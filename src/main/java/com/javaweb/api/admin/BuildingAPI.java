@@ -43,6 +43,11 @@ public class BuildingAPI {
         return result;
     }
 
+        @GetMapping
+    public List<BuildingSearchResponse> getAllBuildings(@ModelAttribute BuildingSearchRequest request) {
+        return buildingService.findAll(request);
+    }
+
     @PostMapping("/assignment")
     public ResponseEntity<?> addOrUpdateAssignmentBuilding(@RequestBody AssignmentBuildingDTO requestData) {
         try {
