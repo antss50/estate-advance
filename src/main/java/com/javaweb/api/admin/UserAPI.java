@@ -20,7 +20,13 @@ public class UserAPI {
     public ResponseEntity<UserDTO> createUsers(@RequestBody UserDTO newUser) {
         return ResponseEntity.ok(userService.insert(newUser));
     }
-
+     
+        @GetMapping("/staffs")
+    public ResponseEntity<Map<Long, String>> getStaffs() {
+        Map<Long, String> result = userService.getStaff();
+        return ResponseEntity.ok(result);
+    }
+    
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUsers(@PathVariable("id") long id, @RequestBody UserDTO userDTO) {
         return ResponseEntity.ok(userService.update(id, userDTO));
