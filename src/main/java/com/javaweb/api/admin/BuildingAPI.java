@@ -36,6 +36,12 @@ public class BuildingAPI {
         buildingService.deleteBuilding(ids);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<BuildingDTO> getBuildingDetail(@PathVariable Long id) {
+        BuildingDTO result = buildingService.getBuildingDetail(id);
+        return ResponseEntity.ok(result);
+    }
+    
     @GetMapping("/{id}/staffs")
     public ResponseDTO getStaffs(@PathVariable Long id)
     {

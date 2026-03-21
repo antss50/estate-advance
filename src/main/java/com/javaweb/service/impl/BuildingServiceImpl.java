@@ -85,6 +85,23 @@ public class BuildingServiceImpl implements BuildingService {
         }
        return res;
     }
+        @Override
+    public BuildingDTO getBuildingDetail(Long id) {
+        BuildingEntity entity = buildingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Building not found"));
+        BuildingDTO buildingDTO = modelMapper.map(entity, BuildingDTO.class);
+        if (entity.getType() != null) {
+            buildingDTO.setTypeCode(entity.getType().split(","));
+        }
+        if (entity.getRentAreas() != null && !entity.getRentAreas().isEmpty()) {
+            String rentArea = entity.getRentAreas().stream()
+                    .map(item -> String.valueOf(item.getValue()))
+                    .reduce((a, b) -> a + "," + b)
+                    .orElse("");
+            buildingDTO.setRentArea(rentArea);
+        }
+        return buildingDTO;
+    }
 
     @Override
     @Transactional

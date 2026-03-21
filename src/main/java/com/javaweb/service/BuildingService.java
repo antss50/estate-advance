@@ -15,5 +15,6 @@ public interface BuildingService {
     BuildingDTO addOrUpdateBuilding(@RequestBody BuildingDTO buildingDTO);
     BuildingDTO getBuildingById(Long id);
     void deleteBuilding(List<Long> ids);
+    BuildingDTO getBuildingDetail(Long id);
 
 }
