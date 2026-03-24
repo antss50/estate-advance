@@ -8,6 +8,7 @@ import com.javaweb.entity.BuildingEntity;
 import com.javaweb.entity.RentAreaEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.TypeCode;
+import com.javaweb.model.dto.AssignmentBuildingDTO;
 import com.javaweb.model.dto.BuildingDTO;
 import com.javaweb.model.request.BuildingSearchRequest;
 import com.javaweb.model.response.BuildingSearchResponse;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BuildingServiceImpl implements BuildingService {
@@ -84,6 +86,36 @@ public class BuildingServiceImpl implements BuildingService {
             res.add(building);
         }
        return res;
+    }
+
+    @Override
+    public void assignBuilding(AssignmentBuildingDTO dto) {
+
+
+        BuildingEntity building = buildingRepository.findById(dto.getBuildingId())
+                .orElseThrow(() -> new RuntimeException("Building not found"));
+
+
+        List<UserEntity> validStaffs = userRepository.findStaffs("STAFF");
+
+
+        Map<Long, UserEntity> staffMap = validStaffs.stream()
+                .collect(Collectors.toMap(UserEntity::getId, item -> item));
+
+
+        List<UserEntity> newStaffs = new ArrayList<>();
+
+        if (dto.getStaffIds() != null) {
+            for (Long staffId : dto.getStaffIds()) {
+                if (staffMap.containsKey(staffId)) {
+                    newStaffs.add(staffMap.get(staffId));
+                }
+            }
+        }
+
+        building.setUsers(newStaffs);
+
+        buildingRepository.save(building);
     }
         @Override
     public BuildingDTO getBuildingDetail(Long id) {

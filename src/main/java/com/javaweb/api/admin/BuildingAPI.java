@@ -32,6 +32,18 @@ public class BuildingAPI {
       return ResponseEntity.ok(buildingService.addOrUpdateBuilding(buildingDTO));
     }
 
+    @PostMapping("/assignment")
+    public ResponseEntity<?> assignBuilding(@RequestBody AssignmentBuildingDTO dto) {
+
+        buildingService.assignBuilding(dto);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Gán nhân viên thành công");
+
+        return ResponseEntity.ok(response);
+    }
+
+
     @DeleteMapping("/{ids}")
     public void deleteBuilding(@PathVariable List<Long> ids)
     {
@@ -55,28 +67,5 @@ public class BuildingAPI {
     public List<BuildingSearchResponse> getAllBuildings(@ModelAttribute BuildingSearchRequest request) {
         return buildingService.findAll(request);
     }
-
-    @PostMapping("/assignment")
-    public ResponseEntity<?> addOrUpdateAssignmentBuilding(@RequestBody AssignmentBuildingDTO requestData) {
-        try {
-            assignmentBuildingService.addOrUpdateAssignmentBuilding(requestData);
-
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Gán nhân viên thành công");
-
-            return ResponseEntity.ok(response);  // ← TRẢ VỀ CHO CLIENT
-
-        } catch (Exception e) {
-            // Nếu có lỗi
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", e.getMessage());
-
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
 
 }
