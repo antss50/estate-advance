@@ -1,24 +1,15 @@
 package com.javaweb.model.request;
 
+import com.javaweb.model.dto.DemandDTO;
+
 public class CustomerRequestDTO {
 
     private String fullName;
     private String phone;
     private String email;
-    private String demand;
+    private DemandDTO demand;
 
-    // ===== CONSTRUCTOR =====
-    public CustomerRequestDTO() {
-    }
-
-    public CustomerRequestDTO(String fullName, String phone, String email, String demand) {
-        this.fullName = fullName;
-        this.phone = phone;
-        this.email = email;
-        this.demand = demand;
-    }
-
-    // ===== GETTER & SETTER =====
+    public CustomerRequestDTO() {}
 
     public String getFullName() {
         return fullName;
@@ -44,11 +35,11 @@ public class CustomerRequestDTO {
         this.email = email;
     }
 
-    public String getDemand() {
+    public DemandDTO getDemand() {
         return demand;
     }
 
-    public void setDemand(String demand) {
+    public void setDemand(DemandDTO demand) {
         this.demand = demand;
     }
 }

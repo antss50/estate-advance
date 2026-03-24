@@ -3,6 +3,7 @@ package com.javaweb.entity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Embedded;
 
 @Entity
 @Table(name = "customer_request")
@@ -17,12 +18,13 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "demand", columnDefinition = "TEXT")
-    private String demand;
+    @Embedded
+    private Demand demand;
 
     @Column(name = "status")
     private String status; // NEW, PROCESSING, DONE
 
+    // ===== Getter & Setter =====
 
     public String getFullName() {
         return fullName;
@@ -48,11 +50,11 @@ public class CustomerRequestEntity extends BaseEntity {
         this.email = email;
     }
 
-    public String getDemand() {
+    public Demand getDemand() {
         return demand;
     }
 
-    public void setDemand(String demand) {
+    public void setDemand(Demand demand) {
         this.demand = demand;
     }
 
