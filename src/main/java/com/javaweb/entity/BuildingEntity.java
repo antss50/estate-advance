@@ -1,5 +1,7 @@
 package com.javaweb.entity;
 
+import com.javaweb.enums.LegalStatus;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,14 +94,17 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "map")
     private String map;
 
-    @Column(name = "avatar")
-    private String avatar;
+    @Column(name = "image")
+    private String image;
 
     @Column(name = "managername")
     private String managerName;
 
     @Column(name = "managerphone")
     private String managerPhone;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "legal")
+    private LegalStatus legal;
 
     // Quan hệ ManyToMany với UserEntity (staffs) thông qua bảng assignmentbuilding
     @ManyToMany(fetch = FetchType.LAZY)
@@ -107,6 +112,14 @@ public class BuildingEntity extends BaseEntity {
             joinColumns = @JoinColumn(name = "buildingid", nullable = false),
             inverseJoinColumns = @JoinColumn(name = "staffid", nullable = false))
     private List<UserEntity> users = new ArrayList<>();
+
+    public LegalStatus getLegal() {
+        return legal;
+    }
+
+    public void setLegal(LegalStatus legal) {
+        this.legal = legal;
+    }
 
     // Quan hệ OneToMany với AssignmentBuildingEntity
     @OneToMany(mappedBy = "building", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -367,12 +380,13 @@ public class BuildingEntity extends BaseEntity {
         this.map = map;
     }
 
-    public String getAvatar() {
-        return avatar;
+    public String getImage() {
+        return image
+                ;
     }
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public String getManagerName() {

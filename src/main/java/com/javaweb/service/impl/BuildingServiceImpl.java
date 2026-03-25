@@ -138,12 +138,24 @@ public class BuildingServiceImpl implements BuildingService {
     @Override
     @Transactional
     public BuildingDTO addOrUpdateBuilding(BuildingDTO buildingDTO) {
-        BuildingEntity buildingEntity = modelMapper.map(buildingDTO, BuildingEntity.class);
-        buildingEntity.setType(String.join(",", buildingDTO.getTypeCode()));
+        BuildingEntity buildingEntity;
+
+        if (buildingDTO.getId() != null) {
+            buildingEntity = buildingRepository.findById(buildingDTO.getId())
+                    .orElse(new BuildingEntity());
+        } else {
+            buildingEntity = new BuildingEntity();
+        }
+
+        modelMapper.map(buildingDTO, buildingEntity);
+        if (buildingDTO.getTypeCode() != null) {
+            buildingEntity.setType(String.join(",", buildingDTO.getTypeCode()));
+        }
         buildingRepository.save(buildingEntity);
         buildingDTO.setId(buildingEntity.getId());
-        if(StringUtils.check(buildingDTO.getRentArea()))
+        if (buildingDTO.getRentArea() != null && !buildingDTO.getRentArea().trim().isEmpty()) {
             rentAreaService.addRentArea(buildingDTO);
+        }
      return buildingDTO;
     }
 

@@ -1,5 +1,7 @@
 package com.javaweb.model.dto;
 
+import com.javaweb.enums.LegalStatus;
+
 import java.util.List;
 
 public class BuildingDTO extends AbstractDTO {
@@ -18,7 +20,6 @@ public class BuildingDTO extends AbstractDTO {
     private String managerName;
     private String managerPhone;
 
-    // Thêm các field mới từ Entity
     private String serviceFee;
     private String carFee;
     private String motoFee;
@@ -33,7 +34,8 @@ public class BuildingDTO extends AbstractDTO {
     private String note;
     private String linkOfBuilding;
     private String map;
-    private String avatar;
+    private String image;
+    private LegalStatus legal;
 
     // Thay đổi typeCode từ List<String> sang String[] để khớp với form
     private String[] typeCode;
@@ -47,6 +49,14 @@ public class BuildingDTO extends AbstractDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public LegalStatus getLegal() {
+        return legal;
+    }
+
+    public void setLegal(LegalStatus legal) {
+        this.legal = legal;
     }
 
     public Integer getFloorArea() {
@@ -282,11 +292,11 @@ public class BuildingDTO extends AbstractDTO {
         this.map = map;
     }
 
-    public String getAvatar() {
-        return avatar;
+    public String getImage() {
+        return image;
     }
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setImage(String image) {
+        this.image = image;
     }
 }
