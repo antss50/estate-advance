@@ -4,24 +4,21 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "user_role")
-public class UserRoleEntity extends BaseEntity {
+@Table(name = "assignmentcustomer")
+public class AssignmentCustomerEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ===== Quan hệ với User =====
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    @JoinColumn(name = "staffid", nullable = false)
+    private UserEntity staff;
 
-    // ===== Quan hệ với Role =====
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    private RoleEntity role;
+    @JoinColumn(name = "customerid", nullable = false)  
+    private CustomerEntity customer;
 
-    // ===== Audit fields =====
     @Column(name = "createddate")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
@@ -42,20 +39,20 @@ public class UserRoleEntity extends BaseEntity {
         return id;
     }
 
-    public UserEntity getUser() {
-        return user;
+    public UserEntity getStaff() {
+        return staff;
     }
 
-    public void setUser(UserEntity user) {
-        this.user = user;
+    public void setStaff(UserEntity staff) {
+        this.staff = staff;
     }
 
-    public RoleEntity getRole() {
-        return role;
+    public CustomerEntity getCustomer() {
+        return customer;
     }
 
-    public void setRole(RoleEntity role) {
-        this.role = role;
+    public void setCustomer(CustomerEntity customer) {
+        this.customer = customer;
     }
 
     public void setId(Long id) {

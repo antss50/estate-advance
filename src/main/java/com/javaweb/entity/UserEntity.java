@@ -6,7 +6,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "user")
-public class UserEntity extends BaseEntity {
+public class    UserEntity extends BaseEntity {
 
     private static final long serialVersionUID = -4988455421375043688L;
 

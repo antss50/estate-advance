@@ -1,20 +1,24 @@
 package com.javaweb.api.customer;
 
+import com.javaweb.entity.CustomerEntity;
+import com.javaweb.model.dto.CustomerDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
 import com.javaweb.service.CustomerRequestService;
+import com.javaweb.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController(value = "buildingAPIOfCustomer")
-@RequestMapping("/api")
+@RequestMapping("/api/customer")
 public class CustomerAPI {
 
     @Autowired
     private CustomerRequestService customerRequestService;
+    @Autowired
+    private CustomerService customerService;
 
     @PostMapping("/customer-request")
     public ResponseEntity<?> createRequest(@RequestBody CustomerRequestDTO dto) {
@@ -23,4 +27,15 @@ public class CustomerAPI {
 
         return ResponseEntity.ok("Gửi yêu cầu thành công");
     }
+
+    @GetMapping()
+    public List<CustomerDTO> getAllCustomers() {
+        return customerService.findAll();
+    }
+
+    @GetMapping("staff/{staffId}")
+    public List<CustomerDTO> getCustomersByStaff(@PathVariable Long staffId) {
+        return customerService.findByStaffId(staffId);
+    }
+
 }
