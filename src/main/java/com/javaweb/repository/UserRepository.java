@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> , UserRe
     List<UserEntity> findByIdIn(List<Long> id);
     @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE r.code = :code AND u.status = 1")
     List<UserEntity> findStaffs(@Param("code") String code);
+    @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE u.status = :status AND r.code = :roleCode")
+    List<UserEntity> findByStatusAndRoleCode(@Param("status") Integer status, @Param("roleCode") String roleCode);
 }

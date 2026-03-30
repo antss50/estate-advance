@@ -4,14 +4,22 @@ import com.javaweb.entity.AssignmentCustomerEntity;
 import com.javaweb.entity.CustomerEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.model.dto.AssignmentCustomerDTO;
+import com.javaweb.model.dto.StaffAssignmentDTO;
 import com.javaweb.repository.AssignmentCustomerRepository;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.AssignmentCustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AssignmentCustomerServiceImpl  implements AssignmentCustomerService
 {
     @Autowired
@@ -44,5 +52,37 @@ public class AssignmentCustomerServiceImpl  implements AssignmentCustomerService
                 assignmentCustomerRepository.save(assignment);
             }
 
+    }
+
+    @Override
+    public List<StaffAssignmentDTO> getStaffAssignment(Long customerId) {
+
+        List<UserEntity> staffs = userRepository.findByStatusAndRoleCode(1, "STAFF");
+
+
+        List<AssignmentCustomerEntity> assignments =
+                assignmentCustomerRepository.findByCustomer_Id(customerId);
+
+
+        Set<Long> assignedStaffIds = assignments.stream()
+                .map(item -> item.getStaff().getId())
+                .collect(Collectors.toSet());
+
+
+        List<StaffAssignmentDTO> result = new ArrayList<>();
+
+        for (UserEntity staff : staffs) {
+            StaffAssignmentDTO dto = new StaffAssignmentDTO();
+
+            dto.setStaffId(staff.getId());
+            dto.setFullName(staff.getFullName());
+
+            // QUAN TRỌNG: check đã assign chưa
+            dto.setChecked(assignedStaffIds.contains(staff.getId()));
+
+            result.add(dto);
+        }
+
+        return result;
     }
 }

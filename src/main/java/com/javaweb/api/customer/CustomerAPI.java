@@ -3,6 +3,7 @@ package com.javaweb.api.customer;
 import com.javaweb.entity.CustomerEntity;
 import com.javaweb.model.dto.AssignmentCustomerDTO;
 import com.javaweb.model.dto.CustomerDTO;
+import com.javaweb.model.dto.StaffAssignmentDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
 import com.javaweb.service.AssignmentCustomerService;
 import com.javaweb.service.CustomerRequestService;
@@ -46,6 +47,14 @@ public class CustomerAPI {
     public ResponseEntity<?> assignCustomer(@RequestBody AssignmentCustomerDTO dto) {
         assignmentCustomerService.assignCustomer(dto);
         return ResponseEntity.ok("Assign customer to staff successfully");
+    }
+    @GetMapping("/{customerId}/assignment")
+    public ResponseEntity<List<StaffAssignmentDTO>> getAssignment(@PathVariable Long customerId) {
+
+        List<StaffAssignmentDTO> result =
+                assignmentCustomerService.getStaffAssignment(customerId);
+
+        return ResponseEntity.ok(result);
     }
 
 }

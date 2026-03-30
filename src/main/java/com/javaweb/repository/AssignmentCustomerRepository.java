@@ -9,4 +9,5 @@ public interface AssignmentCustomerRepository extends JpaRepository<AssignmentCu
 
     List<AssignmentCustomerEntity> findByStaff_Id(Long staffId);
     void deleteByCustomer_Id(Long customerId);
+    List<AssignmentCustomerEntity> findByCustomer_Id(Long customerId);
 }
