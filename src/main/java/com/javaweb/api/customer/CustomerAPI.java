@@ -1,8 +1,10 @@
 package com.javaweb.api.customer;
 
 import com.javaweb.entity.CustomerEntity;
+import com.javaweb.model.dto.AssignmentCustomerDTO;
 import com.javaweb.model.dto.CustomerDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
+import com.javaweb.service.AssignmentCustomerService;
 import com.javaweb.service.CustomerRequestService;
 import com.javaweb.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class CustomerAPI {
     private CustomerRequestService customerRequestService;
     @Autowired
     private CustomerService customerService;
+    @Autowired
+    private AssignmentCustomerService assignmentCustomerService;
+
 
     @PostMapping("/customer-request")
     public ResponseEntity<?> createRequest(@RequestBody CustomerRequestDTO dto) {
@@ -36,6 +41,11 @@ public class CustomerAPI {
     @GetMapping("staff/{staffId}")
     public List<CustomerDTO> getCustomersByStaff(@PathVariable Long staffId) {
         return customerService.findByStaffId(staffId);
+    }
+    @PostMapping("/assignment")
+    public ResponseEntity<?> assignCustomer(@RequestBody AssignmentCustomerDTO dto) {
+        assignmentCustomerService.assignCustomer(dto);
+        return ResponseEntity.ok("Assign customer to staff successfully");
     }
 
 }

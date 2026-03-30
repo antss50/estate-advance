@@ -8,4 +8,5 @@ import java.util.List;
 public interface AssignmentCustomerRepository extends JpaRepository<AssignmentCustomerEntity, Long> {
 
     List<AssignmentCustomerEntity> findByStaff_Id(Long staffId);
+    void deleteByCustomer_Id(Long customerId);
 }
