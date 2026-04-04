@@ -381,8 +381,7 @@ public class BuildingEntity extends BaseEntity {
     }
 
     public String getImage() {
-        return image
-                ;
+        return image;
     }
 
     public void setImage(String image) {

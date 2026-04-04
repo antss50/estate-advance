@@ -10,6 +10,7 @@ public class UserDTO extends AbstractDTO {
     private String fullName;
     private String password;
     private Integer status;
+    private String email;
     private List<RoleDTO> roles = new ArrayList<>();
     private String roleName;
     private String roleCode;
@@ -25,6 +26,13 @@ public class UserDTO extends AbstractDTO {
 
     public String getFullName() {
         return fullName;
+    }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void setFullName(String fullName) {

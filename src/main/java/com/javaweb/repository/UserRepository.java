@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> , UserRepositoryCustom {
     UserEntity findOneByUserNameAndStatus(String name, int status);
@@ -20,6 +21,12 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> , UserRe
     long countByStatusNot(int status);
     UserEntity findOneByUserName(String userName);
     List<UserEntity> findByIdIn(List<Long> id);
+    boolean existsByUserName(String userName);
+
+    boolean existsByEmail(String email);
+    Optional<UserEntity> findByUserName(String userName);
+
+    Optional<UserEntity> findByEmail(String email);
     @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE r.code = :code AND u.status = 1")
     List<UserEntity> findStaffs(@Param("code") String code);
     @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE u.status = :status AND r.code = :roleCode")

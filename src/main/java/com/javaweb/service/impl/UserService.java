@@ -136,16 +136,50 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserDTO update(Long id, UserDTO updateUser) {
-        RoleEntity role = roleRepository.findOneByCode(updateUser.getRoleCode());
-        UserEntity oldUser = userRepository.findById(id).get();
-        UserEntity userEntity = userConverter.convertToEntity(updateUser);
-        userEntity.setUserName(oldUser.getUserName());
-        userEntity.setStatus(oldUser.getStatus());
-        userEntity.setRoles(Stream.of(role).collect(Collectors.toList()));
-        userEntity.setPassword(oldUser.getPassword());
-        return userConverter.convertToDto(userRepository.save(userEntity));
-    }
+        UserEntity oldUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
+        if (updateUser.getUserName() != null && !updateUser.getUserName().equals(oldUser.getUserName())) {
+            // Kiểm tra username mới đã tồn tại chưa
+            boolean exists = userRepository.existsByUserName(updateUser.getUserName());
+            if (exists) {
+                throw new RuntimeException("Username already exists: " + updateUser.getUserName());
+            }
+            oldUser.setUserName(updateUser.getUserName());
+        }
+
+        if (updateUser.getFullName() != null) {
+            oldUser.setFullName(updateUser.getFullName());
+        }
+
+        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(oldUser.getEmail())) {
+            Optional<UserEntity> existingUser = userRepository.findByEmail(updateUser.getEmail());
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(id)) {
+                throw new RuntimeException("Email already exists: " + updateUser.getEmail());
+            }
+            oldUser.setEmail(updateUser.getEmail());
+        }
+
+        if (updateUser.getStatus() != null) {
+            oldUser.setStatus(updateUser.getStatus());
+        }
+
+        if (updateUser.getPassword() != null && !updateUser.getPassword().isEmpty()) {
+            oldUser.setPassword(passwordEncoder.encode(updateUser.getPassword()));
+        }
+
+        if (updateUser.getRoleCode() != null && !updateUser.getRoleCode().isEmpty()) {
+            RoleEntity role = roleRepository.findOneByCode(updateUser.getRoleCode());
+            if (role != null) {
+                List<RoleEntity> roles = new ArrayList<>();
+                roles.add(role);
+                oldUser.setRoles(roles);
+            }
+        }
+
+        UserEntity updatedUser = userRepository.save(oldUser);
+        return userConverter.convertToDto(updatedUser);
+    }
     @Override
     @Transactional
     public void updatePassword(long id, PasswordDTO passwordDTO) throws MyException {
