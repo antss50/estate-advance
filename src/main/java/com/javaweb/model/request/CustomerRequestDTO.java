@@ -4,12 +4,20 @@ import com.javaweb.model.dto.DemandDTO;
 
 public class CustomerRequestDTO {
 
+    private Long id;
     private String fullName;
     private String phone;
     private String email;
-    private DemandDTO demand;
+    private DemandDTO demand; //
+    private String status;
 
-    public CustomerRequestDTO() {}
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getFullName() {
         return fullName;
@@ -41,5 +49,13 @@ public class CustomerRequestDTO {
 
     public void setDemand(DemandDTO demand) {
         this.demand = demand;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
