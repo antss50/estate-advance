@@ -3,6 +3,7 @@ package com.javaweb.service.impl;
 import com.javaweb.entity.AssignmentCustomerEntity;
 import com.javaweb.entity.CustomerEntity;
 import com.javaweb.entity.UserEntity;
+import com.javaweb.enums.CustomerStatus;
 import com.javaweb.model.dto.AssignmentCustomerDTO;
 import com.javaweb.model.dto.StaffAssignmentDTO;
 import com.javaweb.repository.AssignmentCustomerRepository;
@@ -33,13 +34,12 @@ public class AssignmentCustomerServiceImpl  implements AssignmentCustomerService
     @Override
     public void assignCustomer(AssignmentCustomerDTO dto) {
 
-            // 1. XÓA assignment cũ
+
             assignmentCustomerRepository.deleteByCustomer_Id(dto.getCustomerId());
-            // 2. LẤY customer
+
             CustomerEntity customer = customerRepository.findById(dto.getCustomerId())
                     .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-            // 3. INSERT lại danh sách staff mới
             for (Long staffId : dto.getStaffIds()) {
 
                 UserEntity staff = userRepository.findById(staffId)
@@ -51,6 +51,10 @@ public class AssignmentCustomerServiceImpl  implements AssignmentCustomerService
 
                 assignmentCustomerRepository.save(assignment);
             }
+        if (customer.getStatus() == CustomerStatus.NEW) {
+            customer.setStatus(CustomerStatus.ASSIGNED);
+            customerRepository.save(customer);
+        }
 
     }
 

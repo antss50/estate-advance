@@ -51,7 +51,6 @@ public class CustomerAPI {
     }
     @GetMapping("/{customerId}/assignment")
     public ResponseEntity<List<StaffAssignmentDTO>> getAssignment(@PathVariable Long customerId) {
-
         List<StaffAssignmentDTO> result =
                 assignmentCustomerService.getStaffAssignment(customerId);
 

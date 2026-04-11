@@ -1,5 +1,7 @@
 package com.javaweb.entity;
 
+import com.javaweb.enums.CustomerStatus;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -26,8 +28,9 @@ public class CustomerEntity extends BaseEntity{
     @Column(name = "demand")
     private String demand;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private CustomerStatus status = CustomerStatus.NEW;  // Mặc định là NEW
 
     @Column(name = "is_active")
     private Integer isActive;
@@ -96,11 +99,11 @@ public class CustomerEntity extends BaseEntity{
         this.demand = demand;
     }
 
-    public String getStatus() {
+    public CustomerStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(CustomerStatus status) {
         this.status = status;
     }
 
