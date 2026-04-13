@@ -8,27 +8,35 @@ import {
   Tag,
   Button,
   Spin,
-  Pagination,
   Checkbox,
   message,
   Empty,
+  Divider,
+  Typography,
+  Space,
+  Pagination,
 } from "antd";
 import { SearchOutlined, UnorderedListOutlined } from "@ant-design/icons";
-import type { UserDTO } from "../../types/user.type";
-import type { AssignStaffDTO } from "../../types/user.type";
+import type { UserDTO, AssignStaffDTO } from "../../types/user.type";
 import { getStaffs } from "../../api/staffApi";
 import assignmentApi from "../../api/assignmentApi";
 import client from "../../api/axiosClient";
 
+const { Text } = Typography;
+
+// --- Định nghĩa các hằng số màu sắc cho UI mới ---
+const MUTED = "#8c8c8c";
+const RED_ALERT = "#ff4d4f";
+
 // Status type mapping
 const statusConfig: Record<string, { label: string; color: string }> = {
+  NEW: { label: "Chưa tiếp nhận", color: "#999999" },
   PENDING: { label: "Chưa tiếp nhận", color: "#999999" },
   CONSULTING: { label: "Đang tư vấn", color: "#1890ff" },
   SIGNED: { label: "Đã kí hợp đồng", color: "#faad14" },
   PAID: { label: "Đã thanh toán", color: "#52c41a" },
 };
 
-// Performance type mapping
 const performanceConfig: Record<string, { label: string; color: string }> = {
   EXCELLENT: { label: "Xuất sắc", color: "#ff4d4f" },
   GOOD: { label: "Tốt", color: "#52c41a" },
@@ -46,75 +54,71 @@ export const CustomerDemand: React.FC = () => {
   const [staffLoading, setStaffLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null,
   );
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
-  // const [demandData, setDemandData] = useState<Record<string, DemandData>>({});
   const [assigningLoading, setAssigningLoading] = useState(false);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [pageSize, setPageSize] = useState(6);
 
-  // Fetch customers data from real API
+  // --- Logic Fetch dữ liệu khách hàng ---
   const fetchCustomers = async (keyword: string = "", page: number = 1) => {
-    setLoading(true);
-    try {
-      // Fetch both customer demands and customers in parallel
-      const [resDemand, resCustomer] = await Promise.all([
-        client.get("/api/customer-request"),
-        client.get("/api/customer"),
-      ]);
+  setLoading(true);
+  try {
+    const [resDemand, resCustomer] = await Promise.all([
+      client.get("/api/customer-request"),
+      client.get("/api/customer"),
+    ]);
 
-      const demandPayload = resDemand?.data ?? resDemand;
-      const customerPayload = resCustomer?.data ?? resCustomer;
+    const demands = resDemand?.data ?? resDemand;
+    const customersList = resCustomer?.data ?? resCustomer;
 
-      const demands = Array.isArray(demandPayload)
-        ? demandPayload
-        : Array.isArray((demandPayload as any)?.data)
-          ? (demandPayload as any).data
-          : [];
+    const map = new Map<string, any>();
 
-      const customersList = Array.isArray(customerPayload)
-        ? customerPayload
-        : Array.isArray((customerPayload as any)?.data)
-          ? (customerPayload as any).data
-          : [];
+    // 1. Đưa thông tin khách hàng vào Map trước (để lấy status và info chuẩn từ DB)
+    if (Array.isArray(customersList)) {
+      customersList.forEach((c: any) => {
+        map.set(String(c.id), { ...c });
+      });
+    }
 
-      // Merge demands into customers by id. If a demand exists without a matching customer, include it.
-      const map = new Map<string, any>();
-      customersList.forEach((c: any) => map.set(String(c.id), { ...c }));
-
-      (demands as any[]).forEach((d) => {
+    // 2. DUYỆT QUA MẢNG DEMANDS (API request) để gộp nhu cầu vào khách hàng
+    if (Array.isArray(demands)) {
+      demands.forEach((d: any) => {
         const id = String(d.id ?? d.customerId ?? "");
         if (!id) return;
+
         if (map.has(id)) {
           const existing = map.get(id);
-          existing.demand = d.demand ?? d.demand ?? existing.demand;
-          existing.status = d.status ?? existing.status;
+          // Gộp object demand từ request vào thông tin khách hàng
+          existing.demand = d.demand; 
+          // Ưu tiên giữ status từ bảng Customer vì bạn đã fix logic update status ở Backend
           map.set(id, existing);
         } else {
-          // demand-only entry: ensure it has id and demand/status
-          const entry = {
-            id: id,
+          // Trường hợp có request nhưng chưa có trong bảng customer (nếu có)
+          map.set(id, {
+            id,
             fullName: d.fullName ?? "",
-            demand: d.demand ?? d,
-            status: d.status,
-          };
-          map.set(id, entry);
+            demand: d.demand,
+            status: d.status || "NEW",
+          });
         }
       });
-
-      const combined = Array.from(map.values());
-      setCustomers(combined as UserDTO[]);
-    } catch (error) {
-      message.error("Lỗi khi tải danh sách khách hàng");
-      console.error(error);
-      setCustomers([]);
-    } finally {
-      setLoading(false);
     }
-  };
 
-  // Fetch staffs data
+    const allCustomers = Array.from(map.values()) as UserDTO[];
+    setCustomers(allCustomers);
+    // setTotalCustomers(allCustomers.length); 
+  } catch (error) {
+    message.error("Lỗi khi tải danh sách khách hàng");
+    console.error(error);
+    setCustomers([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
   const fetchStaffs = async () => {
     setStaffLoading(true);
     try {
@@ -143,65 +147,79 @@ export const CustomerDemand: React.FC = () => {
     }
   };
 
-  // Load staffs when right panel opens
+  // --- Effect xử lý khi chọn khách hàng ---
   useEffect(() => {
     if (!selectedCustomerId) return;
     const status = getCustomerStatus(selectedCustomerId);
-    console.log("Selected customer ID:", selectedCustomerId, "Status:", status);
+    console.log(
+      "Selected customer status:",
+      status.label,
+      "Status key:",
+      status,
+    );
+
     if (status.label === "Chưa tiếp nhận") {
-      // for new customers, show full staff list and allow assignment
+      console.log("Status is PENDING - fetching all staffs");
       setAssignedStaffs([]);
+      setStaffs([]);
       fetchStaffs();
       setSelectedStaffIds([]);
     } else {
-      // for customers already in flow, load only assigned staffs (read-only)
-      const fetchAssignedStaffs = async (customerId: string) => {
-        setStaffLoading(true);
-        try {
-          const res = await assignmentApi.getCustomerAssignments(
-            Number(customerId),
-          );
-
-          // Lấy mảng dữ liệu từ response
-          let rawList: AssignStaffDTO[] = [];
-
-          if (Array.isArray(res)) {
-            rawList = res;
-          } else if (res && Array.isArray(res as AssignStaffDTO[])) {
-            rawList = res as AssignStaffDTO[];
-          }
-          const assignedList: AssignStaffDTO[] = rawList
-            .filter((item) => item.checked === true)
-            .map(
-              (item) =>
-                ({
-                  id: String(item.staffId),
-                  fullName: item.fullName,
-                }) as unknown as AssignStaffDTO,
-            );
-          setAssignedStaffs(assignedList);
-
-          // keep selectedStaffIds in sync so multi-selection UI can reflect existing assignments
-          const assignedIds = rawList
-            .filter((item) => item.checked === true)
-            .map((item) => String(item.staffId));
-          setSelectedStaffIds(assignedIds);
-
-          setStaffs([]);
-        } catch (err) {
-          console.error("Failed to fetch assigned staffs", err);
-          message.error("Không thể tải nhân viên phụ trách");
-          setAssignedStaffs([]);
-        } finally {
-          setStaffLoading(false);
-        }
-      };
-
-      fetchAssignedStaffs(selectedCustomerId);
+      console.log("Status is NOT PENDING - fetching assigned staffs");
+      fetchAssignedStaffs();
     }
   }, [selectedCustomerId]);
 
-  // Helper: format price (price may be number in millions or a string)
+  // Hàm fetch nhân viên phụ trách
+  const fetchAssignedStaffs = async () => {
+    setStaffLoading(true);
+    try {
+      const res = await assignmentApi.getCustomerAssignments(
+        Number(selectedCustomerId),
+      );
+
+      console.log("Assigned staffs response:", res);
+
+      // Lấy mảng dữ liệu từ response
+      let rawList: AssignStaffDTO[] = [];
+
+      if (Array.isArray(res)) {
+        rawList = res;
+      } else if (res && Array.isArray(res as AssignStaffDTO[])) {
+        rawList = res as AssignStaffDTO[];
+      }
+
+      const assignedList: AssignStaffDTO[] = rawList
+        .filter((item) => item.checked === true)
+        .map(
+          (item) =>
+            ({
+              id: String(item.staffId),
+              fullName: item.fullName,
+            }) as unknown as AssignStaffDTO,
+        );
+
+      console.log("Filtered assigned staffs:", assignedList);
+
+      setAssignedStaffs(assignedList);
+
+      // keep selectedStaffIds in sync so multi-selection UI can reflect existing assignments
+      const assignedIds = rawList
+        .filter((item) => item.checked === true)
+        .map((item) => String(item.staffId));
+      setSelectedStaffIds(assignedIds);
+      setStaffs([]);
+    } catch (err) {
+      console.error("Failed to fetch assigned staffs", err);
+      message.error("Không thể tải nhân viên phụ trách");
+      setAssignedStaffs([]);
+      setStaffs([]);
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  // --- Format tiền tệ ---
   const formatPrice = (p: number | string | undefined | null) => {
     if (p == null) return "";
     // If backend returns price as string (e.g. "1.5E7"), convert to number
@@ -211,12 +229,10 @@ export const CustomerDemand: React.FC = () => {
     return new Intl.NumberFormat("vi-VN").format(num) + " đ";
   };
 
-  // Initial data load
   useEffect(() => {
     fetchCustomers("", 1);
   }, []);
 
-  // Handle search
   const handleSearch = (value: string) => {
     setSearchKeyword(value);
     setCurrentPage(1);
@@ -227,11 +243,14 @@ export const CustomerDemand: React.FC = () => {
   const handlePageChange = (page: number, size?: number) => {
     setCurrentPage(page);
     if (size) setPageSize(size);
-    fetchCustomers(searchKeyword, page);
   };
 
-  // Handle assignment
-  // Handle assignment (API Thật)
+  // Lọc customers theo phân trang
+  const paginatedCustomers = customers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
+
   const handleAssign = async () => {
     if (!selectedCustomerId || selectedStaffIds.length === 0) {
       message.warning("Vui lòng chọn khách hàng và ít nhất một nhân viên");
@@ -240,7 +259,6 @@ export const CustomerDemand: React.FC = () => {
 
     setAssigningLoading(true);
     try {
-      // 1. Tạo payload khớp chuẩn 100% với AssignmentCustomerDTO của Java
       const payload = {
         customerId: Number(selectedCustomerId),
         staffIds: selectedStaffIds.map((s) => Number(s)),
@@ -268,31 +286,62 @@ export const CustomerDemand: React.FC = () => {
     }
   };
 
-  // Get status for a customer. Prefer `customer.status` from API; fallback to hashed mock.
   const getCustomerStatus = (customerOrId: string | UserDTO | null) => {
     if (!customerOrId) return statusConfig.PENDING;
 
     let statusKey: string | undefined;
+    let customer: UserDTO | undefined;
 
     if (typeof customerOrId === "object") {
       statusKey = customerOrId.status;
+      customer = customerOrId;
     } else {
       const found = customers.find(
         (c) => String(c.id) === String(customerOrId),
       );
       statusKey = found?.status;
+      customer = found;
     }
 
-    // Nếu API trả về "NEW", map nó vào PENDING hoặc bổ sung NEW vào statusConfig
-    return statusConfig[statusKey || "PENDING"] || statusConfig.PENDING;
+    // Chuẩn hóa status key - convert to uppercase và trim
+    const normalizedStatusKey = statusKey?.toUpperCase().trim() || "PENDING";
+
+    console.log(
+      "getCustomerStatus - ID:",
+      customerOrId,
+      "Raw StatusKey:",
+      statusKey,
+      "Normalized:",
+      normalizedStatusKey,
+      "Customer status:",
+      customer?.status,
+    );
+
+    // Nếu API trả về status không có trong config, mặc định PENDING
+    const result =
+      statusConfig[normalizedStatusKey] ||
+      statusConfig[statusKey || ""] ||
+      statusConfig.PENDING;
+    console.log("Mapped status result:", result);
+    return result;
   };
 
+  // --- Styles ---
   const containerStyles: React.CSSProperties = {
     padding: "24px",
     backgroundColor: "#f5f5f5",
     minHeight: "100vh",
   };
-
+  const customerCardStyles: React.CSSProperties = {
+    background: "white",
+    border: "0px solid #e0e0e0",
+    borderRadius: "15px",
+    marginBottom: "12px",
+    padding: "16px",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+  };
   const headerStyles: React.CSSProperties = {
     marginBottom: "24px",
   };
@@ -306,96 +355,6 @@ export const CustomerDemand: React.FC = () => {
 
   const searchStyles: React.CSSProperties = {
     marginBottom: "24px",
-  };
-
-  const customerCardStyles: React.CSSProperties = {
-    background: "white",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
-    marginBottom: "12px",
-    padding: "16px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-  };
-
-  const customerHeaderStyles: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "12px",
-  };
-
-  const customerInfoStyles: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    flex: 1,
-    gap: "12px",
-  };
-
-  const customerNameStyles: React.CSSProperties = {
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "#000000",
-  };
-
-  const customerUsernameStyles: React.CSSProperties = {
-    fontSize: "12px",
-    color: "#999999",
-    marginTop: "4px",
-  };
-
-  const actionButtonsStyles: React.CSSProperties = {
-    display: "flex",
-    gap: "8px",
-    alignItems: "center",
-  };
-
-  const demandExpanderStyles: React.CSSProperties = {
-    marginTop: "12px",
-    borderTop: "1px solid #f0f0f0",
-    paddingTop: "12px",
-  };
-
-  const demandRowStyles: React.CSSProperties = {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: "13px",
-    marginBottom: "8px",
-    alignItems: "center",
-  };
-
-  const demandLabelStyles: React.CSSProperties = {
-    color: "#666666",
-    fontWeight: 500,
-  };
-
-  const rightPanelStyles: React.CSSProperties = {
-    background: "white",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
-    padding: "16px",
-    maxHeight: "calc(100vh - 200px)",
-    overflowY: "auto",
-  };
-
-  const staffItemStyles: React.CSSProperties = {
-    padding: "12px",
-    borderBottom: "1px solid #f0f0f0",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  };
-
-  const staffNameStyles: React.CSSProperties = {
-    fontSize: "13px",
-    fontWeight: 500,
-    color: "#000000",
-  };
-
-  const staffDistrictStyles: React.CSSProperties = {
-    fontSize: "12px",
-    color: "#999999",
-    marginTop: "2px",
   };
 
   return (
@@ -420,288 +379,356 @@ export const CustomerDemand: React.FC = () => {
         />
       </div>
 
-      {/* Main Content */}
       <Row gutter={[24, 24]}>
-        {/* Left Panel - Customer List */}
         <Col xs={24} lg={16}>
-          <Spin spinning={loading} tip="Đang tải dữ liệu...">
-            <div
-              style={{
-                background: "white",
-                borderRadius: "8px",
-                padding: "0px",
-              }}
-            >
-              {customers.length === 0 ? (
-                <Empty
-                  description="Không tìm thấy khách hàng"
-                  style={{ padding: "24px" }}
-                />
-              ) : (
-                <div>
-                  {customers.map((customer) => {
-                    const status = getCustomerStatus(customer.id);
-                    // const demand = demandData[customer.id];
+          <Spin spinning={loading}>
+            {paginatedCustomers.map((customer) => {
+              const status = getCustomerStatus(customer);
+              const isSelected = selectedCustomerId === customer.id;
 
-                    return (
-                      <div
-                        key={customer.id}
-                        style={{
-                          ...customerCardStyles,
-                          backgroundColor:
-                            selectedCustomerId === customer.id
-                              ? "#f0f8ff"
-                              : "white",
-                          borderColor:
-                            selectedCustomerId === customer.id
-                              ? "#1890ff"
-                              : "#e0e0e0",
-                        }}
-                      >
-                        {/* Customer Header */}
-                        <div style={customerHeaderStyles}>
-                          <div style={customerInfoStyles}>
-                            <Avatar size={40} src={customer.avatarUrl} />
-                            <div>
-                              <div style={customerNameStyles}>
-                                {customer.fullName}
-                              </div>
-                              <div style={customerUsernameStyles}>
-                                #{customer.userName}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={actionButtonsStyles}>
-                            <Tag
-                              color={status.color}
-                              style={{
-                                border: "none",
-                                fontSize: "11px",
-                                padding: "4px 8px",
-                              }}
-                            >
-                              {status.label}
-                            </Tag>
-                            <Button
-                              type="text"
-                              icon={<UnorderedListOutlined />}
-                              onClick={() => setSelectedCustomerId(customer.id)}
-                              title="Chọn khách hàng"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Demand Details (now using customer.demand and toggle) */}
-                        <div style={demandExpanderStyles}>
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              const cid = customer.id;
-                              setExpandedDemands((s) => ({
-                                ...s,
-                                [cid]: !s[cid],
-                              }));
+              return (
+                <div
+                  key={customer.id}
+                  style={{
+                    ...customerCardStyles,
+                    backgroundColor: isSelected ? "#f0f8ff" : "white",
+                    borderColor: isSelected ? "#1890ff" : "#e0e0e0",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLDivElement;
+                    el.style.boxShadow = "0 8px 16px rgba(0,0,0,0.12)";
+                    el.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLDivElement;
+                    el.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)";
+                    el.style.transform = "translateY(0)";
+                  }}
+                >
+                  <Row align="middle" style={{ width: "100%" }}>
+                    {/* Cột 1: Thông tin khách hàng (Avatar + Name) */}
+                    <Col span={10}>
+                      <Row align="middle" gutter={12}>
+                        <Col>
+                          <Avatar
+                            size={48}
+                            style={{
+                              background: "#E6F6FF",
+                              color: "#000",
+                              fontWeight: 600,
+                              fontSize: "18px",
                             }}
                           >
-                            Chi tiết nhu cầu
-                          </Button>
+                            {customer.fullName.charAt(0).toUpperCase()}
+                          </Avatar>
+                        </Col>
+                        <Col>
+                          <Text
+                            strong
+                            style={{ display: "block", fontSize: "15px" }}
+                          >
+                            {customer.fullName}
+                          </Text>
+                          <Text type="secondary" style={{ fontSize: "13px" }}>
+                            @{customer.userName}
+                          </Text>
+                        </Col>
+                      </Row>
+                    </Col>
 
-                          {expandedDemands[customer.id] && (
-                            <div style={{ marginTop: 12 }}>
-                              <div style={demandRowStyles}>
-                                <span style={demandLabelStyles}>Mức giá:</span>
-                                <span>
-                                  {formatPrice(customer?.demand?.price)}
-                                </span>
-                              </div>
-                              <div style={demandRowStyles}>
-                                <span style={demandLabelStyles}>
-                                  Diện tích:
-                                </span>
-                                <span>{customer?.demand?.area ?? "-"} m²</span>
-                              </div>
-                              <div style={demandRowStyles}>
-                                <span style={demandLabelStyles}>Vị trí:</span>
-                                <span>{customer?.demand?.location ?? "-"}</span>
-                              </div>
-                              <Button
-                                type="primary"
-                                size="small"
-                                style={{ marginTop: 12 }}
-                              >
-                                Matching
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Pagination */}
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "20px",
-                      borderTop: "1px solid #f0f0f0",
-                    }}
-                  >
-                    <Pagination
-                      current={currentPage}
-                      pageSize={pageSize}
-                      total={customers.length * 10} // Mock total for demonstration
-                      onChange={handlePageChange}
-                      showSizeChanger
-                      pageSizeOptions={[10, 20, 50]}
-                      locale={{ items_per_page: "/ trang" }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </Spin>
-        </Col>
-
-        {/* Right Panel - Staff Assignment */}
-        <Col xs={24} lg={8}>
-          {selectedCustomerId ? (
-            <Spin spinning={staffLoading || assigningLoading}>
-              <div style={rightPanelStyles}>
-                {(() => {
-                  const status = getCustomerStatus(selectedCustomerId);
-                  const isPending = status?.label === "Chưa tiếp nhận";
-                  return (
-                    <>
-                      <div
+                    {/* Cột 2: Nút hành động chính (Nằm ở giữa) */}
+                    <Col span={8} style={{ textAlign: "center" }}>
+                      <Button
+                        type="primary"
+                        shape="round"
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "16px",
+                          background: "#1677ff",
+                          borderColor: "#1677ff",
+                          height: "30px",
+                          padding: "0 14px",
+                          fontWeight: 500,
+                          transition: "all 0.2s ease",
+                          boxShadow: "0 2px 8px rgba(22, 119, 255, 0.15)",
+                        }}
+                        onMouseEnter={(e) => {
+                          const btn = e.currentTarget as HTMLButtonElement;
+                          btn.style.boxShadow =
+                            "0 4px 12px rgba(22, 119, 255, 0.3)";
+                          btn.style.transform = "scale(1.02)";
+                        }}
+                        onMouseLeave={(e) => {
+                          const btn = e.currentTarget as HTMLButtonElement;
+                          btn.style.boxShadow =
+                            "0 2px 8px rgba(22, 119, 255, 0.15)";
+                          btn.style.transform = "scale(1)";
+                        }}
+                        onClick={() =>
+                          setExpandedDemands((prev) => ({
+                            ...prev,
+                            [customer.id]: !prev[customer.id],
+                          }))
+                        }
+                      >
+                        Chi tiết nhu cầu
+                      </Button>
+                    </Col>
+
+                    {/* Cột 3: Trạng thái và Icon Menu (Nằm sát phải) */}
+                    <Col span={6} style={{ textAlign: "right" }}>
+                      <Space size={8} align="center">
+                        <Tag
+                          color={status.color}
+                          style={{
+                            margin: 0,
+                            borderRadius: "4px",
+                            padding: "2px 10px",
+                            border: "none",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {status.label}
+                        </Tag>
+
+                        {/* Icon menu bổ sung theo Ảnh 2 */}
+                        <Button
+                          type="text"
+                          icon={
+                            <UnorderedListOutlined
+                              style={{ fontSize: "18px", color: "#8c8c8c" }}
+                            />
+                          }
+                          onClick={() =>
+                            setSelectedCustomerId(String(customer.id))
+                          }
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            const btn = e.currentTarget as HTMLButtonElement;
+                            btn.style.color = "#1677ff";
+                          }}
+                          onMouseLeave={(e) => {
+                            const btn = e.currentTarget as HTMLButtonElement;
+                            btn.style.color = "#8c8c8c";
+                          }}
+                        />
+                      </Space>
+                    </Col>
+                  </Row>
+
+                  {/* --- PANEL CHI TIẾT NHU CẦU MỚI (ĐỒNG BỘ THEO YÊU CẦU) --- */}
+
+                  {expandedDemands[customer.id] && (
+                    <>
+                      <Divider style={{ margin: "12px 0" }} />
+                      <Card
+                        type="inner"
+                        style={{
+                          borderRadius: 8,
+                          border: "1px solid #f0f0f0",
+                          boxShadow: "none",
                         }}
                       >
-                        <h3
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: 600,
-                            margin: 0,
-                          }}
-                        >
-                          {isPending
-                            ? "Danh sách nhân viên"
-                            : "Nhân viên phụ trách"}
-                        </h3>
-                        {isPending && (
-                          <Button
-                            type="primary"
-                            onClick={handleAssign}
-                            disabled={selectedStaffIds.length === 0}
-                          >
-                            Phân công
-                          </Button>
-                        )}
-                      </div>
+                        <Row gutter={[12, 12]}>
+                          <Col span={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text type="secondary" style={{ color: MUTED }}>
+                                Mức giá
+                              </Text>
+                              <Text strong>
+                                {formatPrice(customer?.demand?.price)}
+                              </Text>
+                            </div>
+                          </Col>
+                          <Space>
+                            {(customer as any).priority && (
+                              <Tag color="success">Ưu tiên</Tag>
+                            )}
+                          </Space>
+                        </Row>
 
-                      {isPending ? (
-                        // Checkbox selection for multi-assignment
+                        <Row gutter={[12, 12]}>
+                          <Col span={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text type="secondary" style={{ color: MUTED }}>
+                                Diện tích
+                              </Text>
+                              <Text strong style={{ color: RED_ALERT }}>
+                                {customer?.demand?.area
+                                  ? `${customer.demand.area} m²`
+                                  : "-"}
+                              </Text>
+                            </div>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={[12, 12]}>
+                          <Col span={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text type="secondary" style={{ color: MUTED }}>
+                                Vị trí
+                              </Text>
+                              <Text>{customer?.demand?.location || "-"}</Text>
+                            </div>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={[12, 12]}>
+                          <Col span={12}>
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text type="secondary" style={{ color: MUTED }}>
+                                Loại nhà đất
+                              </Text>
+                              <Text>
+                                {(customer?.demand as any)?.propertyType ||
+                                  "Chung cư"}
+                              </Text>
+                            </div>
+                          </Col>
+                        </Row>
+
                         <div
                           style={{
-                            width: "100%",
                             display: "flex",
-                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginTop: 12,
                           }}
                         >
-                          {staffs.length === 0 ? (
-                            <Empty
-                              description="Không có nhân viên"
-                              style={{ padding: "24px" }}
-                            />
-                          ) : (
-                            staffs.map((staff: UserDTO) => {
-                              const checked = selectedStaffIds.includes(
-                                String(staff.id),
-                              );
-                              return (
-                                <div
-                                  key={staff.id}
-                                  style={{ width: "100%", marginBottom: 0 }}
-                                >
-                                  <Checkbox
-                                    checked={checked}
-                                    onChange={() => {
-                                      setSelectedStaffIds((prev) => {
-                                        const idStr = String(staff.id);
-                                        if (prev.includes(idStr))
-                                          return prev.filter(
-                                            (x) => x !== idStr,
-                                          );
-                                        return [...prev, idStr];
-                                      });
-                                    }}
-                                    style={{ width: "100%" }}
-                                  >
-                                    <div style={staffItemStyles}>
-                                      <Avatar
-                                        size={32}
-                                        src={staff.avatarUrl}
-                                        style={{ marginRight: "8px" }}
-                                      />
-                                      <div style={{ flex: 1 }}>
-                                        <div style={staffNameStyles}>
-                                          {staff.fullName}
-                                        </div>
-                                        <div style={staffDistrictStyles}></div>
-                                      </div>
-                                    </div>
-                                  </Checkbox>
-                                </div>
-                              );
-                            })
-                          )}
+                          <Button
+                            style={{
+                              background: "#fff",
+                              color: "#666",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                            }}
+                          >
+                            Matching
+                          </Button>
                         </div>
-                      ) : (
-                        // Read-only assigned staff list
-                        <div>
-                          {assignedStaffs.length === 0 ? (
-                            <Empty description="Chưa có nhân viên phụ trách" />
-                          ) : (
-                            assignedStaffs.map((s) => (
-                              <div key={s.id} style={staffItemStyles}>
-                                <Avatar
-                                  size={32}
-                                  src={s.avatarUrl}
-                                  style={{ marginRight: 8 }}
-                                />
-                                <div style={{ flex: 1 }}>
-                                  <div style={staffNameStyles}>
-                                    {s.fullName}
-                                  </div>
-                                  <div style={staffDistrictStyles}>
-                                    {/* keep style consistency */}
-                                  </div>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
+                      </Card>
                     </>
-                  );
-                })()}
-              </div>
-            </Spin>
-          ) : (
+                  )}
+                </div>
+              );
+            })}
+          </Spin>
+
+          {/* Pagination */}
+          <div style={{ textAlign: "center", marginTop: 24, marginBottom: 16 }}>
+            <Pagination
+              current={currentPage}
+              pageSize={pageSize}
+              total={totalCustomers}
+              onChange={handlePageChange}
+              showSizeChanger
+              pageSizeOptions={[6, 10, 15, 20]}
+              style={{ display: "flex", justifyContent: "center" }}
+            />
+          </div>
+        </Col>
+
+        {/* Panel Phân công bên phải (Giữ nguyên logic) */}
+        <Col xs={24} lg={8}>
+          {selectedCustomerId ? (
             <Card
-              style={{
-                textAlign: "center",
-                borderRadius: "8px",
-                border: "1px solid #e0e0e0",
-              }}
+              title={
+                getCustomerStatus(selectedCustomerId).label === "Chưa tiếp nhận"
+                  ? "Danh sách nhân viên gán"
+                  : "Nhân viên phụ trách"
+              }
+              extra={
+                getCustomerStatus(selectedCustomerId).label ===
+                  "Chưa tiếp nhận" && (
+                  <Button
+                    type="primary"
+                    onClick={handleAssign}
+                    loading={assigningLoading}
+                  >
+                    Phân công
+                  </Button>
+                )
+              }
             >
-              <Empty
-                description="Chọn một khách hàng để xem danh sách nhân viên"
-                style={{ marginTop: "40px", marginBottom: "40px" }}
-              />
+              <Spin spinning={staffLoading}>
+                {getCustomerStatus(selectedCustomerId).label ===
+                "Chưa tiếp nhận"
+                  ? staffs.map((s) => (
+                      <div
+                        key={s.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "8px 0",
+                          borderBottom: "1px solid #f0f0f0",
+                        }}
+                      >
+                        <Checkbox
+                          checked={selectedStaffIds.includes(String(s.id))}
+                          onChange={() =>
+                            setSelectedStaffIds((prev) =>
+                              prev.includes(String(s.id))
+                                ? prev.filter((id) => id !== String(s.id))
+                                : [...prev, String(s.id)],
+                            )
+                          }
+                        />
+                        <Avatar
+                          size="small"
+                          src={s.avatarUrl}
+                          style={{ margin: "0 8px" }}
+                        />
+                        <Text>{s.fullName}</Text>
+                      </div>
+                    ))
+                  : assignedStaffs.map((s) => (
+                      <div
+                        key={s.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "8px 0",
+                        }}
+                      >
+                        <Avatar
+                          size="small"
+                          src={s.avatarUrl}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Text>{s.fullName}</Text>
+                      </div>
+                    ))}
+              </Spin>
+            </Card>
+          ) : (
+            <Card style={{ textAlign: "center" }}>
+              <Empty description="Chọn khách hàng để phân công" />
             </Card>
           )}
         </Col>

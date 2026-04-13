@@ -45,6 +45,7 @@ export interface DemandDTO {
   area?: number;
   price?: number;
   location?: string;
+  propertyType?: string;
 }
 
 export interface AssignStaffDTO {

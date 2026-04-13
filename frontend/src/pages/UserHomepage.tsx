@@ -30,18 +30,20 @@ const UserHomepage: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout className="user-homepage-wrapper">
       <AppHeader
         isLoggedIn={isLoggedIn}
         onLogin={onLogin}
         onLogout={onLogout}
       />
 
-      <main>
+      <main style={{ position: 'relative', zIndex: 1 }}>
         <HeroSection />
         <FeaturesSection />
         <BrokerTeam />
-        <DemandFormSection onSubmit={handleDemandSubmit} />
+        <div style={{ position: 'relative' }}>
+           <DemandFormSection onSubmit={handleDemandSubmit} />
+        </div>
         <ContactSection />
       </main>
     </Layout>
