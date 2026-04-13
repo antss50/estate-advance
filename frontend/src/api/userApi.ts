@@ -1,0 +1,49 @@
+import client, { setAuthToken } from './axiosClient';
+import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload } from '../types/user.type';
+import type { ResponseDTO, PaginatedResult } from '../types/response.type';
+
+const PATH = '/api/user';
+
+export function configureToken(token: string | null) {
+  setAuthToken(token);
+}
+
+export async function listUsers(params?: { page?: number; size?: number; role?: string; keyword?: string; }): Promise<ResponseDTO<PaginatedResult<UserDTO>>> {
+  const res = await client.get<ResponseDTO<PaginatedResult<UserDTO>>>(`${PATH}`, { params });
+  return res.data;
+}
+
+export async function getAllUsers(): Promise<ResponseDTO<UserDTO>> {
+  const res = await client.get<ResponseDTO<UserDTO>>(`/api/customer`);
+  return res.data;
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<ResponseDTO<UserDTO>> {
+  const res = await client.post<ResponseDTO<UserDTO>>(PATH, payload);
+  return res.data;
+}
+
+export async function updateUser(id: string, payload: UpdateUserPayload): Promise<ResponseDTO<UserDTO>> {
+  const res = await client.put<ResponseDTO<UserDTO>>(`${PATH}/${encodeURIComponent(id)}`, payload);
+  return res.data;
+}
+
+export async function deleteUser(ids: (string | number)[]): Promise<ResponseDTO<null>> {
+  const res = await client.delete<ResponseDTO<null>>(PATH, { data: ids });
+  return res.data;
+}
+
+export async function changePassword(payload: PasswordDTO): Promise<ResponseDTO<null>> {
+  const res = await client.post<ResponseDTO<null>>(`${PATH}/password`, payload);
+  return res.data;
+}
+
+export default {
+  configureToken,
+  listUsers,
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  changePassword,
+};
