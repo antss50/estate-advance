@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  Row,
-  Col,
-  Card,
-  Avatar,
   Typography,
   Input,
   Button,
@@ -14,19 +10,17 @@ import {
   Select,
   Spin,
   message,
+  Row,
+  Col,
   Space,
 } from "antd";
-import {
-  SearchOutlined,
-  PhoneOutlined,
-  PlusOutlined,
-  UserOutlined as IconComponent,
-  EditOutlined,
-  DeleteOutlined,
-} from "@ant-design/icons";
+import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import userApi from "../../api/userApi";
 import staffApi from "../../api/staffApi";
+import StaffGrid from "../../components/admin/StaffGrid";
+import StaffDetailModal from "../../components/admin/StaffDetailModal";
 import type { UserDTO } from "../../types/user.type";
+import type { Staff } from "../../types";
 // import type { PaginatedResult } from "../../types/response.type";
 
 const { Title, Text } = Typography;
@@ -49,6 +43,10 @@ const UserManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Detail modal state
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
 
   const [form] = Form.useForm();
 
@@ -99,22 +97,54 @@ const UserManagement: React.FC = () => {
     form.resetFields();
     setModalVisible(true);
   };
-  const openEdit = (user: UserDTO) => {
-    setEditingUserId(user.id);
-    form.setFieldsValue({
-      fullName: user.fullName,
-      userName: user.userName,
-      role: user.role || "STAFF",
-      status: user.status === "ACTIVE" ? 1 : 0,
-      email: user.email,
-      phone: user.phone,
-    });
-    setModalVisible(true);
+  const openEdit = (user: UserDTO | Staff) => {
+    // Nếu là Staff và từ dropdown menu -> mở detail modal
+    if (activeTab === "staff") {
+      openStaffDetail(user);
+    } else {
+      // Nếu là Customer -> mở form edit trực tiếp
+      setEditingUserId(user.id);
+      form.setFieldsValue({
+        fullName: user.fullName,
+        userName: user.userName,
+        role: user.role || "STAFF",
+        status: user.status === "ACTIVE" ? 1 : 0,
+        email: user.email,
+        phone: user.phone,
+      });
+      setModalVisible(true);
+    }
   };
   const closeModal = () => {
     setModalVisible(false);
     setEditingUserId(null);
     form.resetFields();
+  };
+
+  // Mở modal chi tiết Staff
+  const openStaffDetail = (staff: Staff | UserDTO) => {
+    if (activeTab === "staff") {
+      setSelectedStaffId(staff.id);
+      setDetailModalVisible(true);
+    }
+  };
+
+  // Mở form edit từ detail modal
+  const openEditFromDetail = (staffId: string) => {
+    setDetailModalVisible(false); // Đóng detail modal
+    const staff = users.find((u) => u.id === staffId);
+    if (staff) {
+      setEditingUserId(staff.id);
+      form.setFieldsValue({
+        fullName: staff.fullName,
+        userName: staff.userName,
+        role: staff.role || "STAFF",
+        status: staff.status === "ACTIVE" ? 1 : 0,
+        email: staff.email,
+        phone: staff.phone,
+      });
+      setModalVisible(true);
+    }
   };
 
   interface UserFormValues {
@@ -241,9 +271,9 @@ const UserManagement: React.FC = () => {
       <Tabs
         activeKey={activeTab}
         onChange={(k) => setActiveTab(k as "customer" | "staff")}
-        tabBarStyle={{ 
-          background: 'rgb(245 247 250)', 
-          padding: '0 16px', 
+        tabBarStyle={{
+          background: "rgb(245 247 250)",
+          padding: "0 16px",
         }}
       >
         <TabPane tab="Customer" key="customer" />
@@ -252,120 +282,49 @@ const UserManagement: React.FC = () => {
 
       <div style={{ marginTop: 16 }}>
         <Spin spinning={loading} tip="Đang tải...">
-          <Row gutter={[16, 16]}>
-            {" "}
-            {/* gap between cards: 16px */}
-            {users.map((u) => (
-              <Col key={u.id} xs={24} sm={12} md={8} lg={8} xl={8}
-                >
-                <Card
-                  hoverable
-                  style={{
-                    borderRadius: 10,
-                    background: "#E3EDFF",
-                    border: "none",
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                  bodyStyle={{ padding: 24 }}
-                >
-                  <Row align="middle" gutter={16} style={{ gap: 16 }}>
-                    <Col flex="56px">
-                      <Avatar
-                        size={56}
-                        src={u.avatarUrl}
-                        icon={!u.avatarUrl ? <IconComponent /> : undefined}
-                        style={{
-                          border: "2px solid #000000",
-                          backgroundColor: "#FFFFFF",
-                        }}
-                      />
-                    </Col>
-
-                    <Col flex="auto">
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <Title
-                          level={5}
-                          style={{
-                            margin: 0,
-                            color: "#000000",
-                            fontSize: 24,
-                            fontWeight: 700,
-                            lineHeight: "28px",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {u.fullName}
-                        </Title>
-
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            lineHeight: "22px",
-                            color: "#000000",
-                          }}
-                        >
-                          #{u.userName} &nbsp;{" "}
-                          <Text style={{ color: "#000000" }}>ID:{u.id}</Text>
-                        </Text>
-
-                        <div
-                          style={{
-                            marginTop: 12,
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <PhoneOutlined style={{ color: "#000000" }} />
-                          <Text
-                            style={{
-                              marginLeft: 8,
-                              fontSize: 14,
-                              lineHeight: "22px",
-                              color: "#000000",
-                            }}
-                          >
-                            {u.phone || "---"}
-                          </Text>
-                        </div>
-                        {activeTab === "staff" && (
-                          <div
-                            style={{ marginTop: 12, display: "flex", gap: 8 }}
-                          >
-                            <Button
-                              icon={<EditOutlined />}
-                              onClick={() => openEdit(u)}
-                            />
-                            <Button
-                              danger
-                              icon={<DeleteOutlined />}
-                              onClick={() => handleDelete(u.id)}
-                              loading={deletingId === u.id}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-
-          <div style={{ textAlign: "center", marginTop: 24 }}>
-            <Pagination
-              current={page}
-              pageSize={PAGE_SIZE}
-              total={total}
-              onChange={onPageChange}
-            />
-          </div>
+          {activeTab === "staff" ? (
+            <>
+              <StaffGrid
+                staffList={users as Staff[]}
+                onEdit={openEdit}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              />
+              <div style={{ textAlign: "center", marginTop: 24 }}>
+                <Pagination
+                  current={page}
+                  pageSize={PAGE_SIZE}
+                  total={total}
+                  onChange={onPageChange}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <StaffGrid
+                staffList={users as UserDTO[]}
+                type="customer"
+                onEdit={openEdit}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              />
+              <div style={{ textAlign: "center", marginTop: 24 }}>
+                <Pagination
+                  current={page}
+                  pageSize={PAGE_SIZE}
+                  total={total}
+                  onChange={onPageChange}
+                />
+              </div>
+            </>
+          )}
         </Spin>
       </div>
 
       <Modal
-        title={editingUserId ? "Chỉnh sửa thông tin người dùng" : "Thêm người dùng"}
+        title={
+          editingUserId ? "Chỉnh sửa thông tin người dùng" : "Thêm người dùng"
+        }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
@@ -379,16 +338,15 @@ const UserManagement: React.FC = () => {
           >
             <Input />
           </Form.Item>
-         
+
           <Form.Item
-              name="userName"
-              label="User Name"
-              rules={editingUserId ? undefined : [{ required: true }]
-              }
-            >
-              <Input autoComplete="off" />
+            name="userName"
+            label="User Name"
+            rules={editingUserId ? undefined : [{ required: true }]}
+          >
+            <Input autoComplete="off" />
           </Form.Item>
-         
+
           <Form.Item name="email" label="Email">
             <Input />
           </Form.Item>
@@ -422,6 +380,14 @@ const UserManagement: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Modal chi tiết Staff */}
+      <StaffDetailModal
+        visible={detailModalVisible}
+        staffId={selectedStaffId}
+        onClose={() => setDetailModalVisible(false)}
+        onEdit={openEditFromDetail}
+      />
     </div>
   );
 };

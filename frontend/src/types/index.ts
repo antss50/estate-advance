@@ -8,12 +8,17 @@ export interface Slide {
 
 export interface Staff {
   id: string;
-  name: string;
+  fullName: string;
+  userName: string;
   role: string;
   phone: string;
   email: string;
-  area: string;
+  working_area: string;
   avatarUrl?: string;
+  performance?: number; // Thêm trường hiệu suất nếu có
+  status?: string;
+  revenue?: number; // Doanh thu nếu có
+  total_deals?: number; // Tổng số giao dịch nếu có
 }
 
 export interface DemandFormValues {
