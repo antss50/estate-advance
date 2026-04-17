@@ -1,5 +1,7 @@
 package com.javaweb.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javaweb.builder.BuildingSearchBuilder;
 import com.javaweb.converter.BuildingConverter;
 import com.javaweb.converter.BuildingSearchBuilderConverter;
@@ -26,7 +28,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +58,8 @@ public class BuildingServiceImpl implements BuildingService {
     private ModelMapper modelMapper;
     @Autowired
     private AssignmentBuildingService  assignmentBuildingService;
+    @Autowired
+    private RentAreaRepository rentAreaRepository;
 
     @Override
     public ResponseDTO listStaffs(Long buildingId) {
@@ -148,15 +158,26 @@ public class BuildingServiceImpl implements BuildingService {
         }
 
         modelMapper.map(buildingDTO, buildingEntity);
-        if (buildingDTO.getTypeCode() != null) {
+
+        if (buildingDTO.getTypeCode() != null && buildingDTO.getTypeCode().length > 0) {
             buildingEntity.setType(String.join(",", buildingDTO.getTypeCode()));
         }
-        buildingRepository.save(buildingEntity);
+
+
+        buildingEntity = buildingRepository.save(buildingEntity);
         buildingDTO.setId(buildingEntity.getId());
+
         if (buildingDTO.getRentArea() != null && !buildingDTO.getRentArea().trim().isEmpty()) {
+            if (buildingDTO.getId() != null) {
+                List<RentAreaEntity> oldRentAreas = rentAreaRepository.findByBuildingId(buildingEntity.getId());
+                if (oldRentAreas != null && !oldRentAreas.isEmpty()) {
+                    rentAreaRepository.deleteAll(oldRentAreas);
+                }
+            }
             rentAreaService.addRentArea(buildingDTO);
         }
-     return buildingDTO;
+
+        return buildingDTO;
     }
 
     @Override

@@ -10,6 +10,7 @@ import com.javaweb.service.AssignmentBuildingService;
 import com.javaweb.service.BuildingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,11 +27,12 @@ public class BuildingAPI {
     @Autowired
     private AssignmentBuildingService assignmentBuildingService;
 
+    // Dùng @RequestBody để nhận JSON (có URL ảnh)
     @PostMapping
-    public ResponseEntity<BuildingDTO> addOrUpdateBuilding(@RequestBody BuildingDTO buildingDTO)
-    {
-      return ResponseEntity.ok(buildingService.addOrUpdateBuilding(buildingDTO));
+    public ResponseEntity<BuildingDTO> addOrUpdateBuilding(@RequestBody BuildingDTO buildingDTO) {
+        return ResponseEntity.ok(buildingService.addOrUpdateBuilding(buildingDTO));
     }
+
 
     @PostMapping("/assignment")
     public ResponseEntity<?> assignBuilding(@RequestBody AssignmentBuildingDTO dto) {

@@ -29,7 +29,8 @@ public class RentAreaServiceImpl implements RentAreaService {
             rentAreaRepository.deleteByBuilding(buildingEntity);
         String[] rentAreas = buildingDTO.getRentArea().split(",");
         for(String it : rentAreas) {
-            RentAreaEntity rentAreaEntity = rentAreaConverter.toRentAreaEntity(buildingDTO, Integer.valueOf(it));
+            RentAreaEntity rentAreaEntity = rentAreaConverter.toRentAreaEntity(buildingDTO,
+                    Integer.valueOf(it.trim()));
             rentAreaRepository.save(rentAreaEntity);
         }
     }

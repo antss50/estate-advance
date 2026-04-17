@@ -94,6 +94,9 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "map")
     private String map;
 
+    @Column(name = "avatar")
+    private String avatar;
+
     @Column(name = "image")
     private String image;
 
@@ -135,6 +138,14 @@ public class BuildingEntity extends BaseEntity {
 
     // Constructors
     public BuildingEntity() {
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
     public List<AssignmentBuildingEntity> getAssignmentBuildings() {

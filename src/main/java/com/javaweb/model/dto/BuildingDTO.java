@@ -1,7 +1,7 @@
 package com.javaweb.model.dto;
 
 import com.javaweb.enums.LegalStatus;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public class BuildingDTO extends AbstractDTO {
@@ -10,16 +10,15 @@ public class BuildingDTO extends AbstractDTO {
     private String ward;
     private String street;
     private String structure;
-    private Integer floorArea;              // Đổi từ Long sang Integer
-    private String rentArea;               // Đổi từ Long sang String (để lưu "100,200,300")
-    private Integer rentPrice;             // Đổi từ Long sang Integer
-    private Integer numberOfBasement;      // Đổi từ Long sang Integer
+    private Integer floorArea;
+    private String rentArea;
+    private Integer rentPrice;
+    private Integer numberOfBasement;
     private String direction;
     private String rentPriceDescription;
-    private String level;                  // Đổi từ Long sang String
+    private String level;
     private String managerName;
     private String managerPhone;
-
     private String serviceFee;
     private String carFee;
     private String motoFee;
@@ -34,15 +33,46 @@ public class BuildingDTO extends AbstractDTO {
     private String note;
     private String linkOfBuilding;
     private String map;
-    private String image;
+
+    // THÊM FIELD AVATAR VÀO ĐÂY
+    private String avatar;      // Lưu đường dẫn avatar (1 ảnh)
+    private String image;       // Lưu đường dẫn images (nhiều ảnh)
+
     private LegalStatus legal;
-
-    // Thay đổi typeCode từ List<String> sang String[] để khớp với form
     private String[] typeCode;
+    private Long staffId;
 
-    private Long staffId;  // Giữ nguyên cho assignment
+    // Thêm 2 field để nhận file upload
+    private MultipartFile avatarFile;      // File avatar (1 ảnh)
+    private List<MultipartFile> imageFiles; // Danh sách file images (nhiều ảnh)
 
-    // Getters and Setters
+    // GETTERS AND SETTERS cho avatar
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    // Getters and Setters cho avatarFile và imageFiles
+    public MultipartFile getAvatarFile() {
+        return avatarFile;
+    }
+
+    public void setAvatarFile(MultipartFile avatarFile) {
+        this.avatarFile = avatarFile;
+    }
+
+    public List<MultipartFile> getImageFiles() {
+        return imageFiles;
+    }
+
+    public void setImageFiles(List<MultipartFile> imageFiles) {
+        this.imageFiles = imageFiles;
+    }
+
+    // Các getters và setters khác giữ nguyên
     public String getName() {
         return name;
     }
@@ -179,7 +209,6 @@ public class BuildingDTO extends AbstractDTO {
         this.typeCode = typeCode;
     }
 
-    // Thêm getters và setters cho các field mới
     public String getServiceFee() {
         return serviceFee;
     }

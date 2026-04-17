@@ -24,6 +24,8 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "status")
     private String status; // NEW, PROCESSING, DONE
 
+
+
     // ===== Getter & Setter =====
 
     public String getFullName() {
