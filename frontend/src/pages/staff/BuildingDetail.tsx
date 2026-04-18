@@ -16,7 +16,7 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import client from "../../api/axiosClient";
-
+import formatImageSrc from "../../utils/format/images";
 import type { BuildingDTO } from "../../types/building.type";
 
 const { Title, Paragraph, Text } = Typography;
@@ -48,6 +48,7 @@ const SpecsCard: React.FC<{ building: BuildingDTO }> = ({ building }) => {
       "Khu vực",
       `${building.district ?? ""} ${building.ward ?? ""}`.trim() || "-",
     ],
+    ["Địa chỉ", building.street ?? "-"],
   ];
 
   return (
@@ -118,8 +119,25 @@ const BuildingDetail: React.FC = () => {
     };
   }, [id]);
 
-  const prev = () => setImgIndex((s) => (s - 1 + 1) % 1);
-  const next = () => setImgIndex((s) => (s + 1) % 1);
+  const getImages = (): string[] => {
+    if (!building?.image) return [];
+    return building.image
+      .split(",")
+      .map((u: string) => u.trim())
+      .filter((u: string) => u !== "");
+  };
+
+  const prev = () => {
+    const imgs = getImages();
+    if (imgs.length === 0) return;
+    setImgIndex((s) => (s - 1 + imgs.length) % imgs.length);
+  };
+
+  const next = () => {
+    const imgs = getImages();
+    if (imgs.length === 0) return;
+    setImgIndex((s) => (s + 1) % imgs.length);
+  };
 
   if (loading) {
     return (
@@ -144,12 +162,7 @@ const BuildingDetail: React.FC = () => {
     return null;
   }
 
-  const images =
-    building.imageUrls && building.imageUrls.length > 0
-      ? building.imageUrls
-      : building.image
-        ? [building.image]
-        : [];
+  const images = getImages();
 
   return (
     <div style={{ background: PAGE_BG, padding: 8 }}>
@@ -189,9 +202,9 @@ const BuildingDetail: React.FC = () => {
                 background: "#f2f2f2",
               }}
             >
-              {images.length ? (
+              {Array.isArray(images) && images.length > 0 ? (
                 <img
-                  src={images[imgIndex]}
+                  src={formatImageSrc((images as string[])[imgIndex])}
                   alt={building.name}
                   style={{
                     width: "100%",
@@ -252,10 +265,10 @@ const BuildingDetail: React.FC = () => {
                 flexWrap: "wrap",
               }}
             >
-              {images.map((u, i) => (
+              {(images as string[]).map((u, i) => (
                 <div key={u} style={{ position: "relative" }}>
                   <img
-                    src={u}
+                    src={formatImageSrc(u)}
                     alt={`thumb-${i}`}
                     style={{
                       width: 80,
@@ -279,7 +292,9 @@ const BuildingDetail: React.FC = () => {
                         cancelText: "Hủy",
                         onOk: async () => {
                           try {
-                            const remaining = images.filter((x) => x !== u);
+                            const remaining = (images as string[]).filter(
+                              (x) => x !== u,
+                            );
                             const payload: BuildingDTO = {
                               ...(building as BuildingDTO),
                               imageUrls: remaining,
@@ -320,9 +335,9 @@ const BuildingDetail: React.FC = () => {
                 <Text style={{ color: TEXT_MUTED }}>
                   Mã loại: {building.typeCode?.join(", ")}
                 </Text>
-                <Text style={{ color: TEXT_MUTED }}>
+                {/* <Text style={{ color: TEXT_MUTED }}>
                   Diện cho thuê: {building.rentArea ?? "-"}
-                </Text>
+                </Text> */}
               </div>
             </div>
           </div>
@@ -336,7 +351,8 @@ const BuildingDetail: React.FC = () => {
                 >
                   <Text style={{ color: TEXT_MUTED }}>Giá thuê</Text>
                   <Text style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>
-                    {building.rentPriceDescription || formatCurrency(building.rentPrice)}
+                    {building.rentPriceDescription ||
+                      formatCurrency(building.rentPrice)}
                   </Text>
                 </div>
                 <Divider style={{ margin: "8px 0" }} />
@@ -416,7 +432,7 @@ const BuildingDetail: React.FC = () => {
                   </Text>
                 </div>
                 <Divider style={{ margin: "12px 0" }} />
-                <div
+                {/* <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                 >
                   <Text style={{ color: TEXT_MUTED }}>
@@ -425,7 +441,7 @@ const BuildingDetail: React.FC = () => {
                   <Text style={{ color: TEXT_PRIMARY }}>
                     {building.payment ?? "-"}
                   </Text>
-                </div>
+                </div> */}
                 <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                 >
@@ -437,12 +453,12 @@ const BuildingDetail: React.FC = () => {
                 <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                 >
-                  <Text style={{ color: TEXT_MUTED }}>
+                  {/* <Text style={{ color: TEXT_MUTED }}>
                     Thời gian hoàn thiện
-                  </Text>
-                  <Text style={{ color: TEXT_PRIMARY }}>
+                  </Text> */}
+                  {/* <Text style={{ color: TEXT_PRIMARY }}>
                     {building.decorationTime ?? "-"}
-                  </Text>
+                  </Text> */}
                 </div>
               </div>
             </Card>

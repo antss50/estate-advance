@@ -1,6 +1,5 @@
 import client, { setAuthToken } from './axiosClient';
 import type { UserDTO } from '../types/user.type';
-import type { Staff } from '../types';
 
 const PATH = '/api/user/staffs';
 
@@ -25,14 +24,9 @@ export async function getStaffs(): Promise<UserDTO[]> {
   return [];
 }
 
-export async function getStaffById(id: string): Promise<Staff> {
-  try {
-    const res = await client.get<Staff>(`/api/staff/${id}`);
-    return res.data;
-  } catch (error) {
-    console.error("Error fetching staff details:", error);
-    throw error;
-  }
+export async function getStaffById(staffId: string): Promise<UserDTO> {
+  const res = await client.get<UserDTO>(`${PATH}/${staffId}`);
+  return res.data;
 }
 
 export default { configureToken, getStaffs, getStaffById };

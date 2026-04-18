@@ -18,7 +18,6 @@ import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import userApi from "../../api/userApi";
 import staffApi from "../../api/staffApi";
 import StaffGrid from "../../components/admin/StaffGrid";
-import StaffDetailModal from "../../components/admin/StaffDetailModal";
 import type { UserDTO } from "../../types/user.type";
 import type { Staff } from "../../types";
 // import type { PaginatedResult } from "../../types/response.type";
@@ -43,10 +42,6 @@ const UserManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // Detail modal state
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
 
   const [form] = Form.useForm();
 
@@ -98,53 +93,21 @@ const UserManagement: React.FC = () => {
     setModalVisible(true);
   };
   const openEdit = (user: UserDTO | Staff) => {
-    // Nếu là Staff và từ dropdown menu -> mở detail modal
-    if (activeTab === "staff") {
-      openStaffDetail(user);
-    } else {
-      // Nếu là Customer -> mở form edit trực tiếp
-      setEditingUserId(user.id);
-      form.setFieldsValue({
-        fullName: user.fullName,
-        userName: user.userName,
-        role: user.role || "STAFF",
-        status: user.status === "ACTIVE" ? 1 : 0,
-        email: user.email,
-        phone: user.phone,
-      });
-      setModalVisible(true);
-    }
+    setEditingUserId(user.id);
+    form.setFieldsValue({
+      fullName: user.fullName,
+      userName: user.userName,
+      role: user.role || "STAFF",
+      status: user.status === "ACTIVE" ? 1 : 0,
+      email: user.email,
+      phone: user.phone,
+    });
+    setModalVisible(true);
   };
   const closeModal = () => {
     setModalVisible(false);
     setEditingUserId(null);
     form.resetFields();
-  };
-
-  // Mở modal chi tiết Staff
-  const openStaffDetail = (staff: Staff | UserDTO) => {
-    if (activeTab === "staff") {
-      setSelectedStaffId(staff.id);
-      setDetailModalVisible(true);
-    }
-  };
-
-  // Mở form edit từ detail modal
-  const openEditFromDetail = (staffId: string) => {
-    setDetailModalVisible(false); // Đóng detail modal
-    const staff = users.find((u) => u.id === staffId);
-    if (staff) {
-      setEditingUserId(staff.id);
-      form.setFieldsValue({
-        fullName: staff.fullName,
-        userName: staff.userName,
-        role: staff.role || "STAFF",
-        status: staff.status === "ACTIVE" ? 1 : 0,
-        email: staff.email,
-        phone: staff.phone,
-      });
-      setModalVisible(true);
-    }
   };
 
   interface UserFormValues {
@@ -380,14 +343,6 @@ const UserManagement: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-
-      {/* Modal chi tiết Staff */}
-      <StaffDetailModal
-        visible={detailModalVisible}
-        staffId={selectedStaffId}
-        onClose={() => setDetailModalVisible(false)}
-        onEdit={openEditFromDetail}
-      />
     </div>
   );
 };

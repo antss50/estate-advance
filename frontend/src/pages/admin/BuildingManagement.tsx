@@ -33,7 +33,7 @@ import type {
   BuildingSearchResponse,
   AssignmentBuildingDTO,
 } from "../../types/building.type";
-// import type { ResponseDTO } from "../../types/response.type";
+import formatImageSrc from "../../utils/format/images";
 
 const { Title } = Typography;
 
@@ -159,22 +159,49 @@ const BuildingManagement: React.FC = () => {
     (async () => {
       setEditLoading(true);
       try {
-        const res = await buildingApi.getBuilding(String(building.id));
-        const data = res?.data as BuildingDTO | undefined;
-        setEditingBuilding(data ?? building);
-        // set form fields
-        formEdit.setFieldsValue({ ...(data ?? building) });
+        // 1. Fetch dữ liệu chi tiết từ Backend
+        const data = (await buildingApi.getBuilding(
+          String(building.id),
+        )) as any;
 
-        // populate upload list from existing image URLs
-        const urls = data?.imageUrls ?? [];
-        const files: UploadFile[] = urls.map((u, idx) => ({
-          uid: `existing-${idx}`,
-          name: u.split("/").pop() || `image-${idx}`,
-          status: "done",
-          url: u,
-        }));
-        setUploadList(files);
-        setEditVisible(true);
+        if (data) {
+          setEditingBuilding(data);
+
+          // 2. Chuẩn hóa dữ liệu trước khi đổ vào Form
+          const formattedData = {
+            ...data,
+            // Đảm bảo typeCode luôn là mảng cho Select Multiple, xử lý cả string lẫn array
+            typeCode: Array.isArray(data.typeCode)
+              ? data.typeCode
+              : data.typeCode
+                ? data.typeCode
+                    .split(",")
+                    .filter((i: string) => i.trim() !== "")
+                : [],
+          };
+
+          // Đổ dữ liệu vào Form
+          formEdit.setFieldsValue(formattedData);
+
+          // 3. Xử lý danh sách ảnh (uploadList)
+          const imageUrlString = data.image || "";
+
+          // Tách chuỗi bằng dấu phẩy và loại bỏ các phần tử rỗng (tránh ghost images)
+          const urls = imageUrlString
+            .split(",")
+            .map((u: string) => u.trim())
+            .filter((u: string) => u !== "");
+
+          const files: UploadFile[] = urls.map((u: string, idx: number) => ({
+            uid: `existing-${idx}-${Date.now()}`, // Tạo UID duy nhất để tránh lỗi render
+            name: `image-${idx}.jpg`,
+            status: "done",
+            url: formatImageSrc(u), // Sử dụng hàm format thông minh ở trên
+          }));
+
+          setUploadList(files);
+          setEditVisible(true);
+        }
       } catch (err) {
         console.error("Failed load building detail", err);
         message.error("Không thể tải chi tiết tòa nhà");
@@ -193,83 +220,50 @@ const BuildingManagement: React.FC = () => {
   const handleSave = async (values: BuildingDTO) => {
     setEditLoading(true);
     try {
-      // Build payload and FormData for multipart upload
       const payload: BuildingDTO = {
         ...editingBuilding,
         ...values,
       };
-      // existing image URLs (from files without originFileObj)
-      // const existingUrls: string[] = uploadList
-      //   .filter((f) => !f.originFileObj && f.url)
-      //   .map((f) => String(f.url));
-      // payload.imageUrls = existingUrls;
 
-      // // if there are no newly added files, send JSON to backend (some servers don't accept multipart)
-      // const hasNewFiles = uploadList.some(
-      //   (f) => f.originFileObj instanceof File,
-      // );
-
-      // console.debug(
-      //   "Saving building payload:",
-      //   payload,
-      //   "hasNewFiles=",
-      //   hasNewFiles,
-      // );
       if (uploadList.length > 0) {
-        const fileObj = uploadList[0].originFileObj;
-        if (fileObj instanceof File) {
-          // Nếu là ảnh mới upload từ local -> Chuyển sang Base64
-          const base64Image = await getBase64(fileObj);
-          payload.image = base64Image; 
-        } else {
-          // Nếu là ảnh cũ đã có sẵn URL (user không đổi ảnh)
-          payload.image = uploadList[0].url;
-        }
+        // 1. Xử lý tất cả các ảnh trong list (không chỉ ảnh đầu tiên)
+        const imagePromises = uploadList.map(async (file) => {
+          if (file.originFileObj instanceof File) {
+            // Nếu là ảnh mới -> Chuyển sang Base64
+            return await getBase64(file.originFileObj);
+          }
+          // Nếu là ảnh cũ -> Tách base64 thô từ URL (loại bỏ prefix)
+          if (file.url) {
+            // file.url có thể là: "data:image/jpeg;base64,BASE64DATA" hoặc "http://..." hoặc "BASE64DATA"
+            if (file.url.startsWith("http")) return file.url; // URL tuyệt đối - giữ nguyên
+            if (file.url.startsWith("data:image")) {
+              return file.url.split(",")[1] || file.url; // Lấy phần base64 thô (sau dấu phẩy)
+            }
+            return file.url; // Nếu đã là base64 thô
+          }
+          return "";
+        });
+
+        const images = await Promise.all(imagePromises);
+
+        // 2. Chuyển mảng thành chuỗi ngăn cách bởi dấu phẩy để khớp DTO
+        payload.image = images.filter((img) => img).join(",");
+
+        // 3. Nếu bạn có trường Avatar riêng (thường là ảnh đầu tiên)
+        payload.avatar = images[0] || "";
       } else {
-        payload.image = undefined; // User đã xóa ảnh
+        payload.image = ""; // Hoặc undefined tùy logic backend
+        payload.avatar = "";
       }
 
+      // Gửi payload dạng JSON
       let res;
-      // if (hasNewFiles) {
-      //   const formData = new FormData();
-      //   formData.append("data", JSON.stringify(payload));
-      //   uploadList.forEach((f) => {
-      //     if (f.originFileObj instanceof File)
-      //       formData.append("files", f.originFileObj);
-      //   });
-      //   if (editingBuilding && editingBuilding.id) {
-      //     res = await buildingApi.updateBuildingForm(
-      //       String(editingBuilding.id),
-      //       formData,
-      //     );
-      //   } else {
-      //     res = await buildingApi.createBuildingForm(formData);
-      //   }
-      // } else {
-      //   // send JSON body (create/update uses POST /api/building with BuildingDTO)
-      //   if (editingBuilding && editingBuilding.id) {
-      //     res = await buildingApi.updateBuilding(
-      //       String(editingBuilding.id),
-      //       payload,
-      //     );
-      //   } else {
-      //     res = await buildingApi.createBuilding(payload);
-      //   }
-      // }
       if (payload.id) {
-        // Dùng hàm updateBuilding cũ của bạn
         res = await buildingApi.updateBuilding(String(payload.id), payload);
       } else {
-        // Dùng hàm createBuilding cũ của bạn
         res = await buildingApi.createBuilding(payload);
       }
-
-      if (res) {
-        message.success('Lưu tòa nhà thành công');
-        closeEdit();
-        fetchBuildings(1, keyword);
-      }
-
+      console.log("Save response", res);
       if (res) {
         message.success("Lưu tòa nhà thành công");
         closeEdit();
@@ -319,16 +313,16 @@ const BuildingManagement: React.FC = () => {
   };
 
   const getBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64String = result.split(',')[1]; 
-      resolve(base64String);
-    };
-    reader.onerror = (error) => reject(error);
-  });
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64String = result.split(",")[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
+    });
 
   const handleAssign = async () => {
     if (!currentBuilding) return;
@@ -392,8 +386,8 @@ const BuildingManagement: React.FC = () => {
     },
     {
       title: "Loại tòa nhà",
-      dataIndex: "type",
-      key: "typeCode",
+      dataIndex: "structure",
+      key: "structure",
       render: (val: string) => val || "-",
     },
     { title: "Địa chỉ", dataIndex: "address", key: "address" },
@@ -537,6 +531,7 @@ const BuildingManagement: React.FC = () => {
           initialValues={{ typeCode: [] }}
         >
           <Row gutter={12}>
+            {/* Tên tòa nhà và Loại */}
             <Col span={12}>
               <Form.Item
                 name="name"
@@ -559,11 +554,14 @@ const BuildingManagement: React.FC = () => {
                     { label: "Tầng trệt", value: "TANG_TRET" },
                     { label: "Nội thất", value: "NOI_THAT" },
                     { label: "Văn phòng", value: "VAN_PHONG" },
+                    { label: "Shophouse", value: "SHOPHOUSE" },
+                    { label: "Nhà phố", value: "NHA_PHO" }
                   ]}
                 />
               </Form.Item>
             </Col>
 
+            {/* Phần ảnh */}
             <Col span={24}>
               <Form.Item label="Ảnh (hỗ trợ nhiều ảnh)">
                 <Upload
@@ -581,6 +579,8 @@ const BuildingManagement: React.FC = () => {
                 </Upload>
               </Form.Item>
             </Col>
+
+            {/* Địa chỉ (Quận - Phường - Đường) */}
             <Col span={8}>
               <Form.Item name="district" label="Quận">
                 <Input />
@@ -597,22 +597,37 @@ const BuildingManagement: React.FC = () => {
               </Form.Item>
             </Col>
 
+            {/* Thông số kỹ thuật (Diện tích - Hướng - Kết cấu) */}
             <Col span={8}>
               <Form.Item name="floorArea" label="Diện tích (m²)">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>
             <Col span={8}>
+              <Form.Item name="direction" label="Hướng">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="structure" label="Loại kết cấu">
+                <Input />
+              </Form.Item>
+            </Col>
+
+            {/* YÊU CẦU 1: Số tầng hầm và Số tầng ở 1 dòng */}
+            <Col span={12}>
               <Form.Item name="numberOfBasement" label="Số tầng hầm">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col span={12}>
               <Form.Item name="level" label="Số tầng">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>
 
+            {/* YÊU CẦU 2: Giá và các loại phí nằm trên 2 dòng (Mỗi dòng 3 cột) */}
+            {/* Dòng phí 1 */}
             <Col span={8}>
               <Form.Item name="rentPrice" label="Giá thuê (VND)">
                 <InputNumber style={{ width: "100%" }} />
@@ -629,13 +644,14 @@ const BuildingManagement: React.FC = () => {
               </Form.Item>
             </Col>
 
+            {/* Dòng phí 2 */}
             <Col span={8}>
               <Form.Item name="carFee" label="Phí gửi ô tô">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="motorbikeFee" label="Phí gửi xe máy">
+              <Form.Item name="motoFee" label="Phí gửi xe máy">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>
@@ -645,12 +661,26 @@ const BuildingManagement: React.FC = () => {
               </Form.Item>
             </Col>
 
-            <Col span={12}>
+            {/* YÊU CẦU 3: Thời hạn thuê 1 dòng */}
+            <Col span={24}>
               <Form.Item name="rentTime" label="Thời hạn thuê">
                 <Input />
               </Form.Item>
             </Col>
 
+            {/* YÊU CẦU 4: Chủ sở hữu và Số điện thoại 1 dòng */}
+            <Col span={12}>
+              <Form.Item name="managerName" label="Chủ sở hữu / Quản lý">
+                <Input style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="managerPhone" label="Số điện thoại">
+                <Input />
+              </Form.Item>
+            </Col>
+
+            {/* Ghi chú */}
             <Col span={24}>
               <Form.Item name="note" label="Ghi chú">
                 <Input.TextArea rows={3} />

@@ -31,6 +31,7 @@ export interface BuildingDTO {
   note?: string;
   linkOfBuilding?: string;
   map?: string;
+  avatar?: string;
   image?: string;
   createdDate?: string;
   modifiedDate?: string;
