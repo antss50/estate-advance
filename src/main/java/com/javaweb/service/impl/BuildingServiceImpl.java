@@ -197,6 +197,5 @@ public class BuildingServiceImpl implements BuildingService {
          for (Long id : ids) {
              buildingRepository.deleteById(id);
          }
-   }
-
+    }
 }

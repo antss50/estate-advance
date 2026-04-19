@@ -3,6 +3,7 @@ package com.javaweb.service.impl;
 import com.javaweb.constant.SystemConstant;
 import com.javaweb.converter.UserConverter;
 import com.javaweb.model.dto.PasswordDTO;
+import com.javaweb.model.dto.StaffDTO;
 import com.javaweb.model.dto.UserDTO;
 import com.javaweb.entity.RoleEntity;
 import com.javaweb.entity.UserEntity;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,15 +41,7 @@ public class UserService implements IUserService {
     private UserConverter userConverter;
 
 
-    @Override
-    public Map<Long, String> getStaff() {
-        List<UserEntity> users = userRepository.findByStatusAndRoles_Code(1,"STAFF");
-        Map<Long, String> listStaff =  new HashMap<>();
-        for (UserEntity user : users) {
-            listStaff.put(user.getId(),user.getFullName());
-        }
-        return listStaff;
-    }
+
 
     @Override
     public UserDTO findOneByUserNameAndStatus(String name, int status) {
@@ -84,6 +78,56 @@ public class UserService implements IUserService {
             results.add(userDTO);
         }
         return results;
+    }
+
+    @Override
+    public List<StaffDTO> getStaff() {
+        List<UserEntity> users = userRepository.findByStatusAndRoles_Code(1, "STAFF");
+
+        return users.stream()
+                .map(this::convertToStaffDTO)
+                .collect(Collectors.toList());
+    }
+
+    private StaffDTO convertToStaffDTO(UserEntity user) {
+        StaffDTO dto = new StaffDTO();
+
+
+        dto.setId(user.getId());
+        dto.setFullName(user.getFullName());
+        dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
+
+
+        dto.setPhone(user.getPhone());
+
+        dto.setWorkingArea(user.getWorkingArea());
+
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            dto.setRole(user.getRoles().get(0).getCode());
+        } else {
+            dto.setRole("STAFF");
+        }
+
+        if (user.getRevenue() != null) {
+            dto.setRevenue(user.getRevenue());
+        } else {
+            dto.setRevenue(BigDecimal.ZERO);
+        }
+
+        if (user.getTotalDeals() != null) {
+            dto.setTotalDeals(user.getTotalDeals());
+        } else {
+            dto.setTotalDeals(0);
+        }
+
+        if (user.getPerformance() != null) {
+            dto.setPerformance(user.getPerformance());
+        } else {
+            dto.setPerformance(0.0);
+        }
+
+        return dto;
     }
 
     @Override

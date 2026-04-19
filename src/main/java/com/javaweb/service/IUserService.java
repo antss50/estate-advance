@@ -2,6 +2,7 @@ package com.javaweb.service;
 
 import com.javaweb.model.dto.AssignmentBuildingDTO;
 import com.javaweb.model.dto.PasswordDTO;
+import com.javaweb.model.dto.StaffDTO;
 import com.javaweb.model.dto.UserDTO;
 import com.javaweb.exception.MyException;
 import com.javaweb.model.response.ResponseDTO;
@@ -24,6 +25,6 @@ public interface IUserService {
     void delete(long[] ids);
 //    ResponseDTO listStaff(Long buildingId);
     List<UserDTO> getAllUsers(Pageable pageable);
-    Map<Long, String> getStaff();
+    List<StaffDTO> getStaff();
     int countTotalItems();
 }

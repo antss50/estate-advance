@@ -3,10 +3,11 @@ package com.javaweb.entity;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "user")
-public class    UserEntity extends BaseEntity {
+public class UserEntity extends BaseEntity {
 
     private static final long serialVersionUID = -4988455421375043688L;
 
@@ -29,44 +30,42 @@ public class    UserEntity extends BaseEntity {
     @Column(name = "email", unique = true)
     private String email;
 
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "working_area")
+    private String workingArea;
+
+    @Column(name = "revenue", precision = 15, scale = 2)
+    private BigDecimal revenue;
+
+    @Column(name = "total_deals")
+    private Integer totalDeals;
+
+    @Column(name = "performance")
+    private Double performance;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_role",
             joinColumns = @JoinColumn(name = "user_id", nullable = false),
             inverseJoinColumns = @JoinColumn(name = "role_id", nullable = false))
     private List<RoleEntity> roles = new ArrayList<>();
 
-    // Quan hệ OneToMany với AssignmentBuildingEntity
     @OneToMany(mappedBy = "staff", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<AssignmentBuildingEntity> assignmentBuildings = new ArrayList<>();
 
-
-    // Trong UserEntity
-//    @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
-//    private List<BuildingEntity> buildings = new ArrayList<>();
-
-
-
-//    @OneToMany(mappedBy="staffs", fetch = FetchType.LAZY)
-//    private List<AssignmentBuildingEntity> assignmentBuildingEntities = new ArrayList<>();
-//
-//    @OneToMany(mappedBy="users", fetch = FetchType.LAZY)
-//    private List<UserRoleEntity> userRoleEntities = new ArrayList<>();
-
-//    public List<BuildingEntity> getBuildings() {
-//        return buildings;
-//    }
-//
-//    public void setBuildings(List<BuildingEntity> buildings) {
-//        this.buildings = buildings;
-//    }
-
+    // Getters and Setters
     public static long getSerialVersionUID() {
         return serialVersionUID;
     }
 
-    public List<AssignmentBuildingEntity> getAssignmentBuildings() { return assignmentBuildings; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) { this.assignmentBuildings = assignmentBuildings; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getUserName() {
         return userName;
@@ -100,6 +99,54 @@ public class    UserEntity extends BaseEntity {
         this.status = status;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getWorkingArea() {
+        return workingArea;
+    }
+
+    public void setWorkingArea(String workingArea) {
+        this.workingArea = workingArea;
+    }
+
+    public BigDecimal getRevenue() {
+        return revenue;
+    }
+
+    public void setRevenue(BigDecimal revenue) {
+        this.revenue = revenue;
+    }
+
+    public Integer getTotalDeals() {
+        return totalDeals;
+    }
+
+    public void setTotalDeals(Integer totalDeals) {
+        this.totalDeals = totalDeals;
+    }
+
+    public Double getPerformance() {
+        return performance;
+    }
+
+    public void setPerformance(Double performance) {
+        this.performance = performance;
+    }
+
     public List<RoleEntity> getRoles() {
         return roles;
     }
@@ -108,20 +155,11 @@ public class    UserEntity extends BaseEntity {
         this.roles = roles;
     }
 
-    public String getEmail() {
-        return email;
+    public List<AssignmentBuildingEntity> getAssignmentBuildings() {
+        return assignmentBuildings;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-        @Override
-    public Long getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(Long id) {
-        this.id = id;
+    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) {
+        this.assignmentBuildings = assignmentBuildings;
     }
 }
