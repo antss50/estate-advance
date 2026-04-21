@@ -119,5 +119,4 @@ public class BuildingRepositoryImpl implements BuildingRepositoryCustom{
             return new ArrayList<>();
         }
     }
-
 }
