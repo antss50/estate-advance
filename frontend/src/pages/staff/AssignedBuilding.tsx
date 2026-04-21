@@ -11,12 +11,28 @@ import {
   Col,
   Pagination,
   Spin,
+  message,
 } from "antd";
 
-import type { BuildingCard as BuildingCardType } from "./mockBuildings";
-import { fetchBuildings } from "./mockBuildings";
+import type {
+  BuildingSearchResponse,
+  BuildingSearchRequest,
+} from "../../types/building.type";
+import buildingApi from "../../api/buildingApi";
 import BuildingCard from "../../components/staff/BuildingCard";
 import { Link } from "react-router-dom";
+
+interface BuildingCardType {
+  id: string;
+  title: string;
+  price: string;
+  area: string;
+  bedrooms: string;
+  baths: string;
+  location: string;
+  description: string;
+  imageUrl: string;
+}
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -32,32 +48,80 @@ const AssignedBuilding: React.FC = () => {
   const [buildings, setBuildings] = useState<BuildingCardType[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const [searchName, setSearchName] = useState<string>("");
   const [sliderValue, setSliderValue] = useState<[number, number]>([
     0, 10000000000,
   ]);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchBuildings(page, PAGE_SIZE);
-        if (!mounted) return;
-        setBuildings(res.items);
-        setTotal(res.total);
-      } catch (err) {
-        console.error("Failed to fetch buildings", err);
-      } finally {
-        if (mounted) setLoading(false);
+  // Map API response to BuildingCardType
+  const mapToBuildingCard = (
+    building: BuildingSearchResponse,
+  ): BuildingCardType => {
+    return {
+      id: String(building.id || ""),
+      title: building.name || "Chưa có tiêu đề",
+      price: building.rentPrice
+        ? `${building.rentPrice.toLocaleString("vi-VN")} đ/tháng`
+        : "Liên hệ",
+      area: building.floorArea ? `${building.floorArea} m2` : "---",
+      bedrooms: "---", // API không cung cấp
+      baths: "---", // API không cung cấp
+      location: building.address || "---",
+      description: building.type || "Bất động sản cho thuê",
+      imageUrl:
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80&auto=format&fit=crop", // Default image
+    };
+  };
+
+  // Fetch buildings from API
+  const fetchBuildings = async (p: number, searchQuery: string) => {
+    setLoading(true);
+    try {
+      const request: BuildingSearchRequest = {
+        page: p - 1, // API expects 0-indexed page
+        size: PAGE_SIZE,
+        name: searchQuery || undefined,
+      };
+
+      const response = await buildingApi.searchBuildings(request);
+
+      if (Array.isArray(response)) {
+        // If response is array directly, map it
+        const mappedBuildings = response.map(mapToBuildingCard);
+        setBuildings(mappedBuildings);
+        setTotal(mappedBuildings.length * PAGE_SIZE); // Estimate total
+      } else if (response?.data) {
+        // If response has data structure
+        const mappedBuildings = (response.data || []).map(mapToBuildingCard);
+        setBuildings(mappedBuildings);
+        setTotal(response.total || mappedBuildings.length);
       }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
+    } catch (err) {
+      console.error("Failed to fetch buildings:", err);
+      message.error("Không thể tải danh sách tòa nhà");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBuildings(page, searchName);
   }, [page]);
 
   const onPageChange = (p: number) => setPage(p);
+
+  const handleSearch = (value: string) => {
+    setSearchName(value);
+    setPage(1);
+    fetchBuildings(1, value);
+  };
+
+  const handleReset = () => {
+    setSearchName("");
+    setPage(1);
+    setSliderValue([0, 10000000000]);
+    fetchBuildings(1, "");
+  };
 
   return (
     <Layout style={{ minHeight: "100vh", background: "#ffffff" }}>
@@ -87,6 +151,9 @@ const AssignedBuilding: React.FC = () => {
               placeholder="Tìm kiếm toà nhà..."
               enterButton
               allowClear
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              onSearch={handleSearch}
               style={{
                 borderRadius: 24,
                 height: 33,
@@ -183,6 +250,7 @@ const AssignedBuilding: React.FC = () => {
             <Button
               type="primary"
               shape="round"
+              onClick={handleReset}
               style={{
                 background: PRIMARY,
                 borderColor: PRIMARY,

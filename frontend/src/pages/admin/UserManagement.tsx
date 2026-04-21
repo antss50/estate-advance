@@ -18,6 +18,7 @@ import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import userApi from "../../api/userApi";
 import staffApi from "../../api/staffApi";
 import StaffGrid from "../../components/admin/StaffGrid";
+import StaffDetailModal from "../../components/admin/StaffDetailModal";
 import type { UserDTO } from "../../types/user.type";
 import type { Staff } from "../../types";
 // import type { PaginatedResult } from "../../types/response.type";
@@ -27,8 +28,15 @@ const { TabPane } = Tabs;
 
 const PAGE_SIZE = 12;
 
-// Toggle to use mock data while real endpoints are not available.
-// Set to false to use real APIs later.
+interface UserFormValues {
+  userName?: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  roleCode: "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER" | string;
+  password?: string;
+  status?: number;
+}
 
 const UserManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"customer" | "staff">("customer");
@@ -42,6 +50,9 @@ const UserManagement: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const selectedStaff = users.find((u) => u.id === selectedStaffId) as Staff | undefined;
 
   const [form] = Form.useForm();
 
@@ -55,6 +66,7 @@ const UserManagement: React.FC = () => {
       if (Array.isArray(res)) {
         setUsers(res);
         setTotal((res as UserDTO[]).length || 0);
+        console.log("Fetched users:", res);
       } else {
         setUsers([]);
         setTotal(0);
@@ -110,15 +122,14 @@ const UserManagement: React.FC = () => {
     form.resetFields();
   };
 
-  interface UserFormValues {
-    userName?: string;
-    fullName: string;
-    email?: string;
-    phone?: string;
-    roleCode: "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER" | string;
-    password?: string;
-    status?: number;
-  }
+  const openStaffDetail = (user: UserDTO | Staff) => {
+    setSelectedStaffId(user.id);
+    setDetailModalVisible(true);
+  };
+  const closeDetail = () => {
+    setDetailModalVisible(false);
+    setSelectedStaffId(null);
+  };
 
   const handleSubmit = async (values: UserFormValues) => {
     setSubmitting(true);
@@ -161,7 +172,9 @@ const UserManagement: React.FC = () => {
       fetchUsers(1, keyword, "STAFF");
     } catch (err) {
       console.error("Submit user error", err);
-      const axiosErr = err as any;
+      const axiosErr = err as Error & {
+        response?: { data?: { message?: string; error?: string } };
+      };
       const serverMsg =
         axiosErr?.response?.data?.message || axiosErr?.response?.data?.error;
       message.error(serverMsg || axiosErr?.message || "Thao tác thất bại");
@@ -249,8 +262,11 @@ const UserManagement: React.FC = () => {
             <>
               <StaffGrid
                 staffList={users as Staff[]}
+                type="staff"
                 onEdit={openEdit}
+                onViewDetail={openStaffDetail}
                 onDelete={handleDelete}
+                onCardClick={openStaffDetail}
                 deletingId={deletingId}
               />
               <div style={{ textAlign: "center", marginTop: 24 }}>
@@ -267,8 +283,9 @@ const UserManagement: React.FC = () => {
               <StaffGrid
                 staffList={users as UserDTO[]}
                 type="customer"
-                onEdit={openEdit}
+                // onEdit={openEdit}
                 onDelete={handleDelete}
+                // onCardClick={openStaffDetail}
                 deletingId={deletingId}
               />
               <div style={{ textAlign: "center", marginTop: 24 }}>
@@ -283,6 +300,20 @@ const UserManagement: React.FC = () => {
           )}
         </Spin>
       </div>
+
+      {/* <Modal
+        title={
+          editingUserId ? "Chỉnh sửa thông tin người dùng" : "Thêm người dùng"
+        }
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}/>
+      </Modal> */}
+
+      
 
       <Modal
         title={
@@ -343,6 +374,15 @@ const UserManagement: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+      {/* Staff Detail Modal */}
+      {activeTab === "staff" && (
+          <StaffDetailModal
+          visible={detailModalVisible}
+          staffId={selectedStaffId}
+          staffData={selectedStaff}
+          onClose={closeDetail}
+        />
+      )}
     </div>
   );
 };

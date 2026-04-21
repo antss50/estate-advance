@@ -16,14 +16,17 @@ import { PhoneOutlined, MoreOutlined } from "@ant-design/icons";
 import type { Staff } from "../../types";
 import type { UserDTO } from "../../types/user.type";
 import type { MenuProps } from "antd";
+import { formatPhoneNumber } from "../../utils/format/phone";
 
 const { Text } = Typography;
 
 interface StaffGridProps {
   staffList: (Staff | UserDTO)[];
-  type?: "staff" | "customer"; // 'staff' hoặc 'customer'
-  onEdit?: (staff: Staff | UserDTO) => void;
+  type?: "staff" | "customer";
+  onEdit?: (staff: Staff) => void;
   onDelete?: (staffId: string) => void;
+  onViewDetail?: (staff: Staff | UserDTO) => void;
+  onCardClick?: (staff: Staff | UserDTO) => void;
   deletingId?: string | null;
 }
 
@@ -36,18 +39,30 @@ const StaffGrid: React.FC<StaffGridProps> = ({
   type = "staff",
   onEdit,
   onDelete,
+  onViewDetail,
+  onCardClick,
   deletingId,
 }) => {
   return (
     <Row gutter={[24, 24]}>
       {staffList.map((s) => {
         const items: MenuProps["items"] = [
-          { key: "edit", label: "Chỉnh sửa", onClick: () => onEdit?.(s) },
+          {
+            key: "edit",
+            label: "Chỉnh sửa",
+            onClick: (e) => {
+              e.domEvent?.stopPropagation();
+              onEdit?.(s as Staff);
+            },
+          },
           {
             key: "delete",
             label: "Xóa",
             danger: true,
-            onClick: () => onDelete?.(s.id),
+            onClick: (e) => {
+              e.domEvent?.stopPropagation();
+              onDelete?.(s.id);
+            },
           },
         ];
 
@@ -79,6 +94,11 @@ const StaffGrid: React.FC<StaffGridProps> = ({
             >
               <Card
                 hoverable
+                onClick={(e) => {
+                  onCardClick?.(s);
+                  onViewDetail?.(s);
+                  e.stopPropagation();
+                }}
                 style={{
                   width: "100%",
                   minWidth: 325,
@@ -90,6 +110,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
                   position: "relative",
                   overflow: "hidden",
                   backgroundColor: "#FDFDFF",
+                  cursor: "pointer",
                 }}
                 bodyStyle={{
                   padding: "24px",
@@ -121,11 +142,16 @@ const StaffGrid: React.FC<StaffGridProps> = ({
                     >
                       S00{s.id}
                     </Tag>
-                    <Dropdown menu={{ items }} trigger={["click"]}>
+                    <Dropdown
+                      menu={{ items }}
+                      trigger={["click"]}
+                      // onClick={(e) => e.stopPropagation()}
+                    >
                       <Button
                         type="text"
                         size="small"
                         icon={<MoreOutlined style={{ color: MUTED_COLOR }} />}
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </Dropdown>
                   </div>
@@ -142,7 +168,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
                 >
                   <Avatar
                     size={64}
-                    src={s.avatarUrl}
+                    src={s.avatar}
                     style={{
                       border: `2px solid ${PRIMARY_COLOR}`,
                       padding: "2px",
@@ -189,7 +215,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
                       style={{ color: "#000", fontSize: "14px" }}
                     />
                     <Text style={{ fontSize: "14px" }}>
-                      {s.phone || "0234 567 890"}
+                      {formatPhoneNumber(s.phone) || "0234 567 890"}
                     </Text>
                   </Space>
                 </div>
@@ -253,7 +279,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
                           fontWeight: "bold",
                         }}
                       >
-                        {getStatusLabel((s as UserDTO).status || "PENDING")}
+                        {getStatusLabel((s as UserDTO).status || "NEW")}
                       </Tag>
                     </div>
                   )}

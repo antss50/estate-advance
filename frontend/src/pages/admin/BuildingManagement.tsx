@@ -162,7 +162,7 @@ const BuildingManagement: React.FC = () => {
         // 1. Fetch dữ liệu chi tiết từ Backend
         const data = (await buildingApi.getBuilding(
           String(building.id),
-        )) as any;
+        )) as unknown as BuildingDTO;
 
         if (data) {
           setEditingBuilding(data);
@@ -272,7 +272,7 @@ const BuildingManagement: React.FC = () => {
     } catch (err) {
       console.error("Save building error", err);
       const msg =
-        (err as any)?.response?.data?.message || "Lưu tòa nhà thất bại";
+        (err as Error).message || "Lưu tòa nhà thất bại";
       message.error(msg);
     } finally {
       setEditLoading(false);
@@ -363,7 +363,7 @@ const BuildingManagement: React.FC = () => {
           fetchBuildings(1, keyword);
         } catch (err) {
           console.error("Delete error", err);
-          const msg = (err as any)?.data?.message || "Xóa tòa nhà thất bại";
+          const msg = (err as Error).message || "Xóa tòa nhà thất bại";
           message.error(msg);
         }
       },

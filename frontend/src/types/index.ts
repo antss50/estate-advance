@@ -13,20 +13,23 @@ export interface Staff {
   role: string;
   phone: string;
   email: string;
-  working_area: string;
-  avatarUrl?: string;
+  workingArea: string;
+  avatar?: string;
   performance?: number; // Thêm trường hiệu suất nếu có
   status?: string;
   revenue?: number; // Doanh thu nếu có
-  total_deals?: number; // Tổng số giao dịch nếu có
+  totalDeals?: number; // Tổng số giao dịch nếu có
 }
 
 export interface DemandFormValues {
+  fullName: string;
+  phone: string;
+  email: string;
   propertyType: string;
-  province: string;
-  district: string;
   area: number;
-  priceRange: number[];
+  priceRange: [number, number];
+  ward: string;
+  province: string;
 }
 
 export default {};

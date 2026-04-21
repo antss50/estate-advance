@@ -103,7 +103,7 @@ const BuildingDetail: React.FC = () => {
         setBuilding(res.data as BuildingDTO);
       } catch (err) {
         if (!mounted) return;
-        if (err?.status === 404) {
+        if (err === 404) {
           setNotFound("Không tìm thấy toà nhà");
         } else {
           setNotFound("Lỗi khi tải dữ liệu");

@@ -17,7 +17,7 @@ import {
   Pagination,
 } from "antd";
 import { SearchOutlined, UnorderedListOutlined } from "@ant-design/icons";
-import type { UserDTO, AssignStaffDTO } from "../../types/user.type";
+import type { UserDTO, AssignStaffDTO, DemandDTO, UserDemandDTO } from "../../types/user.type";
 import { getStaffs } from "../../api/staffApi";
 import assignmentApi from "../../api/assignmentApi";
 import client from "../../api/axiosClient";
@@ -25,14 +25,13 @@ import client from "../../api/axiosClient";
 const { Text } = Typography;
 
 // --- Định nghĩa các hằng số màu sắc cho UI mới ---
-const MUTED = "#8c8c8c";
 const RED_ALERT = "#ff4d4f";
 
 // Status type mapping
 const statusConfig: Record<string, { label: string; color: string }> = {
   NEW: { label: "Chưa tiếp nhận", color: "#999999" },
   PENDING: { label: "Chưa tiếp nhận", color: "#999999" },
-  CONSULTING: { label: "Đang tư vấn", color: "#1890ff" },
+  CONSULTING: { label: "Đang tư vấn", color: "#ffbb00" },
   SIGNED: { label: "Đã kí hợp đồng", color: "#faad14" },
   PAID: { label: "Đã thanh toán", color: "#52c41a" },
 };
@@ -78,15 +77,15 @@ export const CustomerDemand: React.FC = () => {
 
     // 1. Đưa thông tin khách hàng vào Map trước (để lấy status và info chuẩn từ DB)
     if (Array.isArray(customersList)) {
-      customersList.forEach((c: any) => {
+      customersList.forEach((c: UserDTO) => {
         map.set(String(c.id), { ...c });
       });
     }
 
     // 2. DUYỆT QUA MẢNG DEMANDS (API request) để gộp nhu cầu vào khách hàng
     if (Array.isArray(demands)) {
-      demands.forEach((d: any) => {
-        const id = String(d.id ?? d.customerId ?? "");
+      demands.forEach((d: UserDemandDTO) => {
+        const id = String(d.id ?? d.id ?? "");
         if (!id) return;
 
         if (map.has(id)) {
@@ -278,7 +277,7 @@ export const CustomerDemand: React.FC = () => {
     } catch (error) {
       console.error("Lỗi khi phân công:", error);
       const msg =
-        (error as any)?.response?.data?.message ||
+        (error as Error & { response?: { data?: { message?: string } } })?.response?.data?.message ||
         "Lỗi khi phân công nhân viên";
       message.error(msg);
     } finally {
@@ -541,7 +540,7 @@ export const CustomerDemand: React.FC = () => {
                                 marginBottom: 8,
                               }}
                             >
-                              <Text type="secondary" style={{ color: MUTED }}>
+                              <Text type="secondary" style={{ color: "black" }}>
                                 Mức giá
                               </Text>
                               <Text strong>
@@ -549,11 +548,11 @@ export const CustomerDemand: React.FC = () => {
                               </Text>
                             </div>
                           </Col>
-                          <Space>
-                            {(customer as any).priority && (
+                          {/* <Space>
+                            {(customer as UserDTO).priority && (
                               <Tag color="success">Ưu tiên</Tag>
                             )}
-                          </Space>
+                          </Space> */}
                         </Row>
 
                         <Row gutter={[12, 12]}>
@@ -565,7 +564,7 @@ export const CustomerDemand: React.FC = () => {
                                 marginBottom: 8,
                               }}
                             >
-                              <Text type="secondary" style={{ color: MUTED }}>
+                              <Text type="secondary" style={{ color: "black" }}>
                                 Diện tích
                               </Text>
                               <Text strong style={{ color: RED_ALERT }}>
@@ -586,10 +585,12 @@ export const CustomerDemand: React.FC = () => {
                                 marginBottom: 8,
                               }}
                             >
-                              <Text type="secondary" style={{ color: MUTED }}>
+                              <Text type="secondary" style={{ color: "black" }}>
                                 Vị trí
                               </Text>
-                              <Text>{customer?.demand?.location || "-"}</Text>
+                              <Text>
+                                <strong>{customer?.demand?.location || "-"}</strong>
+                              </Text>
                             </div>
                           </Col>
                         </Row>
@@ -603,12 +604,12 @@ export const CustomerDemand: React.FC = () => {
                                 marginBottom: 8,
                               }}
                             >
-                              <Text type="secondary" style={{ color: MUTED }}>
+                              <Text type="secondary" style={{ color: "black" }}>
                                 Loại nhà đất
                               </Text>
                               <Text>
-                                {(customer?.demand as any)?.propertyType ||
-                                  "Chung cư"}
+                                <strong>{(customer?.demand as DemandDTO)?.propertyType ||
+                                  "Chung cư"}</strong>
                               </Text>
                             </div>
                           </Col>
@@ -701,7 +702,7 @@ export const CustomerDemand: React.FC = () => {
                         />
                         <Avatar
                           size="small"
-                          src={s.avatarUrl}
+                          src={s.avatar}
                           style={{ margin: "0 8px" }}
                         />
                         <Text>{s.fullName}</Text>
@@ -709,7 +710,7 @@ export const CustomerDemand: React.FC = () => {
                     ))
                   : assignedStaffs.map((s) => (
                       <div
-                        key={s.id}
+                        key={s.staffId}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -718,7 +719,7 @@ export const CustomerDemand: React.FC = () => {
                       >
                         <Avatar
                           size="small"
-                          src={s.avatarUrl}
+                          src={s.avatar}
                           style={{ marginRight: 8 }}
                         />
                         <Text>{s.fullName}</Text>

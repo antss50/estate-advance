@@ -76,12 +76,31 @@ const BuildingCard: React.FC<Props> = ({ building, variant = "vertical" }) => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              gap: 12,
             }}
           >
-            <Text style={{ color: HIGHLIGHT, fontWeight: 700, fontSize: 13 }}>
+            <Text
+              style={{
+                color: HIGHLIGHT,
+                fontWeight: 700,
+                fontSize: 13,
+                flexShrink: 0,
+              }}
+            >
               {building.price}
             </Text>
-            <Text style={{ color: MUTED, fontSize: 12 }}>
+            <Text
+              style={{
+                color: MUTED,
+                fontSize: 12,
+                maxWidth: 180,
+                flexShrink: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              title={building.location}
+            >
               {building.location}
             </Text>
           </div>
@@ -161,12 +180,25 @@ const BuildingCard: React.FC<Props> = ({ building, variant = "vertical" }) => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 12,
           }}
         >
-          <Text style={{ color: HIGHLIGHT, fontWeight: 700 }}>
+          <Text style={{ color: HIGHLIGHT, fontWeight: 700, flexShrink: 0 }}>
             {building.price}
           </Text>
-          <Text style={{ color: MUTED }}>{building.location}</Text>
+          <Text
+            style={{
+              color: MUTED,
+              maxWidth: 180,
+              flexShrink: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={building.location}
+          >
+            {building.location}
+          </Text>
         </div>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>

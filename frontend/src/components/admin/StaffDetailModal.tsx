@@ -10,7 +10,6 @@ import {
   Card,
   Progress,
   Button,
-  Dropdown,
   Spin,
   message,
 } from "antd";
@@ -19,44 +18,45 @@ import {
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
-  MoreOutlined,
   VerifiedOutlined,
 } from "@ant-design/icons";
 import staffApi from "../../api/staffApi";
 import type { Staff } from "../../types";
-import type { MenuProps } from "antd";
 
 const { Text, Title } = Typography;
 
 interface StaffDetailModalProps {
   visible: boolean;
   staffId: string | null;
+  staffData?: Staff;
   onClose: () => void;
-  onEdit?: (staffId: string) => void;
 }
 
 const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
   visible,
   staffId,
+  staffData,
   onClose,
-  onEdit,
 }) => {
   const [staff, setStaff] = useState<Staff | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch staff details when modal opens
   useEffect(() => {
-    if (visible && staffId) {
-      fetchStaffDetails(staffId);
+    if (visible) {
+      if (staffData) {
+        setStaff(staffData);
+      } else if (staffId) {
+        fetchStaffDetails(staffId);
+      }
     }
-  }, [visible, staffId]);
+  }, [visible, staffId, staffData]);
 
   const fetchStaffDetails = async (id: string) => {
     setLoading(true);
     try {
       // Gọi API GET /api/staff/{id}
       const response = await staffApi.getStaffById(id);
-      setStaff(response);
+      setStaff(response as Staff);
     } catch (error) {
       console.error("Error fetching staff details:", error);
       message.error("Lấy thông tin nhân viên thất bại");
@@ -64,24 +64,6 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
       setLoading(false);
     }
   };
-
-  // Menu dropdown items
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "edit",
-      label: "Chỉnh sửa",
-      onClick: () => {
-        if (staffId) {
-          onEdit?.(staffId);
-        }
-      },
-    },
-    {
-      key: "delete",
-      label: "Xóa",
-      danger: true,
-    },
-  ];
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -95,47 +77,37 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
   };
 
   return (
-    <Modal
+    <div style={{position: "relative", padding: 0}}>
+      <Modal
       open={visible}
       onCancel={onClose}
-      width={520}
+      width={550}
       footer={null}
       closable={false}
-      bodyStyle={{ padding: 0, borderRadius: "24px" }}
-      style={{ borderRadius: "24px" }}
+      style={{ borderRadius: "24px", top: 60, padding: 20 }}
     >
       <Spin spinning={loading}>
-        <div style={{ borderRadius: "24px", overflow: "hidden" }}>
-          {/* Header với nút đóng và menu */}
+        <div style={{ borderRadius: "36px", overflow: "hidden" }}>
+          {/* Header với nút đóng */}
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               alignItems: "center",
-              padding: "20px 24px",
+              padding: "10px 12px",
               borderBottom: "1px solid #f0f0f0",
             }}
           >
-            <div />
-            <Space>
-              <Dropdown menu={{  }}>
-                <Button
-                  type="text"
-                  icon={<MoreOutlined />}
-                  style={{ color: "#8c8c8c" }}
-                />
-              </Dropdown>
-              <Button
-                type="text"
-                icon={<CloseOutlined />}
-                onClick={onClose}
-                style={{ color: "#8c8c8c" }}
-              />
-            </Space>
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              onClick={onClose}
+              style={{ color: "#8c8c8c" }}
+            />
           </div>
 
           {/* Main Content */}
-          <div style={{ padding: "32px 24px" }}>
+          <div style={{ padding: "28px 12px" }}>
             {staff ? (
               <Space
                 direction="vertical"
@@ -154,7 +126,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                   <div style={{ position: "relative", marginBottom: 16 }}>
                     <Avatar
                       size={96}
-                      src={staff.avatarUrl}
+                      src={staff.avatar || "https://via.placeholder.com/150"}
                       style={{
                         border: "3px solid #1677ff",
                         backgroundColor: "#fff",
@@ -213,7 +185,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                         fontWeight: "bold",
                       }}
                     >
-                      ID:S00{staff.id?.slice(0, 4)}
+                      ID:S00{staff.id}
                     </Text>
                   </Space>
                 </div>
@@ -233,7 +205,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                     Thông tin chi tiết
                   </Text>
 
-                  <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space orientation="vertical" style={{ width: "100%" }}>
                     {/* Email */}
                     <div
                       style={{
@@ -319,7 +291,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                           KHU VỰC LÀM VIỆC
                         </Text>
                         <Text style={{ fontSize: "14px", display: "block" }}>
-                          {(staff as Staff).working_area || "---"}
+                          {(staff as Staff).workingArea || "---"}
                         </Text>
                       </div>
                     </div>
@@ -399,7 +371,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                           fontWeight: "bold",
                         }}
                       >
-                        {(staff as Staff).total_deals || 0}
+                        {(staff as Staff).totalDeals || 0}
                       </Title>
                     </Card>
                   </Col>
@@ -432,11 +404,11 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
                         color: "#ff4d4f",
                       }}
                     >
-                      {staff.performance || 0}%
+                      {/* {staff.performance || 0} */}%
                     </Text>
                   </div>
                   <Progress
-                    percent={staff.performance || 0}
+                    // percent={staff.performance || 0}
                     strokeColor="#ff4d4f"
                     status="normal"
                     format={() => ""}
@@ -448,6 +420,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
         </div>
       </Spin>
     </Modal>
+    </div>
   );
 };
 

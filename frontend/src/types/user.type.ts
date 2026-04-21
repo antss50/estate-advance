@@ -7,7 +7,7 @@ export interface UserDTO {
   email?: string | null;
   phone?: string | null;
   role?: 'ADMIN' | 'STAFF' | 'CUSTOMER' | string;
-  avatarUrl?: string | null;
+  avatar?: string | null;
   status?: 'ACTIVE' | 'INACTIVE' | string;
   demand?: DemandDTO;
   createdAt?: string;
@@ -46,6 +46,15 @@ export interface DemandDTO {
   price?: number;
   location?: string;
   propertyType?: string;
+}
+
+export interface UserDemandDTO {
+  id: number;
+  fullName: string;
+  phone?: string | null;
+  email?: string | null;
+  demand: DemandDTO;
+  status?: 'NEW' | 'CONSULTING' | 'SIGNED' | 'PAID' | string;
 }
 
 export interface AssignStaffDTO {

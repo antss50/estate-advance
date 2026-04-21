@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Form, Row, Col, Select, Input, Slider, Button } from "antd";
+import { Form, Row, Col, Select, Input, Slider, Button, message } from "antd";
 import {
   HomeOutlined,
   ShoppingOutlined,
@@ -7,16 +7,26 @@ import {
   BankOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
+import axiosClient from "../../api/axiosClient";
 import type { DemandFormValues } from "../../types";
 import "../../styles/DemandFormSection.css";
 
-interface DemandFormProps {
-  onSubmit: (values: DemandFormValues) => void;
+interface CustomerRequestPayload {
+  fullName: string;
+  phone: string;
+  email: string;
+  demand: {
+    propertyType: string;
+    area: number;
+    price: number;
+    location: string;
+  };
+  status: "NEW";
 }
 
 const provinceOptions = [
+  { label: "Hồ Chí Minh", value: "hcm" },
   { label: "Hà Nội", value: "hanoi" },
-  { label: "TP. HCM", value: "hcm" },
   { label: "Đà Nẵng", value: "dn" },
 ];
 
@@ -24,6 +34,14 @@ const wardOptions = [
   { label: "Phường Ba Đình", value: "ba-dinh" },
   { label: "Phường Hoàn Kiếm", value: "hoan-kiem" },
   { label: "Phường Tây Hồ", value: "tay-ho" },
+];
+
+const propertyTypeOptions = [
+  { label: "Căn Hộ", value: "apartment" },
+  { label: "Biệt Thự", value: "villa" },
+  { label: "Chung Cư", value: "condo" },
+  { label: "Nhà Phố", value: "townhouse" },
+  { label: "Shop House", value: "shophouse" },
 ];
 
 const propertyTypes = [
@@ -34,16 +52,61 @@ const propertyTypes = [
   { icon: ShopOutlined, label: "Shop House", value: "shophouse" },
 ];
 
-const DemandFormSection: React.FC<DemandFormProps> = ({ onSubmit }) => {
+const DemandFormSection: React.FC = () => {
   const [form] = Form.useForm<DemandFormValues>();
   const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
   const [priceRange, setPriceRange] = useState<[number, number]>([
     1000000000, 5000000000,
   ]);
+  const [loading, setLoading] = useState(false);
 
-  const handleFinish = (values: DemandFormValues) => {
-    onSubmit(values);
-    form.resetFields();
+  const handleFinish = async (values: DemandFormValues) => {
+    setLoading(true);
+    try {
+      // Lấy province label
+      const provinceLabel = provinceOptions.find(
+        (p) => p.value === values.province
+      )?.label || values.province;
+      // Lấy ward label
+      const wardLabel = wardOptions.find(
+        (w) => w.value === values.ward
+      )?.label || values.ward;
+      
+      const location = `${wardLabel}, ${provinceLabel}`;
+      
+      // Chuẩn bị payload theo yêu cầu API
+      const payload: CustomerRequestPayload = {
+        fullName: values.fullName,
+        phone: values.phone,
+        email: values.email,
+        demand: {
+          propertyType: values.propertyType,
+          area: Number(values.area),
+          price: priceRange[1], // Lấy giá max từ range
+          location: location,
+        },
+        status: "NEW",
+      };
+
+      console.log("Submitting customer request:", payload);
+
+      // Gọi API thực
+      await axiosClient.post("/api/customer/customer-request", payload);
+      
+      message.success("Gửi yêu cầu tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+      form.resetFields();
+      setPriceRange([1000000000, 5000000000]);
+    } catch (error) {
+      console.error("Error submitting customer request:", error);
+      const axiosErr = error as Error & { response?: { data?: { message?: string } } };
+      const errorMsg =
+        axiosErr?.response?.data?.message ||
+        axiosErr?.message ||
+        "Gửi yêu cầu thất bại. Vui lòng thử lại.";
+      message.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatPrice = (value: number) => {
@@ -85,13 +148,99 @@ const DemandFormSection: React.FC<DemandFormProps> = ({ onSubmit }) => {
           onFinish={handleFinish}
           className="glassmorphic-form"
         >
+          {/* Row 0: Contact Information */}
+          <Row gutter={[32, 0]} style={{marginBottom:40}}>
+            <Col xs={24} md={12}>
+              <div className="form-group-inline">
+                <label className="form-label">Họ và Tên</label>
+                <div className="form-input-wrapper">
+                  <Form.Item
+                    name="fullName"
+                    className="no-margin"
+                    rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+                  >
+                    <Input
+                      className="form-input-glass"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <div className="form-group-inline">
+                <label className="form-label">Số Điện Thoại</label>
+                <div className="form-input-wrapper">
+                  <Form.Item
+                    name="phone"
+                    className="no-margin"
+                    rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+                  >
+                    <Input
+                      className="form-input-glass"
+                      placeholder="0987654321"
+                      type="tel"
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Row: Email + Property Type */}
+          <Row gutter={[32, 0]}>
+            <Col xs={24} md={12}>
+              <div className="form-group-inline">
+                <label className="form-label">Email</label>
+                <div className="form-input-wrapper">
+                  <Form.Item
+                    name="email"
+                    className="no-margin"
+                    rules={[
+                      { required: true, message: "Vui lòng nhập email" },
+                      { type: "email", message: "Email không hợp lệ" },
+                    ]}
+                  >
+                    <Input
+                      className="form-input-glass"
+                      placeholder="nguyenvana@email.com"
+                      type="email"
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} md={12} >
+              <div className="form-group-inline">
+                <label className="form-label">Loại Bất Động Sản</label>
+                <div className="form-input-wrapper">
+                  <Form.Item
+                    name="propertyType"
+                    className="no-margin"
+                    rules={[{ required: true, message: "Vui lòng chọn loại BĐS" }]}
+                  >
+                    <Select
+                      className="form-select-glass"
+                      placeholder="Chọn loại bất động sản"
+                      options={propertyTypeOptions}
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </Col>
+          </Row>
+
           {/* Row 1: Area + Price Range */}
           <Row gutter={[32, 0]} align="middle">
             <Col xs={24} lg={12}>
               <div className="form-group-inline">
                 <label className="form-label">Diện Tích (m²)</label>
                 <div className="form-input-wrapper">
-                  <Form.Item name="area" className="no-margin">
+                  <Form.Item
+                    name="area"
+                    className="no-margin"
+                    rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
+                  >
                     <Input
                       className="form-input-glass"
                       placeholder="VD: 50"
@@ -140,7 +289,11 @@ const DemandFormSection: React.FC<DemandFormProps> = ({ onSubmit }) => {
                 <label className="form-label">Vị Trí</label>
                 <Row gutter={[12, 0]}>
                   <Col flex={1}>
-                    <Form.Item name="ward" className="no-margin">
+                    <Form.Item
+                      name="ward"
+                      className="no-margin"
+                      rules={[{ required: true, message: "Vui lòng chọn phường/xã" }]}
+                    >
                       <Select
                         className="form-select-glass"
                         placeholder="Phường/Xã"
@@ -149,7 +302,11 @@ const DemandFormSection: React.FC<DemandFormProps> = ({ onSubmit }) => {
                     </Form.Item>
                   </Col>
                   <Col flex={1}>
-                    <Form.Item name="province" className="no-margin">
+                    <Form.Item
+                      name="province"
+                      className="no-margin"
+                      rules={[{ required: true, message: "Vui lòng chọn tỉnh" }]}
+                    >
                       <Select
                         className="form-select-glass"
                         placeholder="Tỉnh"
@@ -166,8 +323,10 @@ const DemandFormSection: React.FC<DemandFormProps> = ({ onSubmit }) => {
                   type="primary"
                   htmlType="submit"
                   className="btn-submit-glass"
+                  loading={loading}
+                  disabled={loading}
                 >
-                  Gửi Yêu Cầu
+                  {loading ? "Đang gửi..." : "Gửi Yêu Cầu"}
                 </Button>
               </Form.Item>
             </Col>
