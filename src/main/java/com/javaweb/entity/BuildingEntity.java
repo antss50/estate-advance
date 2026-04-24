@@ -22,11 +22,24 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "street")
     private String street;
 
-    @Column(name = "ward")
-    private String ward;
+    @Column(name = "province_code")
+    private String provinceCode;
 
-    @Column(name = "district")
-    private String district;
+    @Column(name = "province_name")
+    private String provinceName;
+
+    @Column(name = "ward_code")
+    private String wardCode;
+
+    @Column(name = "ward_name")
+    private String wardName;
+
+    // ============ GIỮ LẠI FIELD CŨ ĐỂ MIGRATION ============
+    @Column(name = "ward_legacy")
+    private String wardLegacy;
+
+    @Column(name = "district_legacy")
+    private String districtLegacy;
 
     @Column(name = "structure")
     private String structure;
@@ -105,24 +118,17 @@ public class BuildingEntity extends BaseEntity {
 
     @Column(name = "managerphone")
     private String managerPhone;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "legal")
     private LegalStatus legal;
 
-    // Quan hệ ManyToMany với UserEntity (staffs) thông qua bảng assignmentbuilding
+    // Quan hệ ManyToMany với UserEntity (staffs)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "assignmentbuilding",
             joinColumns = @JoinColumn(name = "buildingid", nullable = false),
             inverseJoinColumns = @JoinColumn(name = "staffid", nullable = false))
     private List<UserEntity> users = new ArrayList<>();
-
-    public LegalStatus getLegal() {
-        return legal;
-    }
-
-    public void setLegal(LegalStatus legal) {
-        this.legal = legal;
-    }
 
     // Quan hệ OneToMany với AssignmentBuildingEntity
     @OneToMany(mappedBy = "building", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -131,47 +137,14 @@ public class BuildingEntity extends BaseEntity {
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RentAreaEntity> rentAreas = new ArrayList<>();
 
-
-    // Quan hệ OneToMany với RentArea
-//    @OneToMany(mappedBy = "building", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//    private List<RentAreaEntity> rentAreas = new ArrayList<>();
-
     // Constructors
-    public BuildingEntity() {
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public List<AssignmentBuildingEntity> getAssignmentBuildings() {
-        return assignmentBuildings;
-    }
-
-    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) {
-        this.assignmentBuildings = assignmentBuildings;
-    }
-
-    public List<RentAreaEntity> getRentAreas() {
-        return rentAreas;
-    }
-
-    public void setRentAreas(List<RentAreaEntity> rentAreas) {
-        this.rentAreas = rentAreas;
-    }
+    public BuildingEntity() {}
 
     public BuildingEntity(Long id) {
         this.id = id;
     }
 
-    // Getters and Setters
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
+    // ============ GETTERS AND SETTERS ============
 
     @Override
     public Long getId() {
@@ -199,20 +172,71 @@ public class BuildingEntity extends BaseEntity {
         this.street = street;
     }
 
-    public String getWard() {
-        return ward;
+    // Địa chỉ mới
+    public String getProvinceCode() {
+        return provinceCode;
     }
 
-    public void setWard(String ward) {
-        this.ward = ward;
+    public void setProvinceCode(String provinceCode) {
+        this.provinceCode = provinceCode;
     }
 
-    public String getDistrict() {
-        return district;
+    public String getProvinceName() {
+        return provinceName;
     }
 
-    public void setDistrict(String district) {
-        this.district = district;
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
+    }
+
+    public String getWardCode() {
+        return wardCode;
+    }
+
+    public void setWardCode(String wardCode) {
+        this.wardCode = wardCode;
+    }
+
+    public String getWardName() {
+        return wardName;
+    }
+
+    public void setWardName(String wardName) {
+        this.wardName = wardName;
+    }
+
+    // Địa chỉ cũ (migration)
+    public String getWardLegacy() {
+        return wardLegacy;
+    }
+
+    public void setWardLegacy(String wardLegacy) {
+        this.wardLegacy = wardLegacy;
+    }
+
+    public String getDistrictLegacy() {
+        return districtLegacy;
+    }
+
+    public void setDistrictLegacy(String districtLegacy) {
+        this.districtLegacy = districtLegacy;
+    }
+
+    // Lấy địa chỉ đầy đủ
+    public String getFullAddress() {
+        StringBuilder sb = new StringBuilder();
+        if (street != null && !street.isEmpty()) {
+            sb.append(street);
+        }
+        if (wardName != null && !wardName.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(wardName);
+        }
+        if (provinceName != null && !provinceName.isEmpty()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(provinceName);
+        }
+        return sb.toString();
     }
 
     public String getStructure() {
@@ -399,6 +423,14 @@ public class BuildingEntity extends BaseEntity {
         this.image = image;
     }
 
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
     public String getManagerName() {
         return managerName;
     }
@@ -415,6 +447,14 @@ public class BuildingEntity extends BaseEntity {
         this.managerPhone = managerPhone;
     }
 
+    public LegalStatus getLegal() {
+        return legal;
+    }
+
+    public void setLegal(LegalStatus legal) {
+        this.legal = legal;
+    }
+
     public List<UserEntity> getUsers() {
         return users;
     }
@@ -423,11 +463,19 @@ public class BuildingEntity extends BaseEntity {
         this.users = users;
     }
 
-    //    public List<RentAreaEntity> getRentAreas() {
-//        return rentAreas;
-//    }
-//
-//    public void setRentAreas(List<RentAreaEntity> rentAreas) {
-//        this.rentAreas = rentAreas;
-//    }
+    public List<AssignmentBuildingEntity> getAssignmentBuildings() {
+        return assignmentBuildings;
+    }
+
+    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) {
+        this.assignmentBuildings = assignmentBuildings;
+    }
+
+    public List<RentAreaEntity> getRentAreas() {
+        return rentAreas;
+    }
+
+    public void setRentAreas(List<RentAreaEntity> rentAreas) {
+        this.rentAreas = rentAreas;
+    }
 }

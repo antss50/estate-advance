@@ -26,18 +26,24 @@ public class BuildingSearchResponseConverter {
                     .collect(Collectors.joining(",")));
         }
 
-        // Xử lý address
-        String districtName = "";
-        if(buildingEntity.getDistrict() != null && buildingEntity.getDistrict() != ""){
-            districtName = buildingEntity.getDistrict();
+        // ============ SỬA LẠI PHẦN NÀY ============
+        // Xử lý address với cấu trúc mới: street + wardName + provinceName
+        String wardName = buildingEntity.getWardName() != null ? buildingEntity.getWardName() : "";
+        String provinceName = buildingEntity.getProvinceName() != null ? buildingEntity.getProvinceName() : "";
+        String street = buildingEntity.getStreet() != null ? buildingEntity.getStreet() : "";
+
+        // Tạo địa chỉ đầy đủ
+        String fullAddress = street;
+        if (!wardName.isEmpty()) {
+            fullAddress += (fullAddress.isEmpty() ? "" : ", ") + wardName;
         }
-        if(districtName != null && districtName != ""){
-            res.setAddress(buildingEntity.getStreet() + ", " + buildingEntity.getWard() + ", " + districtName);
+        if (!provinceName.isEmpty()) {
+            fullAddress += (fullAddress.isEmpty() ? "" : ", ") + provinceName;
         }
+        res.setAddress(fullAddress);
+        // ============ KẾT THÚC SỬA ============
 
         // Thêm xử lý cho structure và note
-        // ModelMapper đã tự động map structure và note nếu tên field giống nhau
-        // Nhưng để đảm bảo, có thể set trực tiếp
         res.setStructure(buildingEntity.getStructure());
         res.setNote(buildingEntity.getNote());
 
@@ -61,7 +67,6 @@ public class BuildingSearchResponseConverter {
 
         // Trường hợp 1: JSON array format: ["url1.jpg", "url2.jpg"]
         if (trimmed.startsWith("[")) {
-            // Tìm URL đầu tiên trong JSON array
             int firstQuote = trimmed.indexOf("\"");
             if (firstQuote != -1) {
                 int secondQuote = trimmed.indexOf("\"", firstQuote + 1);
@@ -69,19 +74,17 @@ public class BuildingSearchResponseConverter {
                     return trimmed.substring(firstQuote + 1, secondQuote);
                 }
             }
-            // Trường hợp JSON array không có quotes: [url1.jpg, url2.jpg]
             else if (trimmed.contains(",")) {
                 String firstUrl = trimmed.substring(1, trimmed.indexOf(",")).trim();
                 return firstUrl;
             }
-            // Trường hợp chỉ có 1 phần tử trong array
             else {
                 String firstUrl = trimmed.substring(1, trimmed.length() - 1).trim();
                 return firstUrl;
             }
         }
 
-        // Trường hợp 2: CSV format: url1.jpg, url2.jpg
+        // Trường hợp 2: CSV format
         if (trimmed.contains(",")) {
             return trimmed.split(",")[0].trim();
         }
