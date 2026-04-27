@@ -7,7 +7,7 @@ export interface Slide {
 }
 
 export interface Staff {
-  id: string;
+  id: number;
   fullName: string;
   userName: string;
   role: string;

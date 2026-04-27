@@ -2,7 +2,7 @@ import type { PaginatedResult, ResponseDTO } from './response.type';
 
 export interface BuildingDTO {
   id?: number;
-  name: string;
+  name?: string;
   address?: string;
   district?: string;
   ward?: string;
@@ -37,7 +37,7 @@ export interface BuildingDTO {
   modifiedDate?: string;
   createdBy?: string;
   modifiedBy?: string;
-  typeCode?: string[];
+  typeCode?: string | string[];
   type?: string;
   managerName?: string | null;
   managerPhone?: string | null;
@@ -83,6 +83,12 @@ export interface AssignmentBuildingDTO {
   buildingId: number | string;
   staffIds: number[];
   assignedBy?: string;
+}
+
+export interface AssignmentStaffDTO {
+  staffId: number;
+  fullName: string;
+  checked?: boolean;
 }
 
 export type BuildingListResponse = ResponseDTO<PaginatedResult<BuildingDTO>>;

@@ -54,7 +54,7 @@ export interface UserDemandDTO {
   phone?: string | null;
   email?: string | null;
   demand: DemandDTO;
-  status?: 'NEW' | 'CONSULTING' | 'SIGNED' | 'PAID' | string;
+  status?: 'NEW' | 'CONSULTING' | 'ASSIGNED' | 'SIGNED' | 'PAID' | string;
 }
 
 export interface AssignStaffDTO {
@@ -64,5 +64,6 @@ export interface AssignStaffDTO {
 }
 
 export type UserListResponse = ResponseDTO<UserDTO[]>;
+export type CustomerRequestListResponse = ResponseDTO<UserDemandDTO[]>;
 
 export default {};

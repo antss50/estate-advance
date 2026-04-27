@@ -51,8 +51,12 @@ const propertyTypes = [
   { icon: ShoppingOutlined, label: "Nhà Phố", value: "townhouse" },
   { icon: ShopOutlined, label: "Shop House", value: "shophouse" },
 ];
+interface DemandFormSectionProps {
+  // Định nghĩa hàm onSubmit nhận dữ liệu nhu cầu khách hàng
+  onSubmit?: () => void; 
+}
 
-const DemandFormSection: React.FC = () => {
+const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
   const [form] = Form.useForm<DemandFormValues>();
   const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
   const [priceRange, setPriceRange] = useState<[number, number]>([
@@ -91,11 +95,12 @@ const DemandFormSection: React.FC = () => {
       console.log("Submitting customer request:", payload);
 
       // Gọi API thực
-      await axiosClient.post("/api/customer/customer-request", payload);
+      await axiosClient.post("/api/customer-request", payload);
       
       message.success("Gửi yêu cầu tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
       form.resetFields();
       setPriceRange([1000000000, 5000000000]);
+      onSubmit?.(); // Gọi callback nếu có
     } catch (error) {
       console.error("Error submitting customer request:", error);
       const axiosErr = error as Error & { response?: { data?: { message?: string } } };

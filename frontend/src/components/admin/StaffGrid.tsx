@@ -69,6 +69,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
         // Lấy status label cho Customer
         const getStatusLabel = (status: string) => {
           const statusMap: Record<string, string> = {
+            ASSIGNED: "Đã phân công",
             CONSULTING: "Đang tư vấn",
             SIGNED: "Đã kí hợp đồng",
             PAID: "Đã thanh toán",
@@ -79,6 +80,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
         // Lấy màu status cho Customer
         const getStatusColor = (status: string) => {
           const colorMap: Record<string, string> = {
+            ASSIGNED: "#1677ff", // xanh dương
             CONSULTING: "#FFD152", // xanh
             SIGNED: "#0099FF", // đỏ
             PAID: "#00FF00", // vàng

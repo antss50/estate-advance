@@ -39,7 +39,7 @@ const ContactSection: React.FC = () => {
             {/* Left Column - Connect */}
             <Col xs={24} lg={12}>
               <div className="contact-left">
-                <Title level={2} className="contact-title">
+                <Title level={2} className="contact-title" style={{ color: "#255ecf" }}>
                   KẾT NỐI VỚI CHÚNG TÔI
                 </Title>
                 <Paragraph className="contact-desc">

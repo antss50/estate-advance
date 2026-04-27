@@ -30,6 +30,7 @@ const RED_ALERT = "#ff4d4f";
 // Status type mapping
 const statusConfig: Record<string, { label: string; color: string }> = {
   NEW: { label: "Chưa tiếp nhận", color: "#999999" },
+  ASSIGNED : { label: "Đã tiếp nhận", color: "#1890ff" },
   PENDING: { label: "Chưa tiếp nhận", color: "#999999" },
   CONSULTING: { label: "Đang tư vấn", color: "#ffbb00" },
   SIGNED: { label: "Đã kí hợp đồng", color: "#faad14" },
@@ -65,54 +66,26 @@ export const CustomerDemand: React.FC = () => {
   const fetchCustomers = async (keyword: string = "", page: number = 1) => {
   setLoading(true);
   try {
-    const [resDemand, resCustomer] = await Promise.all([
-      client.get("/api/customer-request"),
-      client.get("/api/customer"),
-    ]);
+    // Chỉ gọi API customer-request để lấy dữ liệu gộp
+    const res = await client.get("/api/customer-request");
+    const data = res?.data ?? res;
 
-    const demands = resDemand?.data ?? resDemand;
-    const customersList = resCustomer?.data ?? resCustomer;
+    if (Array.isArray(data)) {
+      const mappedData = data.map((item: any) => ({
+        ...item,
+        // QUAN TRỌNG: Gán ID thực của khách hàng vào trường id của object
+        // Điều này đảm bảo khi click 'Phân công', selectedCustomerId sẽ là ID khách hàng
+        id: String(item.customerId || item.id), 
+        // Giữ lại request ID nếu cần dùng cho mục đích khác
+        customerRequestId: item.id, 
+      }));
 
-    const map = new Map<string, any>();
-
-    // 1. Đưa thông tin khách hàng vào Map trước (để lấy status và info chuẩn từ DB)
-    if (Array.isArray(customersList)) {
-      customersList.forEach((c: UserDTO) => {
-        map.set(String(c.id), { ...c });
-      });
+      setCustomers(mappedData);
+      setTotalCustomers(mappedData.length);
     }
-
-    // 2. DUYỆT QUA MẢNG DEMANDS (API request) để gộp nhu cầu vào khách hàng
-    if (Array.isArray(demands)) {
-      demands.forEach((d: UserDemandDTO) => {
-        const id = String(d.id ?? d.id ?? "");
-        if (!id) return;
-
-        if (map.has(id)) {
-          const existing = map.get(id);
-          // Gộp object demand từ request vào thông tin khách hàng
-          existing.demand = d.demand; 
-          // Ưu tiên giữ status từ bảng Customer vì bạn đã fix logic update status ở Backend
-          map.set(id, existing);
-        } else {
-          // Trường hợp có request nhưng chưa có trong bảng customer (nếu có)
-          map.set(id, {
-            id,
-            fullName: d.fullName ?? "",
-            demand: d.demand,
-            status: d.status || "NEW",
-          });
-        }
-      });
-    }
-
-    const allCustomers = Array.from(map.values()) as UserDTO[];
-    setCustomers(allCustomers);
-    // setTotalCustomers(allCustomers.length); 
   } catch (error) {
     message.error("Lỗi khi tải danh sách khách hàng");
     console.error(error);
-    setCustomers([]);
   } finally {
     setLoading(false);
   }
@@ -263,7 +236,6 @@ export const CustomerDemand: React.FC = () => {
         staffIds: selectedStaffIds.map((s) => Number(s)),
       };
 
-      // 2. Gọi API POST
       await client.post("/api/customer/assignment", payload);
 
       message.success("Phân công thành công!");

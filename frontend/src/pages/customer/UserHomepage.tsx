@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Layout, notification } from "antd";
-import AppHeader from "../components/customer/Header";
-import HeroSection from "../components/customer/HeroSection";
-import FeaturesSection from "../components/customer/FeaturesSection";
-import DemandFormSection from "../components/customer/DemandForm";
-import BrokerTeam from "../components/customer/BrokerTeam";
-import ContactSection from "../components/customer/ContactSection";
-import "../styles/variables.css";
-import "../styles/index.css";
+import AppHeader from "../../components/customer/Header";
+import HeroSection from "../../components/customer/HeroSection";
+import FeaturesSection from "../../components/customer/FeaturesSection";
+import DemandFormSection from "../../components/customer/DemandForm";
+import BrokerTeam from "../../components/customer/BrokerTeam";
+import ContactSection from "../../components/customer/ContactSection";
+import "../../styles/variables.css";
+import "../../styles/index.css";
 
 const UserHomepage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

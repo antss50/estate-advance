@@ -40,6 +40,7 @@ const RED_ALERT = "#EA0000";
 const statusConfig: Record<string, { label: string; color: string }> = {
   NEW: { label: "Chưa tiếp nhận", color: "default" },
   PENDING: { label: "Chưa tiếp nhận", color: "default" },
+  ASSIGNED: { label: "Đã phân công", color: "processing" },
   CONSULTING: { label: "Đang tư vấn", color: "processing" },
   "Đang tư vấn": { label: "Đang tư vấn", color: "processing" },
   SIGNED: { label: "Đã kí hợp đồng", color: "warning" },

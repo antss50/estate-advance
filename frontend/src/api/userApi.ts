@@ -1,6 +1,7 @@
 import client, { setAuthToken } from './axiosClient';
-import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload } from '../types/user.type';
+import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload, UserDemandDTO } from '../types/user.type';
 import type { ResponseDTO, PaginatedResult } from '../types/response.type';
+import type { Staff } from '../types';
 
 const PATH = '/api/user';
 
@@ -15,6 +16,16 @@ export async function listUsers(params?: { page?: number; size?: number; role?: 
 
 export async function getAllUsers(): Promise<ResponseDTO<UserDTO>> {
   const res = await client.get<ResponseDTO<UserDTO>>(`/api/customer`);
+  return res.data;
+}
+
+export async function getCustomerRequests(): Promise<UserDemandDTO[]> {
+  const res = await client.get<UserDemandDTO[]>('/api/customer-request');
+  return res.data;
+}
+
+export async function getCustomerAssignment(customerId: number | string): Promise<ResponseDTO<Staff[]>> {
+  const res = await client.get<ResponseDTO<Staff[]>>(`/api/customer/${encodeURIComponent(String(customerId))}/assignment`);
   return res.data;
 }
 
@@ -42,6 +53,8 @@ export default {
   configureToken,
   listUsers,
   getAllUsers,
+  getCustomerRequests,
+  getCustomerAssignment,
   createUser,
   updateUser,
   deleteUser,

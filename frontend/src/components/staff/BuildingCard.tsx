@@ -114,7 +114,7 @@ const BuildingCard: React.FC<Props> = ({ building, variant = "vertical" }) => {
           </div>
 
           <Paragraph style={{ color: MUTED, margin: 0 }} ellipsis={{ rows: 2 }}>
-            {building.description}
+            {building.note}
           </Paragraph>
         </div>
       </Card>
