@@ -95,8 +95,10 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "brokeragefee")
     private Double brokerageFee;
 
+    // ============ TYPE LƯU DƯỚI DẠNG STRING, CÓ NHIỀU GIÁ TRỊ CÁCH NHAU BẰNG DẤU PHẨY ============
     @Column(name = "type")
-    private String type;
+    private String type;  // Ví dụ: "TANG_TRET,NGUYEN_CAN"
+    // ============ END ============
 
     @Column(name = "note")
     private String note;
@@ -112,6 +114,17 @@ public class BuildingEntity extends BaseEntity {
 
     @Column(name = "image")
     private String image;
+
+    // ============ THÊM 3 FIELD MỚI ============
+    @Column(name = "price_sale")
+    private Double priceSale;
+
+    @Column(name = "price_rent")
+    private Double priceRent;
+
+    @Column(name = "transaction_type")
+    private String transactionType;
+    // ============ END FIELD MỚI ============
 
     @Column(name = "managername")
     private String managerName;
@@ -172,7 +185,6 @@ public class BuildingEntity extends BaseEntity {
         this.street = street;
     }
 
-    // Địa chỉ mới
     public String getProvinceCode() {
         return provinceCode;
     }
@@ -205,7 +217,6 @@ public class BuildingEntity extends BaseEntity {
         this.wardName = wardName;
     }
 
-    // Địa chỉ cũ (migration)
     public String getWardLegacy() {
         return wardLegacy;
     }
@@ -222,7 +233,6 @@ public class BuildingEntity extends BaseEntity {
         this.districtLegacy = districtLegacy;
     }
 
-    // Lấy địa chỉ đầy đủ
     public String getFullAddress() {
         StringBuilder sb = new StringBuilder();
         if (street != null && !street.isEmpty()) {
@@ -429,6 +439,30 @@ public class BuildingEntity extends BaseEntity {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public Double getPriceSale() {
+        return priceSale;
+    }
+
+    public void setPriceSale(Double priceSale) {
+        this.priceSale = priceSale;
+    }
+
+    public Double getPriceRent() {
+        return priceRent;
+    }
+
+    public void setPriceRent(Double priceRent) {
+        this.priceRent = priceRent;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
     }
 
     public String getManagerName() {

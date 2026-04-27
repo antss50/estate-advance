@@ -28,7 +28,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,42 +39,52 @@ import java.util.stream.Collectors;
 
 @Service
 public class BuildingServiceImpl implements BuildingService {
+
     @Autowired
     private BuildingRepository buildingRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private BuildingSearchBuilderConverter buildingSearchBuilderConverter;
+
     @Autowired
     private BuildingRepositoryCustom buildingRepositoryCustom;
+
     @Autowired
     private BuildingSearchResponseConverter buildingSearchResponseConverter;
+
     @Autowired
     private BuildingConverter buildingConverter;
+
     @Autowired
     private RentAreaService rentAreaService;
+
     @Autowired
     private ModelMapper modelMapper;
+
     @Autowired
-    private AssignmentBuildingService  assignmentBuildingService;
+    private AssignmentBuildingService assignmentBuildingService;
+
     @Autowired
     private RentAreaRepository rentAreaRepository;
 
     @Override
     public ResponseDTO listStaffs(Long buildingId) {
         BuildingEntity building = buildingRepository.findById(buildingId).get();
-        List<UserEntity> staffs = userRepository.findByStatusAndRoles_Code(1,"STAFF");
+        List<UserEntity> staffs = userRepository.findByStatusAndRoles_Code(1, "STAFF");
         List<UserEntity> staffAssignment = building.getUsers();
-        List<StaffResponseDTO>  staffResponseDTOS = new ArrayList<>();
+        List<StaffResponseDTO> staffResponseDTOS = new ArrayList<>();
         ResponseDTO responseDTO = new ResponseDTO();
-        for(UserEntity it:staffs){
-            StaffResponseDTO  staffResponseDTO = new StaffResponseDTO();
+
+        for (UserEntity it : staffs) {
+            StaffResponseDTO staffResponseDTO = new StaffResponseDTO();
             staffResponseDTO.setStaffId(it.getId());
             staffResponseDTO.setFullName(it.getFullName());
-            if(staffAssignment.contains(it)){
+            if (staffAssignment.contains(it)) {
                 staffResponseDTO.setChecked("checked");
-            }
-            else {
+            } else {
                 staffResponseDTO.setChecked("");
             }
             staffResponseDTOS.add(staffResponseDTO);
@@ -86,32 +95,27 @@ public class BuildingServiceImpl implements BuildingService {
     }
 
     @Override
-    public List<BuildingSearchResponse> findAll(BuildingSearchRequest  buildingSearchRequest) {
+    public List<BuildingSearchResponse> findAll(BuildingSearchRequest buildingSearchRequest) {
         List<String> typeCode = buildingSearchRequest.getTypeCode();
         BuildingSearchBuilder buildingSearchBuilder = buildingSearchBuilderConverter.toBuildingSearchBuilder(buildingSearchRequest, typeCode);
         List<BuildingEntity> buildingEntities = buildingRepositoryCustom.findAll(buildingSearchBuilder);
         List<BuildingSearchResponse> res = new ArrayList<>();
-        for(BuildingEntity it:buildingEntities){
+        for (BuildingEntity it : buildingEntities) {
             BuildingSearchResponse building = buildingSearchResponseConverter.toBuildingSearchResponse(it);
             res.add(building);
         }
-       return res;
+        return res;
     }
 
     @Override
     public void assignBuilding(AssignmentBuildingDTO dto) {
-
-
         BuildingEntity building = buildingRepository.findById(dto.getBuildingId())
                 .orElseThrow(() -> new RuntimeException("Building not found"));
 
-
         List<UserEntity> validStaffs = userRepository.findStaffs("STAFF");
-
 
         Map<Long, UserEntity> staffMap = validStaffs.stream()
                 .collect(Collectors.toMap(UserEntity::getId, item -> item));
-
 
         List<UserEntity> newStaffs = new ArrayList<>();
 
@@ -124,17 +128,22 @@ public class BuildingServiceImpl implements BuildingService {
         }
 
         building.setUsers(newStaffs);
-
         buildingRepository.save(building);
     }
-        @Override
+
+    @Override
     public BuildingDTO getBuildingDetail(Long id) {
         BuildingEntity entity = buildingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Building not found"));
         BuildingDTO buildingDTO = modelMapper.map(entity, BuildingDTO.class);
-        if (entity.getType() != null) {
+
+        // Xử lý type từ String (lưu trong DB) -> String[] (cho DTO)
+        // Ví dụ: "TANG_TRET,NGUYEN_CAN" -> ["TANG_TRET", "NGUYEN_CAN"]
+        if (entity.getType() != null && !entity.getType().isEmpty()) {
             buildingDTO.setTypeCode(entity.getType().split(","));
         }
+
+        // Xử lý rentArea từ List<RentAreaEntity> -> String (comma separated)
         if (entity.getRentAreas() != null && !entity.getRentAreas().isEmpty()) {
             String rentArea = entity.getRentAreas().stream()
                     .map(item -> String.valueOf(item.getValue()))
@@ -142,6 +151,7 @@ public class BuildingServiceImpl implements BuildingService {
                     .orElse("");
             buildingDTO.setRentArea(rentArea);
         }
+
         return buildingDTO;
     }
 
@@ -150,6 +160,7 @@ public class BuildingServiceImpl implements BuildingService {
     public BuildingDTO addOrUpdateBuilding(BuildingDTO buildingDTO) {
         BuildingEntity buildingEntity;
 
+        // Nếu có ID -> update, không thì tạo mới
         if (buildingDTO.getId() != null) {
             buildingEntity = buildingRepository.findById(buildingDTO.getId())
                     .orElse(new BuildingEntity());
@@ -157,23 +168,29 @@ public class BuildingServiceImpl implements BuildingService {
             buildingEntity = new BuildingEntity();
         }
 
+        // Map các field cơ bản từ DTO sang Entity
         modelMapper.map(buildingDTO, buildingEntity);
 
+        // Xử lý typeCode: từ String[] (trong DTO) -> String (lưu trong DB, cách nhau bằng dấu phẩy)
+        // Ví dụ: ["TANG_TRET", "NGUYEN_CAN"] -> "TANG_TRET,NGUYEN_CAN"
         if (buildingDTO.getTypeCode() != null && buildingDTO.getTypeCode().length > 0) {
             buildingEntity.setType(String.join(",", buildingDTO.getTypeCode()));
         }
 
-
+        // Lưu building vào database
         buildingEntity = buildingRepository.save(buildingEntity);
         buildingDTO.setId(buildingEntity.getId());
 
+        // Xử lý rentArea
         if (buildingDTO.getRentArea() != null && !buildingDTO.getRentArea().trim().isEmpty()) {
+            // Xóa rentArea cũ nếu có
             if (buildingDTO.getId() != null) {
                 List<RentAreaEntity> oldRentAreas = rentAreaRepository.findByBuildingId(buildingEntity.getId());
                 if (oldRentAreas != null && !oldRentAreas.isEmpty()) {
                     rentAreaRepository.deleteAll(oldRentAreas);
                 }
             }
+            // Thêm rentArea mới
             rentAreaService.addRentArea(buildingDTO);
         }
 
@@ -189,13 +206,14 @@ public class BuildingServiceImpl implements BuildingService {
         }
         return null;
     }
-   @Override
-   @Transactional
+
+    @Override
+    @Transactional
     public void deleteBuilding(List<Long> ids) {
-         assignmentBuildingService.deleteByBuildingIds(ids);
-         rentAreaService.deleteByBuildingIds(ids);
-         for (Long id : ids) {
-             buildingRepository.deleteById(id);
-         }
+        assignmentBuildingService.deleteByBuildingIds(ids);
+        rentAreaService.deleteByBuildingIds(ids);
+        for (Long id : ids) {
+            buildingRepository.deleteById(id);
+        }
     }
 }
