@@ -1,28 +1,17 @@
 package com.javaweb.enums;
 
 public enum CustomerStatus {
-    NEW("New"),
-    ASSIGNED("Assigned"),
-    IN_PROGRESS("In Progress"),
-    SIGNED("Signed"),
-    PAID("Paid");
+    NEW("Mới"),
+    ASSIGNED("Đã phân công"),
+    CONSULTING("Đang tư vấn"),
+    SIGNED("Đã ký hợp đồng"),
+    PAID("Đã thanh toán");
 
-    private final String displayName;
+    private final String name;
 
-    CustomerStatus(String displayName) {
-        this.displayName = displayName;
+    CustomerStatus(String name) {
+        this.name = name;
     }
 
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public static CustomerStatus fromDisplayName(String displayName) {
-        for (CustomerStatus status : CustomerStatus.values()) {
-            if (status.displayName.equals(displayName)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Unknown status: " + displayName);
-    }
+    public String getName() { return name; }
 }
