@@ -1,63 +1,122 @@
 package com.javaweb.converter;
 
 import com.javaweb.entity.BuildingEntity;
-import com.javaweb.enums.District;
 import com.javaweb.model.response.BuildingSearchResponse;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public class BuildingSearchResponseConverter {
-    @Autowired
-    private ModelMapper modelMapper;
 
-    public BuildingSearchResponse toBuildingSearchResponse(BuildingEntity buildingEntity)
-    {
-        BuildingSearchResponse res = modelMapper.map(buildingEntity, BuildingSearchResponse.class);
-
-        // Xử lý rentArea
-        if(buildingEntity.getRentAreas() != null && !buildingEntity.getRentAreas().isEmpty()) {
-            res.setRentArea(buildingEntity.getRentAreas().stream()
-                    .map(entity -> String.valueOf(entity.getValue()))
-                    .collect(Collectors.joining(",")));
+    public BuildingSearchResponse toBuildingSearchResponse(BuildingEntity buildingEntity) {
+        if (buildingEntity == null) {
+            return null;
         }
 
-        // ============ SỬA LẠI PHẦN NÀY ============
-        // Xử lý address với cấu trúc mới: street + wardName + provinceName
-        String wardName = buildingEntity.getWardName() != null ? buildingEntity.getWardName() : "";
-        String provinceName = buildingEntity.getProvinceName() != null ? buildingEntity.getProvinceName() : "";
-        String street = buildingEntity.getStreet() != null ? buildingEntity.getStreet() : "";
+        BuildingSearchResponse res = new BuildingSearchResponse();
 
-        // Tạo địa chỉ đầy đủ
-        String fullAddress = street;
-        if (!wardName.isEmpty()) {
-            fullAddress += (fullAddress.isEmpty() ? "" : ", ") + wardName;
-        }
-        if (!provinceName.isEmpty()) {
-            fullAddress += (fullAddress.isEmpty() ? "" : ", ") + provinceName;
-        }
+        // Thông tin cơ bản
+        res.setId(buildingEntity.getId());
+        res.setName(buildingEntity.getName());
+
+        // Địa chỉ
+        String fullAddress = buildFullAddress(buildingEntity);
         res.setAddress(fullAddress);
-        // ============ KẾT THÚC SỬA ============
 
-        // Thêm xử lý cho structure và note
+        // Thông tin cấu trúc
         res.setStructure(buildingEntity.getStructure());
+        res.setDirection(buildingEntity.getDirection());
+        res.setLevel(buildingEntity.getLevel());
+
+        // Số tầng hầm và diện tích sàn
+        if (buildingEntity.getNumberOfBasement() != null) {
+            res.setNumberOfBasement(buildingEntity.getNumberOfBasement().longValue());
+        }
+        if (buildingEntity.getFloorArea() != null) {
+            res.setFloorArea(buildingEntity.getFloorArea().longValue());
+        }
+
+        // Giá thuê
+        if (buildingEntity.getRentPrice() != null) {
+            res.setRentPrice(buildingEntity.getRentPrice().longValue());
+        } else if (buildingEntity.getPriceRent() != null) {
+            res.setRentPrice(buildingEntity.getPriceRent().longValue());
+        }
+
+        // Mô tả giá thuê và các loại phí
+        res.setRentPriceDescription(buildingEntity.getRentPriceDescription());
+        res.setServiceFee(buildingEntity.getServiceFee());
+        res.setCarFee(buildingEntity.getCarFee());
+        res.setMotoFee(buildingEntity.getMotoFee());
+        res.setOvertimeFee(buildingEntity.getOvertimeFee());
+        res.setWaterFee(buildingEntity.getWaterFee());
+        res.setElectricityFee(buildingEntity.getElectricityFee());
+
+        // Tiền đặt cọc và thanh toán
+        res.setDeposit(buildingEntity.getDeposit());
+        res.setPayment(buildingEntity.getPayment());
+
+        // Thời gian
+        res.setRentTime(buildingEntity.getRentTime());
+        res.setDecorationTime(buildingEntity.getDecorationTime());
+
+        // Hoa hồng
+        res.setBrokerageFee(buildingEntity.getBrokerageFee());
+
+        // Ghi chú
         res.setNote(buildingEntity.getNote());
 
-        // Xử lý image đầu tiên từ mảng images
-        String firstImage = getFirstImage(buildingEntity.getImage());
-        res.setImage(firstImage);
+        // Link và hình ảnh
+        res.setLinkOfBuilding(buildingEntity.getLinkOfBuilding());
+        res.setMap(buildingEntity.getMap());
+        res.setAvatar(buildingEntity.getAvatar());
+        res.setImage(getFirstImage(buildingEntity.getImage()));
+
+        // Giá bán và loại giao dịch
+        res.setPriceSale(buildingEntity.getPriceSale());
+        res.setTransactionType(buildingEntity.getTransactionType());
+
+        // Thông tin quản lý
+        res.setManagerName(buildingEntity.getManagerName());
+        res.setManagerPhone(buildingEntity.getManagerPhone());
+
+        // Tình trạng pháp lý
+        if (buildingEntity.getLegal() != null) {
+            res.setLegal(buildingEntity.getLegal().name());
+        }
+
+        // Diện tích thuê
+        if (buildingEntity.getRentAreas() != null && !buildingEntity.getRentAreas().isEmpty()) {
+            String rentAreaStr = buildingEntity.getRentAreas().stream()
+                    .map(area -> String.valueOf(area.getValue()))
+                    .collect(Collectors.joining(","));
+            res.setRentArea(rentAreaStr);
+        }
 
         return res;
     }
 
-    /**
-     * Lấy ảnh đầu tiên từ chuỗi images
-     * Hỗ trợ nhiều định dạng: JSON array, CSV, hoặc single string
-     */
+    private String buildFullAddress(BuildingEntity buildingEntity) {
+        String street = buildingEntity.getStreet() != null ? buildingEntity.getStreet() : "";
+        String wardName = buildingEntity.getWardName() != null ? buildingEntity.getWardName() : "";
+        String provinceName = buildingEntity.getProvinceName() != null ? buildingEntity.getProvinceName() : "";
+
+        StringBuilder address = new StringBuilder();
+        if (!street.isEmpty()) {
+            address.append(street);
+        }
+        if (!wardName.isEmpty()) {
+            if (address.length() > 0) address.append(", ");
+            address.append(wardName);
+        }
+        if (!provinceName.isEmpty()) {
+            if (address.length() > 0) address.append(", ");
+            address.append(provinceName);
+        }
+        return address.toString();
+    }
+
     private String getFirstImage(String imageString) {
         if (imageString == null || imageString.trim().isEmpty()) {
             return null;
@@ -65,7 +124,7 @@ public class BuildingSearchResponseConverter {
 
         String trimmed = imageString.trim();
 
-        // Trường hợp 1: JSON array format: ["url1.jpg", "url2.jpg"]
+        // Xử lý JSON array
         if (trimmed.startsWith("[")) {
             int firstQuote = trimmed.indexOf("\"");
             if (firstQuote != -1) {
@@ -74,22 +133,19 @@ public class BuildingSearchResponseConverter {
                     return trimmed.substring(firstQuote + 1, secondQuote);
                 }
             }
-            else if (trimmed.contains(",")) {
-                String firstUrl = trimmed.substring(1, trimmed.indexOf(",")).trim();
-                return firstUrl;
+            // Nếu không có quotes, xử lý như mảng đơn giản
+            String content = trimmed.substring(1, trimmed.length() - 1);
+            if (content.contains(",")) {
+                return content.split(",")[0].trim();
             }
-            else {
-                String firstUrl = trimmed.substring(1, trimmed.length() - 1).trim();
-                return firstUrl;
-            }
+            return content.trim();
         }
 
-        // Trường hợp 2: CSV format
+        // Xử lý CSV
         if (trimmed.contains(",")) {
             return trimmed.split(",")[0].trim();
         }
 
-        // Trường hợp 3: Chỉ có 1 URL
         return trimmed;
     }
 }
