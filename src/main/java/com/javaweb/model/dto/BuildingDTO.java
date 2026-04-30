@@ -6,13 +6,31 @@ import java.util.List;
 
 public class BuildingDTO extends AbstractDTO {
     private String name;
-    private String district;
-    private String ward;
+
+    // ============ ĐỊA CHỈ MỚI SAU SÁP NHẬP ============
     private String street;
+    private String provinceCode;
+    private String provinceName;
+    private String wardCode;
+    private String wardName;      // Tên phường/xã
+    private String ward;          // Giữ lại cho tương thích (map từ wardName)
+    // ============ END ============
+
+    // ============ GIỮ LẠI FIELD CŨ CHO MIGRATION ============
+    private String district;       // Giữ nhưng có thể null
+    // ============ END ============
+
     private String structure;
     private Integer floorArea;
     private String rentArea;
-    private Integer rentPrice;
+
+    // ============ GIÁ (HỖ TRỢ CẢ MUA VÀ THUÊ) ============
+    private Integer rentPrice;      // Giá thuê cũ (giữ lại)
+    private Double priceSale;       // Giá bán
+    private Double priceRent;       // Giá thuê mới
+    private String transactionType; // "SALE", "RENT", "BOTH"
+    // ============ END ============
+
     private Integer numberOfBasement;
     private String direction;
     private String rentPriceDescription;
@@ -34,45 +52,20 @@ public class BuildingDTO extends AbstractDTO {
     private String linkOfBuilding;
     private String map;
 
-    // THÊM FIELD AVATAR VÀO ĐÂY
+    // THÊM FIELD AVATAR VÀ IMAGE
     private String avatar;      // Lưu đường dẫn avatar (1 ảnh)
     private String image;       // Lưu đường dẫn images (nhiều ảnh)
 
     private LegalStatus legal;
-    private String[] typeCode;
+    private String[] typeCode;   // Mảng type code
     private Long staffId;
 
     // Thêm 2 field để nhận file upload
     private MultipartFile avatarFile;      // File avatar (1 ảnh)
     private List<MultipartFile> imageFiles; // Danh sách file images (nhiều ảnh)
 
-    // GETTERS AND SETTERS cho avatar
-    public String getAvatar() {
-        return avatar;
-    }
+    // ============ GETTERS AND SETTERS ============
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    // Getters and Setters cho avatarFile và imageFiles
-    public MultipartFile getAvatarFile() {
-        return avatarFile;
-    }
-
-    public void setAvatarFile(MultipartFile avatarFile) {
-        this.avatarFile = avatarFile;
-    }
-
-    public List<MultipartFile> getImageFiles() {
-        return imageFiles;
-    }
-
-    public void setImageFiles(List<MultipartFile> imageFiles) {
-        this.imageFiles = imageFiles;
-    }
-
-    // Các getters và setters khác giữ nguyên
     public String getName() {
         return name;
     }
@@ -81,12 +74,107 @@ public class BuildingDTO extends AbstractDTO {
         this.name = name;
     }
 
-    public LegalStatus getLegal() {
-        return legal;
+    // Địa chỉ mới
+    public String getStreet() {
+        return street;
     }
 
-    public void setLegal(LegalStatus legal) {
-        this.legal = legal;
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public String getProvinceCode() {
+        return provinceCode;
+    }
+
+    public void setProvinceCode(String provinceCode) {
+        this.provinceCode = provinceCode;
+    }
+
+    public String getProvinceName() {
+        return provinceName;
+    }
+
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
+    }
+
+    public String getWardCode() {
+        return wardCode;
+    }
+
+    public void setWardCode(String wardCode) {
+        this.wardCode = wardCode;
+    }
+
+    public String getWardName() {
+        return wardName;
+    }
+
+    public void setWardName(String wardName) {
+        this.wardName = wardName;
+        this.ward = wardName; // Đồng bộ với field ward cũ
+    }
+
+    public String getWard() {
+        return ward;
+    }
+
+    public void setWard(String ward) {
+        this.ward = ward;
+        if (this.wardName == null) {
+            this.wardName = ward;
+        }
+    }
+
+    // Field cũ (migration)
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    // Giá
+    public Integer getRentPrice() {
+        return rentPrice;
+    }
+
+    public void setRentPrice(Integer rentPrice) {
+        this.rentPrice = rentPrice;
+    }
+
+    public Double getPriceSale() {
+        return priceSale;
+    }
+
+    public void setPriceSale(Double priceSale) {
+        this.priceSale = priceSale;
+    }
+
+    public Double getPriceRent() {
+        return priceRent;
+    }
+
+    public void setPriceRent(Double priceRent) {
+        this.priceRent = priceRent;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public String getStructure() {
+        return structure;
+    }
+
+    public void setStructure(String structure) {
+        this.structure = structure;
     }
 
     public Integer getFloorArea() {
@@ -105,54 +193,6 @@ public class BuildingDTO extends AbstractDTO {
         this.rentArea = rentArea;
     }
 
-    public Integer getRentPrice() {
-        return rentPrice;
-    }
-
-    public void setRentPrice(Integer rentPrice) {
-        this.rentPrice = rentPrice;
-    }
-
-    public String getDistrict() {
-        return district;
-    }
-
-    public void setDistrict(String district) {
-        this.district = district;
-    }
-
-    public String getStructure() {
-        return structure;
-    }
-
-    public void setStructure(String structure) {
-        this.structure = structure;
-    }
-
-    public String getRentPriceDescription() {
-        return rentPriceDescription;
-    }
-
-    public void setRentPriceDescription(String rentPriceDescription) {
-        this.rentPriceDescription = rentPriceDescription;
-    }
-
-    public String getWard() {
-        return ward;
-    }
-
-    public void setWard(String ward) {
-        this.ward = ward;
-    }
-
-    public String getStreet() {
-        return street;
-    }
-
-    public void setStreet(String street) {
-        this.street = street;
-    }
-
     public Integer getNumberOfBasement() {
         return numberOfBasement;
     }
@@ -167,6 +207,14 @@ public class BuildingDTO extends AbstractDTO {
 
     public void setDirection(String direction) {
         this.direction = direction;
+    }
+
+    public String getRentPriceDescription() {
+        return rentPriceDescription;
+    }
+
+    public void setRentPriceDescription(String rentPriceDescription) {
+        this.rentPriceDescription = rentPriceDescription;
     }
 
     public String getLevel() {
@@ -191,22 +239,6 @@ public class BuildingDTO extends AbstractDTO {
 
     public void setManagerPhone(String managerPhone) {
         this.managerPhone = managerPhone;
-    }
-
-    public Long getStaffId() {
-        return staffId;
-    }
-
-    public void setStaffId(Long staffId) {
-        this.staffId = staffId;
-    }
-
-    public String[] getTypeCode() {
-        return typeCode;
-    }
-
-    public void setTypeCode(String[] typeCode) {
-        this.typeCode = typeCode;
     }
 
     public String getServiceFee() {
@@ -321,11 +353,59 @@ public class BuildingDTO extends AbstractDTO {
         this.map = map;
     }
 
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
     public String getImage() {
         return image;
     }
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public LegalStatus getLegal() {
+        return legal;
+    }
+
+    public void setLegal(LegalStatus legal) {
+        this.legal = legal;
+    }
+
+    public String[] getTypeCode() {
+        return typeCode;
+    }
+
+    public void setTypeCode(String[] typeCode) {
+        this.typeCode = typeCode;
+    }
+
+    public Long getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(Long staffId) {
+        this.staffId = staffId;
+    }
+
+    public MultipartFile getAvatarFile() {
+        return avatarFile;
+    }
+
+    public void setAvatarFile(MultipartFile avatarFile) {
+        this.avatarFile = avatarFile;
+    }
+
+    public List<MultipartFile> getImageFiles() {
+        return imageFiles;
+    }
+
+    public void setImageFiles(List<MultipartFile> imageFiles) {
+        this.imageFiles = imageFiles;
     }
 }

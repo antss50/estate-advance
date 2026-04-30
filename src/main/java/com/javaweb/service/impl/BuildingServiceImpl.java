@@ -135,15 +135,63 @@ public class BuildingServiceImpl implements BuildingService {
     public BuildingDTO getBuildingDetail(Long id) {
         BuildingEntity entity = buildingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Building not found"));
-        BuildingDTO buildingDTO = modelMapper.map(entity, BuildingDTO.class);
 
-        // Xử lý type từ String (lưu trong DB) -> String[] (cho DTO)
-        // Ví dụ: "TANG_TRET,NGUYEN_CAN" -> ["TANG_TRET", "NGUYEN_CAN"]
+        // Map thủ công - KHÔNG dùng ModelMapper
+        BuildingDTO buildingDTO = new BuildingDTO();
+
+        // Các field cơ bản
+        buildingDTO.setId(entity.getId());
+        buildingDTO.setName(entity.getName());
+        buildingDTO.setStreet(entity.getStreet());
+        buildingDTO.setStructure(entity.getStructure());
+        buildingDTO.setNote(entity.getNote());
+        buildingDTO.setImage(entity.getImage());
+        buildingDTO.setAvatar(entity.getAvatar());
+        buildingDTO.setFloorArea(entity.getFloorArea());
+        buildingDTO.setNumberOfBasement(entity.getNumberOfBasement());
+        buildingDTO.setDirection(entity.getDirection());
+        buildingDTO.setLevel(entity.getLevel());
+        buildingDTO.setRentPrice(entity.getRentPrice());
+        buildingDTO.setRentPriceDescription(entity.getRentPriceDescription());
+        buildingDTO.setServiceFee(entity.getServiceFee());
+        buildingDTO.setCarFee(entity.getCarFee());
+        buildingDTO.setMotoFee(entity.getMotoFee());
+        buildingDTO.setOvertimeFee(entity.getOvertimeFee());
+        buildingDTO.setWaterFee(entity.getWaterFee());
+        buildingDTO.setElectricityFee(entity.getElectricityFee());
+        buildingDTO.setDeposit(entity.getDeposit());
+        buildingDTO.setPayment(entity.getPayment());
+        buildingDTO.setRentTime(entity.getRentTime());
+        buildingDTO.setDecorationTime(entity.getDecorationTime());
+        buildingDTO.setBrokerageFee(entity.getBrokerageFee());
+        buildingDTO.setManagerName(entity.getManagerName());
+        buildingDTO.setManagerPhone(entity.getManagerPhone());
+        buildingDTO.setMap(entity.getMap());
+        buildingDTO.setLinkOfBuilding(entity.getLinkOfBuilding());
+        buildingDTO.setLegal(entity.getLegal());
+
+        // Địa chỉ mới
+        buildingDTO.setWard(entity.getWardName());          // ward = wardName
+        buildingDTO.setWardName(entity.getWardName());
+        buildingDTO.setWardCode(entity.getWardCode());
+        buildingDTO.setProvinceCode(entity.getProvinceCode());
+        buildingDTO.setProvinceName(entity.getProvinceName());
+        buildingDTO.setStreet(entity.getStreet());
+
+        // Field cũ (migration)
+        buildingDTO.setDistrict(entity.getDistrictLegacy());
+
+        // Giá
+        buildingDTO.setPriceSale(entity.getPriceSale());
+        buildingDTO.setPriceRent(entity.getPriceRent());
+        buildingDTO.setTransactionType(entity.getTransactionType());
+
+        // Xử lý type từ String -> String[]
         if (entity.getType() != null && !entity.getType().isEmpty()) {
             buildingDTO.setTypeCode(entity.getType().split(","));
         }
 
-        // Xử lý rentArea từ List<RentAreaEntity> -> String (comma separated)
+        // Xử lý rentArea từ List<RentAreaEntity> -> String
         if (entity.getRentAreas() != null && !entity.getRentAreas().isEmpty()) {
             String rentArea = entity.getRentAreas().stream()
                     .map(item -> String.valueOf(item.getValue()))
