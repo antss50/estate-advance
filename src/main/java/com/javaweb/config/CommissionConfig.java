@@ -17,13 +17,17 @@ public class CommissionConfig {
     private int rentLongTermMonths = 12;       // >= 12 tháng
     private int rentShortTermMonths = 6;       // < 12 tháng
 
-    // ============ CHẤM ĐIỂM ============
-    private double revenueTarget = 200000000;   // 200 triệu VND
-    private int maxWorkload = 5;                // Số building tối đa staff có thể quản lý
+    // ============ CHẤM ĐIỂM BUILDING ============
+    private double maxPriceSale = 5_000_000_000L;   // 5 tỷ - bán (dùng L hoặc _ để dễ đọc)
+    private double maxPriceRent = 15_000_000;       // 15 triệu - thuê
+
+    // ============ CHẤM ĐIỂM STAFF ============
+    private double revenueTargetPerDeal = 200_000_000;  // P_target = 200 triệu VND/đơn hàng
+    private int maxWorkload = 5;                       // L_max = 5
 
     // ============ NEWBIE BONUS ============
-    private double newbieBonusBoost = 0.3;      // Hệ số ưu tiên
-    private int probationDays = 90;             // Số ngày thử việc
+    private double newbieBonusBoost = 0.3;      // Score_boost = 0.3
+    private int probationDays = 90;             // T = 90 ngày thử việc
 
     // Getters and Setters
     public double getSaleTotalRate() { return saleTotalRate; }
@@ -44,8 +48,14 @@ public class CommissionConfig {
     public int getRentShortTermMonths() { return rentShortTermMonths; }
     public void setRentShortTermMonths(int rentShortTermMonths) { this.rentShortTermMonths = rentShortTermMonths; }
 
-    public double getRevenueTarget() { return revenueTarget; }
-    public void setRevenueTarget(double revenueTarget) { this.revenueTarget = revenueTarget; }
+    public double getMaxPriceSale() { return maxPriceSale; }
+    public void setMaxPriceSale(double maxPriceSale) { this.maxPriceSale = maxPriceSale; }
+
+    public double getMaxPriceRent() { return maxPriceRent; }
+    public void setMaxPriceRent(double maxPriceRent) { this.maxPriceRent = maxPriceRent; }
+
+    public double getRevenueTargetPerDeal() { return revenueTargetPerDeal; }
+    public void setRevenueTargetPerDeal(double revenueTargetPerDeal) { this.revenueTargetPerDeal = revenueTargetPerDeal; }
 
     public int getMaxWorkload() { return maxWorkload; }
     public void setMaxWorkload(int maxWorkload) { this.maxWorkload = maxWorkload; }

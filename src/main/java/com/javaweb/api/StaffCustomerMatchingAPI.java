@@ -18,10 +18,10 @@ public class StaffCustomerMatchingAPI {
 
     @GetMapping
     public ResponseEntity<List<StaffMatchScore>> findBestStaffForCustomer(
-            @RequestParam String district,
+            @RequestParam String ward,
             @RequestParam(defaultValue = "5") int limit) {
 
-        List<StaffMatchScore> result = matchingService.findBestStaffForCustomer(district, limit);
+        List<StaffMatchScore> result = matchingService.findBestStaffForCustomer(ward, limit);
         return ResponseEntity.ok(result);
     }
 }

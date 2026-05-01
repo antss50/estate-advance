@@ -24,20 +24,31 @@ public class StaffBuildingMatchingService {
     @Autowired
     private CommissionConfig commissionConfig;
 
-    private static final Map<String, List<String>> NEIGHBORING_DISTRICTS = new HashMap<>();
+    // Map các phường/xã lân cận (trong cùng quận cũ)
+    private static final Map<String, List<String>> NEIGHBORING_WARDS = new HashMap<>();
 
     static {
-        NEIGHBORING_DISTRICTS.put("Quận 1", Arrays.asList("Quận 3", "Quận 4", "Quận 5", "Quận Bình Thạnh"));
-        NEIGHBORING_DISTRICTS.put("Quận 2", Arrays.asList("Quận 9", "Thủ Đức", "Quận 7"));
-        NEIGHBORING_DISTRICTS.put("Quận 3", Arrays.asList("Quận 1", "Quận 4", "Quận 5", "Quận 10"));
-        NEIGHBORING_DISTRICTS.put("Quận Ba Đình", Arrays.asList("Quận Hoàn Kiếm", "Quận Đống Đa", "Quận Tây Hồ"));
-        NEIGHBORING_DISTRICTS.put("Quận Hoàn Kiếm", Arrays.asList("Quận Ba Đình", "Quận Đống Đa", "Quận Hai Bà Trưng"));
-        NEIGHBORING_DISTRICTS.put("Quận Đống Đa", Arrays.asList("Quận Ba Đình", "Quận Hoàn Kiếm", "Quận Hai Bà Trưng", "Quận Thanh Xuân"));
+        // ============ TP HỒ CHÍ MINH - Quận 1 ============
+        NEIGHBORING_WARDS.put("Phường Bến Nghé", Arrays.asList("Phường Bến Thành", "Phường Cầu Kho", "Phường Đa Kao"));
+        NEIGHBORING_WARDS.put("Phường Bến Thành", Arrays.asList("Phường Bến Nghé", "Phường Cầu Kho", "Phường Tân Định"));
+        NEIGHBORING_WARDS.put("Phường Cầu Kho", Arrays.asList("Phường Bến Nghé", "Phường Bến Thành"));
+
+        // ============ TP HỒ CHÍ MINH - Quận 2 ============
+        NEIGHBORING_WARDS.put("Phường An Phú", Arrays.asList("Phường Bình An", "Phường An Khánh"));
+        NEIGHBORING_WARDS.put("Phường Bình An", Arrays.asList("Phường An Phú", "Phường An Khánh"));
+
+        // ============ HÀ NỘI - Quận Ba Đình ============
+        NEIGHBORING_WARDS.put("Phường Phúc Xá", Arrays.asList("Phường Trúc Bạch", "Phường Vĩnh Phúc"));
+        NEIGHBORING_WARDS.put("Phường Trúc Bạch", Arrays.asList("Phường Phúc Xá", "Phường Cống Vị"));
+
+        // ============ HÀ NỘI - Quận Hoàn Kiếm ============
+        NEIGHBORING_WARDS.put("Phường Hàng Mã", Arrays.asList("Phường Đồng Xuân", "Phường Hàng Buồm"));
+        NEIGHBORING_WARDS.put("Phường Hàng Bạc", Arrays.asList("Phường Hàng Đào", "Phường Hàng Trống"));
     }
 
     /**
      * Tìm staff phù hợp cho building
-     * Công thức: S_CS = (S_performance × 0.4) + (S_workload × 0.25) + (S_area × 0.35)
+     * Công thức: Score = (S_performance × 0.4) + (S_workload × 0.25) + (S_area × 0.35)
      */
     public List<StaffMatchScore> findBestStaffForBuilding(Long buildingId, int limit) {
         BuildingEntity building = buildingRepository.findById(buildingId)
@@ -50,6 +61,7 @@ public class StaffBuildingMatchingService {
         }
 
         return allStaff.stream()
+                .distinct()
                 .map(staff -> calculateMatchScore(staff, building))
                 .sorted((s1, s2) -> Double.compare(s2.getTotalScore(), s1.getTotalScore()))
                 .limit(limit)
@@ -57,17 +69,30 @@ public class StaffBuildingMatchingService {
     }
 
     private StaffMatchScore calculateMatchScore(UserEntity staff, BuildingEntity building) {
+        // 1. Tính điểm khu vực (S_area) - dựa trên Xã/Phường
         double areaScore = calculateAreaScore(staff, building);
+
+        // 2. Tính điểm hiệu suất (S_performance)
         double performanceScore = calculatePerformanceScore(staff);
+
+        // 3. Tính điểm workload (S_workload)
         double workloadScore = calculateWorkloadScore(staff);
 
+        // 4. Tính điểm cơ bản
         double baseScore = (performanceScore * 0.4) + (workloadScore * 0.25) + (areaScore * 0.35);
+
+        // 5. Tính Newbie Bonus
         double newbieBonus = calculateNewbieBonus(staff);
+
+        // 6. Tổng điểm
         double totalScore = baseScore + newbieBonus;
 
         int currentWorkload = staff.getAssignmentBuildings() != null ?
                 staff.getAssignmentBuildings().size() : 0;
         int daysWorked = getDaysWorked(staff);
+        Integer totalDeals = staff.getTotalDeals() != null ? staff.getTotalDeals() : 0;
+        Double revenue = staff.getRevenue() != null ? staff.getRevenue().doubleValue() : 0.0;
+        Double avgRevenuePerDeal = (totalDeals > 0) ? (revenue / totalDeals) : 0.0;
 
         return new StaffMatchScore(
                 staff.getId(),
@@ -80,31 +105,41 @@ public class StaffBuildingMatchingService {
                 newbieBonus,
                 Math.min(totalScore, 1.0),
                 currentWorkload,
-                staff.getTotalDeals() != null ? staff.getTotalDeals() : 0,
-                staff.getRevenue() != null ? staff.getRevenue().doubleValue() : 0.0,
-                daysWorked
+                totalDeals,
+                revenue,
+                daysWorked,
+                avgRevenuePerDeal
         );
     }
 
+    /**
+     * Tính điểm khu vực (S_area)
+     * Sau sáp nhập 2025: Chỉ còn cấp Xã/Phường
+     *
+     * Cùng phường/xã: 1.0
+     * Phường/xã lân cận: 0.6
+     * Khác xa: 0.2
+     */
     private double calculateAreaScore(UserEntity staff, BuildingEntity building) {
         String workingArea = staff.getWorkingArea();
-        String buildingDistrict = building.getDistrictLegacy();
+        String buildingWard = building.getWardName();  // Lấy tên phường/xã của building
 
-        if (workingArea == null || workingArea.isEmpty() || buildingDistrict == null || buildingDistrict.isEmpty()) {
+        if (workingArea == null || workingArea.isEmpty() || buildingWard == null || buildingWard.isEmpty()) {
             return 0.5;
         }
 
-        List<String> staffAreas = Arrays.asList(workingArea.split(","));
+        List<String> staffWards = Arrays.asList(workingArea.split(","));
 
-        for (String area : staffAreas) {
-            if (area.trim().equalsIgnoreCase(buildingDistrict)) {
+        // Cùng phường/xã
+        for (String ward : staffWards) {
+            if (ward.trim().equalsIgnoreCase(buildingWard)) {
                 return 1.0;
             }
         }
 
-        for (String area : staffAreas) {
-            List<String> neighbors = NEIGHBORING_DISTRICTS.get(area.trim());
-            if (neighbors != null && neighbors.contains(buildingDistrict)) {
+        // Phường/xã lân cận
+        for (String ward : staffWards) {
+            if (isNeighboringWard(ward.trim(), buildingWard)) {
                 return 0.6;
             }
         }
@@ -112,13 +147,27 @@ public class StaffBuildingMatchingService {
         return 0.2;
     }
 
+    private boolean isNeighboringWard(String ward1, String ward2) {
+        List<String> neighbors = NEIGHBORING_WARDS.get(ward1);
+        if (neighbors != null) {
+            return neighbors.stream().anyMatch(n -> n.equalsIgnoreCase(ward2));
+        }
+        return false;
+    }
+
     private double calculatePerformanceScore(UserEntity staff) {
         Double revenue = staff.getRevenue() != null ? staff.getRevenue().doubleValue() : 0.0;
-        double target = commissionConfig.getRevenueTarget();
+        Integer totalDeals = staff.getTotalDeals() != null ? staff.getTotalDeals() : 0;
+        double targetPerDeal = commissionConfig.getRevenueTargetPerDeal();
 
-        if (target <= 0) return 0.5;
-        double score = Math.min(1.0, revenue / target);
-        return Math.max(0, score);
+        if (totalDeals == null || totalDeals == 0 || targetPerDeal <= 0) {
+            return 0.0;
+        }
+
+        double expectedRevenue = totalDeals * targetPerDeal;
+        double score = revenue / expectedRevenue;
+
+        return Math.min(1.0, Math.max(0, score));
     }
 
     private double calculateWorkloadScore(UserEntity staff) {

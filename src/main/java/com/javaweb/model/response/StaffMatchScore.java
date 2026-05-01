@@ -14,13 +14,14 @@ public class StaffMatchScore {
     private Integer totalDeals;
     private Double revenue;
     private Integer daysWorked;
+    private Double avgRevenuePerDeal;
 
     public StaffMatchScore() {}
 
     public StaffMatchScore(Long staffId, String staffName, String phone, String workingArea,
                            Double areaScore, Double performanceScore, Double workloadScore,
                            Double newbieBonus, Double totalScore, Integer currentWorkload,
-                           Integer totalDeals, Double revenue, Integer daysWorked) {
+                           Integer totalDeals, Double revenue, Integer daysWorked, Double avgRevenuePerDeal) {
         this.staffId = staffId;
         this.staffName = staffName;
         this.phone = phone;
@@ -34,6 +35,7 @@ public class StaffMatchScore {
         this.totalDeals = totalDeals;
         this.revenue = revenue;
         this.daysWorked = daysWorked;
+        this.avgRevenuePerDeal = avgRevenuePerDeal;
     }
 
     // Getters and Setters
@@ -63,4 +65,6 @@ public class StaffMatchScore {
     public void setRevenue(Double revenue) { this.revenue = revenue; }
     public Integer getDaysWorked() { return daysWorked; }
     public void setDaysWorked(Integer daysWorked) { this.daysWorked = daysWorked; }
+    public Double getAvgRevenuePerDeal() { return avgRevenuePerDeal; }
+    public void setAvgRevenuePerDeal(Double avgRevenuePerDeal) { this.avgRevenuePerDeal = avgRevenuePerDeal; }
 }
