@@ -23,33 +23,41 @@ public class StaffCustomerMatchingService {
     private static final Map<String, List<String>> NEIGHBORING_WARDS = new HashMap<>();
 
     static {
-        // ============ TP HỒ CHÍ MINH ============
-        // Quận 1
-        NEIGHBORING_WARDS.put("Phường Bến Nghé", Arrays.asList("Phường Bến Thành", "Phường Cầu Kho", "Phường Đa Kao"));
-        NEIGHBORING_WARDS.put("Phường Bến Thành", Arrays.asList("Phường Bến Nghé", "Phường Cầu Kho", "Phường Tân Định"));
-        NEIGHBORING_WARDS.put("Phường Cầu Kho", Arrays.asList("Phường Bến Nghé", "Phường Bến Thành"));
-        NEIGHBORING_WARDS.put("Phường Đa Kao", Arrays.asList("Phường Bến Nghé", "Phường Tân Định"));
-        NEIGHBORING_WARDS.put("Phường Tân Định", Arrays.asList("Phường Bến Thành", "Phường Đa Kao"));
+        // ============ TP HỒ CHÍ MINH - Quận 1 ============
+        NEIGHBORING_WARDS.put("Phường Bến Nghé", Arrays.asList(
+                "Phường Bến Thành", "Phường Cầu Kho", "Phường Đa Kao", "Phường Tân Định"
+        ));
+        NEIGHBORING_WARDS.put("Phường Đa Kao", Arrays.asList(
+                "Phường Bến Nghé", "Phường Tân Định"
+        ));
+        NEIGHBORING_WARDS.put("Phường Tân Định", Arrays.asList(
+                "Phường Bến Nghé", "Phường Đa Kao", "Phường Bến Thành"
+        ));
+        NEIGHBORING_WARDS.put("Phường Bến Thành", Arrays.asList(
+                "Phường Bến Nghé", "Phường Cầu Kho", "Phường Tân Định"
+        ));
+        NEIGHBORING_WARDS.put("Phường Cầu Kho", Arrays.asList(
+                "Phường Bến Nghé", "Phường Bến Thành"
+        ));
 
-        // Quận 2
+        // ============ TP HỒ CHÍ MINH - Quận 2 ============
         NEIGHBORING_WARDS.put("Phường An Phú", Arrays.asList("Phường Bình An", "Phường An Khánh"));
         NEIGHBORING_WARDS.put("Phường Bình An", Arrays.asList("Phường An Phú", "Phường An Khánh"));
         NEIGHBORING_WARDS.put("Phường An Khánh", Arrays.asList("Phường An Phú", "Phường Bình An"));
 
-        // Quận 3
+        // ============ TP HỒ CHÍ MINH - Quận 3 ============
         NEIGHBORING_WARDS.put("Phường Võ Thị Sáu", Arrays.asList("Phường 4", "Phường 5", "Phường 9"));
         NEIGHBORING_WARDS.put("Phường 4", Arrays.asList("Phường Võ Thị Sáu", "Phường 5"));
         NEIGHBORING_WARDS.put("Phường 5", Arrays.asList("Phường Võ Thị Sáu", "Phường 4"));
 
-        // ============ HÀ NỘI ============
-        // Quận Ba Đình
+        // ============ HÀ NỘI - Quận Ba Đình ============
         NEIGHBORING_WARDS.put("Phường Phúc Xá", Arrays.asList("Phường Trúc Bạch", "Phường Vĩnh Phúc"));
         NEIGHBORING_WARDS.put("Phường Trúc Bạch", Arrays.asList("Phường Phúc Xá", "Phường Cống Vị"));
         NEIGHBORING_WARDS.put("Phường Vĩnh Phúc", Arrays.asList("Phường Phúc Xá", "Phường Cống Vị"));
         NEIGHBORING_WARDS.put("Phường Cống Vị", Arrays.asList("Phường Trúc Bạch", "Phường Vĩnh Phúc", "Phường Liễu Giai"));
         NEIGHBORING_WARDS.put("Phường Liễu Giai", Arrays.asList("Phường Cống Vị", "Phường Ngọc Khánh"));
 
-        // Quận Hoàn Kiếm
+        // ============ HÀ NỘI - Quận Hoàn Kiếm ============
         NEIGHBORING_WARDS.put("Phường Hàng Mã", Arrays.asList("Phường Đồng Xuân", "Phường Hàng Buồm"));
         NEIGHBORING_WARDS.put("Phường Đồng Xuân", Arrays.asList("Phường Hàng Mã", "Phường Hàng Buồm"));
         NEIGHBORING_WARDS.put("Phường Hàng Buồm", Arrays.asList("Phường Hàng Mã", "Phường Đồng Xuân"));
@@ -57,15 +65,15 @@ public class StaffCustomerMatchingService {
         NEIGHBORING_WARDS.put("Phường Hàng Đào", Arrays.asList("Phường Hàng Bạc", "Phường Hàng Trống"));
         NEIGHBORING_WARDS.put("Phường Hàng Trống", Arrays.asList("Phường Hàng Bạc", "Phường Hàng Đào"));
 
-        // Quận Đống Đa
+        // ============ HÀ NỘI - Quận Đống Đa ============
         NEIGHBORING_WARDS.put("Phường Quốc Tử Giám", Arrays.asList("Phường Văn Miếu", "Phường Nam Đồng"));
         NEIGHBORING_WARDS.put("Phường Văn Miếu", Arrays.asList("Phường Quốc Tử Giám", "Phường Nam Đồng"));
+        NEIGHBORING_WARDS.put("Phường Nam Đồng", Arrays.asList("Phường Quốc Tử Giám", "Phường Văn Miếu"));
     }
 
     /**
      * Tìm staff phù hợp cho customer dựa trên phường/xã mong muốn
      */
-// Trong StaffCustomerMatchingService.java
     public List<StaffMatchScore> findBestStaffForCustomer(String desiredWard, int limit) {
         List<UserEntity> allStaff = userRepository.findStaffs("STAFF");
 
@@ -74,18 +82,25 @@ public class StaffCustomerMatchingService {
         }
 
         return allStaff.stream()
-                .distinct()  // <-- THÊM DÒNG NÀY ĐỂ LOẠI TRÙNG
+                .distinct()
                 .map(staff -> calculateMatchScore(staff, desiredWard))
+                .filter(score -> score.getAreaScore() > 0)  // Chỉ lấy staff có khu vực phù hợp
                 .sorted((s1, s2) -> Double.compare(s2.getTotalScore(), s1.getTotalScore()))
                 .limit(limit)
                 .collect(Collectors.toList());
     }
+
     /**
      * Tính điểm match cho 1 staff
      */
     private StaffMatchScore calculateMatchScore(UserEntity staff, String desiredWard) {
-        // 1. Tính điểm khu vực (S_area) - dựa trên Xã/Phường
+        // 1. Tính điểm khu vực (S_area)
         double areaScore = calculateAreaScore(staff, desiredWard);
+
+        // Nếu areaScore = 0, không cần tính tiếp
+        if (areaScore == 0.0) {
+            return createEmptyScore(staff, areaScore);
+        }
 
         // 2. Tính điểm hiệu suất (S_performance)
         double performanceScore = calculatePerformanceScore(staff);
@@ -108,8 +123,6 @@ public class StaffCustomerMatchingService {
         int daysWorked = getDaysWorked(staff);
         Integer totalDeals = staff.getTotalDeals() != null ? staff.getTotalDeals() : 0;
         Double revenue = staff.getRevenue() != null ? staff.getRevenue().doubleValue() : 0.0;
-
-        // Tính doanh thu trung bình mỗi đơn hàng
         Double avgRevenuePerDeal = (totalDeals > 0) ? (revenue / totalDeals) : 0.0;
 
         return new StaffMatchScore(
@@ -131,36 +144,67 @@ public class StaffCustomerMatchingService {
     }
 
     /**
+     * Tạo StaffMatchScore rỗng (khi areaScore = 0)
+     */
+    private StaffMatchScore createEmptyScore(UserEntity staff, double areaScore) {
+        return new StaffMatchScore(
+                staff.getId(),
+                staff.getFullName(),
+                staff.getPhone(),
+                staff.getWorkingArea(),
+                areaScore,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0,
+                0,
+                0.0,
+                0,
+                0.0
+        );
+    }
+
+    /**
      * Tính điểm khu vực (S_area)
-     * Sau sáp nhập 2025: Chỉ còn cấp Xã/Phường (bỏ cấp Quận/Huyện)
      *
-     * Cùng phường/xã: 1.0
-     * Phường/xã lân cận: 0.6
-     * Khác xa: 0.2
+     * QUAN TRỌNG:
+     * - Nếu staff không có workingArea (null hoặc rỗng) -> trả về 0 (không đề xuất)
+     * - Nếu customer không yêu cầu phường -> trả về 1.0 (tất cả đều được)
+     * - Cùng phường: 1.0
+     * - Phường lân cận: 0.6
+     * - Khác xa: 0.2
      */
     private double calculateAreaScore(UserEntity staff, String desiredWard) {
         String workingArea = staff.getWorkingArea();
 
-        if (workingArea == null || workingArea.isEmpty() || desiredWard == null || desiredWard.isEmpty()) {
-            return 0.5;
+        // TRƯỜNG HỢP 1: Staff không có khu vực làm việc -> KHÔNG đề xuất
+        if (workingArea == null || workingArea.trim().isEmpty()) {
+            return 0.0;
+        }
+
+        // TRƯỜNG HỢP 2: Customer không yêu cầu phường cụ thể -> tất cả đều được
+        if (desiredWard == null || desiredWard.trim().isEmpty()) {
+            return 1.0;
         }
 
         List<String> staffWards = Arrays.asList(workingArea.split(","));
 
-        // Cùng phường/xã
+        // TRƯỜNG HỢP 3: Cùng phường/xã
         for (String ward : staffWards) {
             if (ward.trim().equalsIgnoreCase(desiredWard)) {
                 return 1.0;
             }
         }
 
-        // Phường/xã lân cận
+        // TRƯỜNG HỢP 4: Phường/xã lân cận
         for (String ward : staffWards) {
             if (isNeighboringWard(ward.trim(), desiredWard)) {
                 return 0.6;
             }
         }
 
+        // TRƯỜNG HỢP 5: Khác xa
         return 0.2;
     }
 

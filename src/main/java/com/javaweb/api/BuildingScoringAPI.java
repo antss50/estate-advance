@@ -17,8 +17,16 @@ public class BuildingScoringAPI {
     private BuildingScoringService scoringService;
 
     @GetMapping
-    public ResponseEntity<List<BuildingScoreDTO>> scoreBuildings(
+    public ResponseEntity<?> scoreBuildings(
             @RequestParam String transactionType) {
+
+        // Kiểm tra transactionType
+        if (transactionType == null ||
+                (!"SALE".equalsIgnoreCase(transactionType) && !"RENT".equalsIgnoreCase(transactionType))) {
+            return ResponseEntity.badRequest().body(
+                    "{\"error\": \"transactionType phải là SALE hoặc RENT\"}"
+            );
+        }
 
         List<BuildingScoreDTO> result = scoringService.scoreAllBuildings(transactionType);
         return ResponseEntity.ok(result);
