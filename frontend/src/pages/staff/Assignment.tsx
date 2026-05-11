@@ -15,18 +15,18 @@ import {
   Space,
   Spin,
   message,
+  Tooltip,
+  Empty,
 } from "antd";
-
-import BuildingCard from "../../components/staff/BuildingCard";
-import type { UserDTO } from "../../types/user.type";
+import { EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import MatchedBuildingItem from "../../components/staff/MatchedBuildingItem";
+import type { MatchingPayload, UserDTO } from "../../types/user.type";
 import client from "../../api/axiosClient";
-// import buildingApi, { searchBuildings } from "../../api/buildingApi";
 import type {
-  BuildingDTO,
-  BuildingSearchRequest,
-  BuildingSearchResponse,
+  MatchingResponseDTO,
+  SuggestedBuildingDTO,
 } from "../../types/building.type";
-import { mockBuildingsData } from "./mockBuildingsData";
+import { matchCustomerRequest } from "../../api/userApi";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -42,19 +42,13 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   PENDING: { label: "Chưa tiếp nhận", color: "default" },
   ASSIGNED: { label: "Đã phân công", color: "processing" },
   CONSULTING: { label: "Đang tư vấn", color: "processing" },
-  "Đang tư vấn": { label: "Đang tư vấn", color: "processing" },
   SIGNED: { label: "Đã kí hợp đồng", color: "warning" },
-  "Đã kí hợp đồng": { label: "Đã kí hợp đồng", color: "warning" },
   PAID: { label: "Đã thanh toán", color: "success" },
-  "Đã thanh toán": { label: "Đã thanh toán", color: "success" },
 };
 
 const statusTag = (status: string | undefined) => {
   const normalizedStatus = status?.toUpperCase().trim() || "PENDING";
-  const config =
-    statusConfig[normalizedStatus] ||
-    statusConfig[status || ""] ||
-    statusConfig.PENDING;
+  const config = statusConfig[normalizedStatus] || statusConfig.PENDING;
   return <Tag color={config.color}>{config.label}</Tag>;
 };
 
@@ -64,120 +58,108 @@ const Assignment: React.FC = () => {
   const [expandedCustomerIds, setExpandedCustomerIds] = useState<string[]>([]);
   const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [buildingLoading, setBuildingLoading] = useState(false);
   const [customers, setCustomers] = useState<UserDTO[]>([]);
-  const [buildings, setBuildings] = useState<BuildingSearchResponse[]>([]);
+
+  // States cho Matching
+  const [matchedBuildings, setMatchedBuildings] = useState<
+    SuggestedBuildingDTO[]
+  >([]);
+  const [isMatchingLoading, setIsMatchingLoading] = useState(false);
   const [totalCustomers, setTotalCustomers] = useState(0);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    null,
+  );
   const pageSize = 5;
 
   // Fetch customers demand
-  const fetchCustomers = async (keyword: string = "", page: number = 1) => {
+  const fetchCustomers = async (keyword: string = "") => {
     setLoading(true);
     try {
-      const [resDemand, resCustomer] = await Promise.all([
-        client.get("/api/customer-request"),
-        client.get("/api/customer"),
-      ]);
+      const res = await client.get("/api/customer-request");
+      const demands = res?.data ?? res;
 
-      const demands = resDemand?.data ?? resDemand;
-      const customersList = resCustomer?.data ?? resCustomer;
-
-      const map = new Map<string, any>();
-
-      // 1. Đưa thông tin khách hàng vào Map trước (để lấy status và info chuẩn từ DB)
-      if (Array.isArray(customersList)) {
-        customersList.forEach((c: any) => {
-          map.set(String(c.id), { ...c });
-        });
-      }
-
-      // 2. DUYỆT QUA MẢNG DEMANDS (API request) để gộp nhu cầu vào khách hàng
       if (Array.isArray(demands)) {
-        demands.forEach((d: any) => {
-          const id = String(d.id ?? d.customerId ?? "");
-          if (!id) return;
-
-          if (map.has(id)) {
-            const existing = map.get(id);
-            // Gộp object demand từ request vào thông tin khách hàng
-            existing.demand = d.demand;
-            // Ưu tiên giữ status từ bảng Customer vì bạn đã fix logic update status ở Backend
-            map.set(id, existing);
-          } else {
-            // Trường hợp có request nhưng chưa có trong bảng customer (nếu có)
-            map.set(id, {
-              id,
-              fullName: d.fullName ?? "",
-              demand: d.demand,
-              status: d.status || "NEW",
-            });
-          }
-        });
+        const mappedData = demands.map((d: any) => ({
+          ...d,
+          id: String(d.customerId || d.id),
+        }));
+        setCustomers(mappedData);
+        setTotalCustomers(mappedData.length);
       }
-
-      const allCustomers = Array.from(map.values()) as UserDTO[];
-      setCustomers(allCustomers);
-      setTotalCustomers(allCustomers.length);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       message.error("Lỗi khi tải danh sách khách hàng");
-      console.error(error);
       setCustomers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch buildings - get buildings to match with customer demands
-  const fetchBuildings = async (page = 1, kw = "") => {
-    setBuildingLoading(true);
-    try {
-      // TODO: Enable this when API is tested
-      // const params: BuildingSearchRequest = {
-      //   name: kw || "",
-      //   page: page,
-      //   size: pageSize,
-      // };
-      // const res = await buildingApi.searchBuildings(params);
-      // if (Array.isArray(res)) {
-      //   setBuildings(res as BuildingSearchResponse[]);
-      // } else {
-      //   setBuildings([]);
-      // }
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
-      // Using mock data for now
-      console.log("Using mock building data");
-      setBuildings(mockBuildingsData as BuildingSearchResponse[]);
-    } catch (err) {
-      console.error("Error fetching buildings", err);
-      message.error("Lấy danh sách tòa nhà thất bại");
+  // --- Logic Matching Hoàn chỉnh ---
+  const handleMatching = async (customer: UserDTO) => {
+    setIsMatchingLoading(true);
+    setSelectedCustomerId(String(customer.id));
+
+    try {
+      // 1. Tách địa chỉ từ location (Ví dụ: "Phường Bến Nghé, Hồ Chí Minh")
+      const rawLocation = (customer as UserDTO).demand?.location || "";
+      const locationParts = rawLocation.split(",").map((s: string) => s.trim());
+      const ward = locationParts[0] || "";
+      const province = locationParts[1] || "";
+
+      // 2. Chuẩn bị payload chuẩn theo API
+      const payload: MatchingPayload = {
+        customerId: Number(customer.id),
+        transactionType: "BOTH", 
+        desiredPriceSale: Number((customer as UserDTO).demand?.price || 0),
+        desiredArea: Number((customer as UserDTO).demand?.area || 0),
+        desiredWard: ward,
+        desiredProvince: province,
+        buildingType: (customer as UserDTO).demand?.propertyType || "Căn hộ",
+        priorityType: "DEFAULT",
+        priceTolerance: 0.2,
+        areaTolerance: 0.2,
+        limit: 10,
+      };
+
+      // 3. Gọi API matching thực tế
+      const response = await matchCustomerRequest(payload);
+      console.log("Dữ liệu nhận được:", response);
+
+      const responseData = response?.data || response;
+      const suggested = responseData?.suggestedBuildings || [];
+
+    if (suggested && suggested.length > 0) {
+      const sorted = [...suggested].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+      setMatchedBuildings(sorted);
+      message.success(`Tìm thấy ${suggested.length} tòa nhà phù hợp`);
+    } else {
+      setMatchedBuildings([]);
+      message.warning("Không tìm thấy tòa nhà nào phù hợp");
+    }
+    } catch (error) {
+      console.error("Matching error:", error);
+      message.error("Lỗi khi tìm kiếm tòa nhà phù hợp");
     } finally {
-      setBuildingLoading(false);
+      setIsMatchingLoading(false);
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    fetchCustomers("", 1);
-    fetchBuildings();
-  }, []);
-
-  // Handle search
   const handleSearch = (value: string) => {
     setSearch(value);
     setSelectedCustomerPage(1);
-    fetchCustomers(value, 1);
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setSelectedCustomerPage(page);
+    fetchCustomers(value);
   };
 
   return (
     <Layout style={{ minHeight: "100vh", background: "#ffffff" }}>
       <Content style={{ padding: 28 }}>
         <Row gutter={24}>
-          {/* Left column: customers list */}
+          {/* Left Column: Customers */}
           <Col span={13}>
             <div style={{ marginBottom: 16 }}>
               <Title level={4} style={{ margin: 0 }}>
@@ -186,22 +168,17 @@ const Assignment: React.FC = () => {
               <Text style={{ color: MUTED }}>Welcome to Estate Advance</Text>
             </div>
 
-            <div style={{ marginTop: 12, marginBottom: 20 }}>
+            <div style={{ marginBottom: 20 }}>
               <Search
-                placeholder="Tìm khách hàng"
+                placeholder="Tìm khách hàng..."
                 allowClear
-                enterButton
-                onSearch={(val) => handleSearch(val)}
-                onChange={(e) => handleSearch(e.target.value)}
-                style={{ borderRadius: 24, width: 520 }}
-                value={search}
+                onSearch={handleSearch}
+                style={{ borderRadius: 24, width: "100%" }}
               />
             </div>
 
             <Spin spinning={loading}>
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
+              <Space direction="vertical" style={{ width: "100%" }} size={12}>
                 {customers
                   .slice(
                     (selectedCustomerPage - 1) * pageSize,
@@ -211,42 +188,42 @@ const Assignment: React.FC = () => {
                     const isExpanded = expandedCustomerIds.includes(
                       String(c.id),
                     );
+                    const isSelected = selectedCustomerId === String(c.id);
+
                     return (
-                      <Card key={c.id} bodyStyle={{ padding: 12 }}>
-                        <Row align="middle" style={{ width: "100%" }}>
+                      <Card
+                        key={c.id}
+                        bodyStyle={{ padding: 12 }}
+                        style={{
+                          border: isSelected
+                            ? `1px solid ${PRIMARY}`
+                            : "1px solid #f0f0f0",
+                        }}
+                      >
+                        <Row align="middle">
                           <Col span={10}>
-                            <Row align="middle" gutter={12}>
-                              <Col>
-                                <Avatar
-                                  size={48}
-                                  style={{
-                                    background: "#E6F6FF",
-                                    color: "#000",
-                                  }}
-                                >
-                                  {c.fullName?.charAt(0) || "?"}
-                                </Avatar>
-                              </Col>
-                              <Col>
+                            <Space size={12}>
+                              <Avatar
+                                size={48}
+                                style={{ background: "#E6F6FF", color: "#000" }}
+                              >
+                                {c.fullName?.charAt(0) || "?"}
+                              </Avatar>
+                              <div>
                                 <Text strong style={{ display: "block" }}>
-                                  {c.fullName || "N/A"}
+                                  {c.fullName}
                                 </Text>
                                 <Text style={{ color: MUTED }}>
                                   @{c.userName || "N/A"}
                                 </Text>
-                              </Col>
-                            </Row>
+                              </div>
+                            </Space>
                           </Col>
-
                           <Col span={8}>
                             <Button
                               type="primary"
                               shape="round"
-                              style={{
-                                background: PRIMARY,
-                                borderColor: PRIMARY,
-                                width: "100%",
-                              }}
+                              style={{ background: PRIMARY, width: "100%" }}
                               onClick={() =>
                                 setExpandedCustomerIds((prev) =>
                                   prev.includes(String(c.id))
@@ -258,238 +235,137 @@ const Assignment: React.FC = () => {
                               Chi tiết nhu cầu
                             </Button>
                           </Col>
-
                           <Col span={6} style={{ textAlign: "right" }}>
                             {statusTag(c.status)}
                           </Col>
                         </Row>
 
                         {isExpanded && (
-                          <>
+                          <div
+                            style={{
+                              marginTop: 12,
+                              padding: 12,
+                              background: "#fafafa",
+                              borderRadius: 8,
+                            }}
+                          >
+                            <Row gutter={[12, 12]}>
+                              <Col span={12}>
+                                <Text type="secondary">Mức giá:</Text>{" "}
+                                <Text strong>
+                                  {new Intl.NumberFormat("vi-VN").format(
+                                    Number((c as UserDTO).demand?.price || 0),
+                                  )}{" "}
+                                  đ
+                                </Text>
+                              </Col>
+                              <Col span={12}>
+                                <Text type="secondary">Diện tích:</Text>{" "}
+                                <Text strong style={{ color: RED_ALERT }}>
+                                  {(c as UserDTO).demand?.area} m²
+                                </Text>
+                              </Col>
+                              <Col span={24}>
+                                <Text type="secondary">
+                                  <EnvironmentOutlined /> Vị trí:
+                                </Text>{" "}
+                                <Text strong>
+                                  {(c as UserDTO).demand?.location}
+                                </Text>
+                              </Col>
+                            </Row>
                             <Divider style={{ margin: "12px 0" }} />
-                            <Card
-                              type="inner"
-                              style={{
-                                borderRadius: 8,
-                                border: "1px solid #f0f0f0",
-                                boxShadow: "none",
-                              }}
+                            <Button
+                              icon={<ThunderboltOutlined />}
+                              onClick={() => handleMatching(c)}
+                              loading={
+                                isMatchingLoading &&
+                                selectedCustomerId === String(c.id)
+                              }
                             >
-                              <Row gutter={[12, 12]}>
-                                <Col span={12}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      marginBottom: 8,
-                                    }}
-                                  >
-                                    <Text
-                                      type="secondary"
-                                      style={{ color: MUTED }}
-                                    >
-                                      Mức giá
-                                    </Text>
-                                    <Text strong>
-                                      {c.demand?.price
-                                        ? new Intl.NumberFormat("vi-VN").format(
-                                            c.demand.price as number,
-                                          ) + " đ"
-                                        : "-"}
-                                    </Text>
-                                  </div>
-                                </Col>
-                                {/* <Space>
-                                  {(c as DemandDTO)?.priority && (
-                                    <Tag color="success">Ưu tiên</Tag>
-                                  )}
-                                </Space> */}
-                              </Row>
-
-                              <Row gutter={[12, 12]}>
-                                <Col span={12}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      marginBottom: 8,
-                                    }}
-                                  >
-                                    <Text
-                                      type="secondary"
-                                      style={{ color: MUTED }}
-                                    >
-                                      Diện tích
-                                    </Text>
-                                    <Text strong style={{ color: RED_ALERT }}>
-                                      {c.demand?.area
-                                        ? `${c.demand.area} m²`
-                                        : "-"}
-                                    </Text>
-                                  </div>
-                                </Col>
-                              </Row>
-
-                              <Row gutter={[12, 12]}>
-                                <Col span={12}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      marginBottom: 8,
-                                    }}
-                                  >
-                                    <Text
-                                      type="secondary"
-                                      style={{ color: MUTED }}
-                                    >
-                                      Vị trí
-                                    </Text>
-                                    <Text>{c.demand?.location || "-"}</Text>
-                                  </div>
-                                </Col>
-                              </Row>
-
-                              <Row gutter={[12, 12]}>
-                                <Col span={12}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      marginBottom: 8,
-                                    }}
-                                  >
-                                    <Text
-                                      type="secondary"
-                                      style={{ color: MUTED }}
-                                    >
-                                      Loại nhà đất
-                                    </Text>
-                                    <Text>
-                                      {c.demand?.propertyType || "Chung cư"}
-                                    </Text>
-                                  </div>
-                                </Col>
-                              </Row>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  marginTop: 12,
-                                }}
-                              >
-                                <Button
-                                  style={{
-                                    background: "#fff",
-                                    color: "#666",
-                                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                                  }}
-                                >
-                                  Matching
-                                </Button>
-                              </div>
-                            </Card>
-                          </>
+                              Matching
+                            </Button>
+                          </div>
                         )}
                       </Card>
                     );
                   })}
-              </div>
+              </Space>
             </Spin>
 
-            <div style={{ textAlign: "center", marginTop: 16 }}>
-              <Pagination
-                current={selectedCustomerPage}
-                pageSize={pageSize}
-                total={totalCustomers}
-                onChange={handlePageChange}
-              />
-            </div>
+            <Pagination
+              current={selectedCustomerPage}
+              pageSize={pageSize}
+              total={totalCustomers}
+              onChange={setSelectedCustomerPage}
+              style={{ textAlign: "center", marginTop: 16 }}
+            />
           </Col>
 
-          {/* Right column: matched buildings panel */}
+          {/* Right Column: Matched Buildings */}
           <Col span={11}>
             <Card
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>Tòa nhà phù hợp</span>
+                  <Button
+                    type="primary"
+                    shape="round"
+                    disabled={selectedBuildingIds.length === 0}
+                  >
+                    Gửi khách hàng
+                  </Button>
+                </div>
+              }
               style={{
                 borderRadius: 16,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                 height: "calc(100vh - 56px)",
                 display: "flex",
                 flexDirection: "column",
-                padding: 16,
               }}
-              bodyStyle={{
-                padding: 16,
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-              }}
+              bodyStyle={{ flex: 1, overflowY: "auto", padding: 16 }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <div>
-                  <Title level={5} style={{ margin: 0 }}>
-                    Toà nhà phù hợp
-                  </Title>
-                </div>
-
-                <Button
-                  type="primary"
-                  shape="round"
-                  style={{ background: PRIMARY, borderColor: PRIMARY }}
-                >
-                  Gửi khách hàng
-                </Button>
-              </div>
-
-              <Divider style={{ margin: "8px 0 12px 0" }} />
-
-              <Spin spinning={buildingLoading}>
-                <div style={{ overflowY: "auto", flex: 1, paddingRight: 8 }}>
-                  {buildings && buildings.length > 0 ? (
-                    <Checkbox.Group
-                      value={selectedBuildingIds}
-                      onChange={(vals) =>
-                        setSelectedBuildingIds(vals as string[])
-                      }
+              <Spin spinning={isMatchingLoading}>
+                {matchedBuildings.length > 0 ? (
+                  <Checkbox.Group
+                    value={selectedBuildingIds}
+                    onChange={(vals) =>
+                      setSelectedBuildingIds(vals as string[])
+                    }
+                    style={{ width: "100%" }}
+                  >
+                    <Space
+                      direction="vertical"
                       style={{ width: "100%" }}
+                      size={16}
                     >
-                      <Space direction="vertical" style={{ width: "100%" }}>
-                        {buildings.map((b) => (
-                          <div key={b.id} style={{ width: "100%" }}>
-                            <Checkbox
-                              value={String(b.id)}
-                              style={{ width: "100%" }}
-                            >
-                              <BuildingCard
-                                building={b}
-                                variant="horizontal"
-                                thumbnailWidth={140}
-                              />
-                            </Checkbox>
-                          </div>
-                        ))}
-                      </Space>
-                    </Checkbox.Group>
-                  ) : (
-                    <div
-                      style={{
-                        textAlign: "center",
-                        padding: "40px 20px",
-                        color: MUTED,
-                      }}
-                    >
-                      <Text>Không có toà nhà nào</Text>
-                    </div>
-                  )}
-                </div>
+                      {matchedBuildings.map((b) => (
+                        <div
+                          key={b.buildingId}
+                          style={{ position: "relative" }}
+                        >
+                          <Checkbox
+                            value={String(b.buildingId)}
+                            style={{ width: "100%" }}
+                          >
+                            <MatchedBuildingItem building={b} />
+                          </Checkbox>
+                        </div>
+                      ))}
+                    </Space>
+                  </Checkbox.Group>
+                ) : (
+                  <Empty
+                    description="Không tìm thấy tòa nhà hoặc chưa sử dụng Matching"
+                    style={{ marginTop: 60 }}
+                  />
+                )}
               </Spin>
             </Card>
           </Col>

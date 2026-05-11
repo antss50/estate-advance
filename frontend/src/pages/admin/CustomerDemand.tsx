@@ -17,10 +17,16 @@ import {
   Pagination,
 } from "antd";
 import { SearchOutlined, UnorderedListOutlined } from "@ant-design/icons";
-import type { UserDTO, AssignStaffDTO, DemandDTO, UserDemandDTO } from "../../types/user.type";
+import type {
+  UserDTO,
+  AssignStaffDTO,
+  DemandDTO,
+  UserDemandDTO,
+} from "../../types/user.type";
 import { getStaffs } from "../../api/staffApi";
 import assignmentApi from "../../api/assignmentApi";
 import client from "../../api/axiosClient";
+import { getMatchingStaffs } from "../../api/staffApi";
 
 const { Text } = Typography;
 
@@ -30,7 +36,7 @@ const RED_ALERT = "#ff4d4f";
 // Status type mapping
 const statusConfig: Record<string, { label: string; color: string }> = {
   NEW: { label: "Chưa tiếp nhận", color: "#999999" },
-  ASSIGNED : { label: "Đã tiếp nhận", color: "#1890ff" },
+  ASSIGNED: { label: "Đã tiếp nhận", color: "#1890ff" },
   PENDING: { label: "Chưa tiếp nhận", color: "#999999" },
   CONSULTING: { label: "Đang tư vấn", color: "#ffbb00" },
   SIGNED: { label: "Đã kí hợp đồng", color: "#faad14" },
@@ -64,32 +70,29 @@ export const CustomerDemand: React.FC = () => {
 
   // --- Logic Fetch dữ liệu khách hàng ---
   const fetchCustomers = async (keyword: string = "", page: number = 1) => {
-  setLoading(true);
-  try {
-    // Chỉ gọi API customer-request để lấy dữ liệu gộp
-    const res = await client.get("/api/customer-request");
-    const data = res?.data ?? res;
+    setLoading(true);
+    try {
+      // Chỉ gọi API customer-request để lấy dữ liệu gộp
+      const res = await client.get("/api/customer-request");
+      const data = res?.data ?? res;
 
-    if (Array.isArray(data)) {
-      const mappedData = data.map((item: any) => ({
-        ...item,
-        // QUAN TRỌNG: Gán ID thực của khách hàng vào trường id của object
-        // Điều này đảm bảo khi click 'Phân công', selectedCustomerId sẽ là ID khách hàng
-        id: String(item.customerId || item.id), 
-        // Giữ lại request ID nếu cần dùng cho mục đích khác
-        customerRequestId: item.id, 
-      }));
+      if (Array.isArray(data)) {
+        const mappedData = data.map((item: any) => ({
+          ...item,
+          id: String(item.customerId || item.id),
+          customerRequestId: item.id,
+        }));
 
-      setCustomers(mappedData);
-      setTotalCustomers(mappedData.length);
+        setCustomers(mappedData);
+        setTotalCustomers(mappedData.length);
+      }
+    } catch (error) {
+      message.error("Lỗi khi tải danh sách khách hàng");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    message.error("Lỗi khi tải danh sách khách hàng");
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchStaffs = async () => {
     setStaffLoading(true);
@@ -249,11 +252,64 @@ export const CustomerDemand: React.FC = () => {
     } catch (error) {
       console.error("Lỗi khi phân công:", error);
       const msg =
-        (error as Error & { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Lỗi khi phân công nhân viên";
+        (error as Error & { response?: { data?: { message?: string } } })
+          ?.response?.data?.message || "Lỗi khi phân công nhân viên";
       message.error(msg);
     } finally {
       setAssigningLoading(false);
+    }
+  };
+
+  const handleMatching = async (customerRequest: UserDemandDTO) => {
+    const rawLocation = customerRequest.demand?.location || "";
+
+    // Tách chuỗi bằng dấu phẩy
+    const locationParts = rawLocation.split(",").map((s: string) => s.trim());
+
+    // Lấy Ward (Phần tử đầu tiên) và chuẩn hóa
+    const ward = locationParts[0] || "";
+
+    if (!ward) {
+      message.warning("Dữ liệu vị trí không hợp lệ để tìm kiếm nhân viên");
+      return;
+    }
+
+    setStaffLoading(true);
+
+    try {
+      // Gọi API staff-customer-matching với Ward đã tách
+      const response = await getMatchingStaffs(ward);
+
+      const staffData = response ?? [];
+
+      if (Array.isArray(staffData) && staffData.length > 0) {
+        // Sắp xếp theo totalScore giảm dần để lấy người phù hợp nhất lên đầu
+        const sortedStaff = [...staffData].sort(
+          (a, b) => b.totalScore - a.totalScore,
+        );
+
+        const mappedStaffs = sortedStaff.map((s) => ({
+          id: String(s.staffId),
+          fullName: s.staffName,
+          phone: s.phone,
+          workingArea: s.workingArea,
+          totalScore: s.totalScore,
+          performance: s.performanceScore,
+          workload: s.currentWorkload,
+        }));
+        console.log("Matched staffs:", mappedStaffs);
+        setStaffs(mappedStaffs as unknown as UserDTO[]);
+        setSelectedCustomerId(String(customerRequest.id));
+        message.success(`Tìm thấy ${staffData.length} nhân viên tại ${ward}`);
+      } else {
+        setStaffs([]);
+        message.info("Không có nhân viên phù hợp tại phường này");
+      }
+    } catch (error) {
+      console.error("Staff matching failed:", error);
+      message.error("Lỗi hệ thống khi tìm kiếm nhân viên");
+    } finally {
+      setStaffLoading(false);
     }
   };
 
@@ -390,7 +446,7 @@ export const CustomerDemand: React.FC = () => {
                               fontSize: "18px",
                             }}
                           >
-                            {customer.fullName.charAt(0).toUpperCase()}
+                            {customer.fullName}
                           </Avatar>
                         </Col>
                         <Col>
@@ -561,7 +617,9 @@ export const CustomerDemand: React.FC = () => {
                                 Vị trí
                               </Text>
                               <Text>
-                                <strong>{customer?.demand?.location || "-"}</strong>
+                                <strong>
+                                  {customer?.demand?.location || "-"}
+                                </strong>
                               </Text>
                             </div>
                           </Col>
@@ -580,8 +638,10 @@ export const CustomerDemand: React.FC = () => {
                                 Loại nhà đất
                               </Text>
                               <Text>
-                                <strong>{(customer?.demand as DemandDTO)?.propertyType ||
-                                  "Chung cư"}</strong>
+                                <strong>
+                                  {(customer?.demand as DemandDTO)
+                                    ?.propertyType || "Chung cư"}
+                                </strong>
                               </Text>
                             </div>
                           </Col>
@@ -601,6 +661,7 @@ export const CustomerDemand: React.FC = () => {
                               color: "#666",
                               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                             }}
+                            onClick={() => handleMatching(customer as unknown as UserDemandDTO)}
                           >
                             Matching
                           </Button>

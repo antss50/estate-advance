@@ -1,5 +1,14 @@
-import React, { useState } from "react";
-import { Form, Row, Col, Select, Input, Slider, Button, message } from "antd";
+import React, { useState, useEffect } from "react";
+import {
+  Form,
+  Row,
+  Col,
+  Select,
+  Input,
+  Slider,
+  Button,
+  message,
+} from "antd";
 import {
   HomeOutlined,
   ShoppingOutlined,
@@ -8,10 +17,17 @@ import {
   ShopOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
+import {
+  getProvinces,
+  getWardsByProvince,
+  type Province,
+  type Ward,
+} from "../../api/administrativeApi";
 import type { DemandFormValues } from "../../types";
 import "../../styles/DemandFormSection.css";
 
 interface CustomerRequestPayload {
+  customerId?: number; // Có thể có hoặc không, tùy vào logic của bạn
   fullName: string;
   phone: string;
   email: string;
@@ -20,40 +36,27 @@ interface CustomerRequestPayload {
     area: number;
     price: number;
     location: string;
+    // priorityType?: string;
   };
   status: "NEW";
 }
 
-const provinceOptions = [
-  { label: "Hồ Chí Minh", value: "hcm" },
-  { label: "Hà Nội", value: "hanoi" },
-  { label: "Đà Nẵng", value: "dn" },
-];
-
-const wardOptions = [
-  { label: "Phường Ba Đình", value: "ba-dinh" },
-  { label: "Phường Hoàn Kiếm", value: "hoan-kiem" },
-  { label: "Phường Tây Hồ", value: "tay-ho" },
-];
-
 const propertyTypeOptions = [
-  { label: "Căn Hộ", value: "apartment" },
-  { label: "Biệt Thự", value: "villa" },
-  { label: "Chung Cư", value: "condo" },
-  { label: "Nhà Phố", value: "townhouse" },
-  { label: "Shop House", value: "shophouse" },
+  { label: "Căn Hộ", value: "APARTMENT" },
+  { label: "Mặt bằng kinh doanh", value: "RETAIL" },
+  { label: "Kho bãi", value: "WAREHOUSE" },
+  { label: "Văn phòng", value: "OFFICE" },
 ];
 
 const propertyTypes = [
-  { icon: HomeOutlined, label: "Căn Hộ", value: "apartment" },
-  { icon: BankOutlined, label: "Biệt Thự", value: "villa" },
-  { icon: InsertRowLeftOutlined, label: "Chung Cư", value: "condo" },
-  { icon: ShoppingOutlined, label: "Nhà Phố", value: "townhouse" },
-  { icon: ShopOutlined, label: "Shop House", value: "shophouse" },
+  { icon: HomeOutlined, label: "Căn Hộ", value: "APARTMENT" },
+  { icon: BankOutlined, label: "Mặt bằng kinh doanh", value: "RETAIL" },
+  { icon: InsertRowLeftOutlined, label: "Kho bãi", value: "WAREHOUSE" },
+  { icon: ShoppingOutlined, label: "Văn phòng", value: "OFFICE" },
 ];
 interface DemandFormSectionProps {
   // Định nghĩa hàm onSubmit nhận dữ liệu nhu cầu khách hàng
-  onSubmit?: () => void; 
+  onSubmit?: () => void;
 }
 
 const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
@@ -64,20 +67,63 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
   ]);
   const [loading, setLoading] = useState(false);
 
+  // State for provinces and wards
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
+
+  // Fetch provinces on component mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setLoadingProvinces(true);
+      try {
+        const data = await getProvinces();
+        setProvinces(data);
+      } catch (error) {
+        console.error("Error fetching provinces:", error);
+        message.error("Không thể tải danh sách tỉnh/thành phố");
+      } finally {
+        setLoadingProvinces(false);
+      }
+    };
+
+    fetchProvinces();
+  }, []);
+
+  // Fetch wards when province changes
+  const handleProvinceChange = async (provinceCode: string) => {
+    setSelectedProvince(provinceCode);
+    form.setFieldValue("ward", undefined); // Reset ward when province changes
+    setLoadingWards(true);
+    try {
+      const data = await getWardsByProvince(provinceCode);
+      setWards(data);
+    } catch (error) {
+      console.error("Error fetching wards:", error);
+      message.error("Không thể tải danh sách phường/xã");
+      setWards([]);
+    } finally {
+      setLoadingWards(false);
+    }
+  };
+
   const handleFinish = async (values: DemandFormValues) => {
     setLoading(true);
     try {
-      // Lấy province label
-      const provinceLabel = provinceOptions.find(
-        (p) => p.value === values.province
-      )?.label || values.province;
-      // Lấy ward label
-      const wardLabel = wardOptions.find(
-        (w) => w.value === values.ward
-      )?.label || values.ward;
-      
-      const location = `${wardLabel}, ${provinceLabel}`;
-      
+      // Find the selected province and ward objects
+      const selectedProvinceObj = provinces.find(
+        (p) => p.code === values.province,
+      );
+      const selectedWardObj = wards.find((w) => w.code === values.ward);
+
+      // Build location string from ward and province names
+      const location =
+        selectedWardObj && selectedProvinceObj
+          ? `${selectedWardObj.name}, ${selectedProvinceObj.name}`
+          : "";
+
       // Chuẩn bị payload theo yêu cầu API
       const payload: CustomerRequestPayload = {
         fullName: values.fullName,
@@ -86,8 +132,9 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
         demand: {
           propertyType: values.propertyType,
           area: Number(values.area),
-          price: priceRange[1], // Lấy giá max từ range
+          price: priceRange[1], 
           location: location,
+          // priorityType: "DEFAULT || SAVINGS || PROFIT || SPACE", 
         },
         status: "NEW",
       };
@@ -95,15 +142,21 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
       console.log("Submitting customer request:", payload);
 
       // Gọi API thực
-      await axiosClient.post("/api/customer-request", payload);
-      
-      message.success("Gửi yêu cầu tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
+      await axiosClient.post("/api/customer/customer-request", payload);
+
+      message.success(
+        "Gửi yêu cầu tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm.",
+      );
       form.resetFields();
       setPriceRange([1000000000, 5000000000]);
+      setWards([]);
+      setSelectedProvince(null);
       onSubmit?.(); // Gọi callback nếu có
     } catch (error) {
       console.error("Error submitting customer request:", error);
-      const axiosErr = error as Error & { response?: { data?: { message?: string } } };
+      const axiosErr = error as Error & {
+        response?: { data?: { message?: string } };
+      };
       const errorMsg =
         axiosErr?.response?.data?.message ||
         axiosErr?.message ||
@@ -154,7 +207,7 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
           className="glassmorphic-form"
         >
           {/* Row 0: Contact Information */}
-          <Row gutter={[32, 0]} style={{marginBottom:40}}>
+          <Row gutter={[32, 0]} style={{ marginBottom: 40 }}>
             <Col xs={24} md={12}>
               <div className="form-group-inline">
                 <label className="form-label">Họ và Tên</label>
@@ -162,7 +215,9 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                   <Form.Item
                     name="fullName"
                     className="no-margin"
-                    rules={[{ required: true, message: "Vui lòng nhập họ và tên" }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập họ và tên" },
+                    ]}
                   >
                     <Input
                       className="form-input-glass"
@@ -179,7 +234,12 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                   <Form.Item
                     name="phone"
                     className="no-margin"
-                    rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng nhập số điện thoại",
+                      },
+                    ]}
                   >
                     <Input
                       className="form-input-glass"
@@ -215,14 +275,16 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                 </div>
               </div>
             </Col>
-            <Col xs={24} md={12} >
+            <Col xs={24} md={12}>
               <div className="form-group-inline">
                 <label className="form-label">Loại Bất Động Sản</label>
                 <div className="form-input-wrapper">
                   <Form.Item
                     name="propertyType"
                     className="no-margin"
-                    rules={[{ required: true, message: "Vui lòng chọn loại BĐS" }]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn loại BĐS" },
+                    ]}
                   >
                     <Select
                       className="form-select-glass"
@@ -244,7 +306,9 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                   <Form.Item
                     name="area"
                     className="no-margin"
-                    rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
+                    rules={[
+                      { required: true, message: "Vui lòng nhập diện tích" },
+                    ]}
                   >
                     <Input
                       className="form-input-glass"
@@ -295,27 +359,41 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                 <Row gutter={[12, 0]}>
                   <Col flex={1}>
                     <Form.Item
-                      name="ward"
+                      name="province"
                       className="no-margin"
-                      rules={[{ required: true, message: "Vui lòng chọn phường/xã" }]}
+                      rules={[
+                        { required: true, message: "Vui lòng chọn tỉnh" },
+                      ]}
                     >
                       <Select
                         className="form-select-glass"
-                        placeholder="Phường/Xã"
-                        options={wardOptions}
+                        placeholder="Tỉnh/Thành phố"
+                        loading={loadingProvinces}
+                        onChange={handleProvinceChange}
+                        options={provinces.map((province) => ({
+                          label: province.name,
+                          value: province.code,
+                        }))}
                       />
                     </Form.Item>
                   </Col>
                   <Col flex={1}>
                     <Form.Item
-                      name="province"
+                      name="ward"
                       className="no-margin"
-                      rules={[{ required: true, message: "Vui lòng chọn tỉnh" }]}
+                      rules={[
+                        { required: true, message: "Vui lòng chọn phường/xã" },
+                      ]}
                     >
                       <Select
                         className="form-select-glass"
-                        placeholder="Tỉnh"
-                        options={provinceOptions}
+                        placeholder="Phường/Xã"
+                        loading={loadingWards}
+                        disabled={!selectedProvince}
+                        options={wards.map((ward) => ({
+                          label: ward.name,
+                          value: ward.code,
+                        }))}
                       />
                     </Form.Item>
                   </Col>

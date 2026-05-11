@@ -1,6 +1,6 @@
 import client, { setAuthToken } from './axiosClient';
 import type { UserDTO } from '../types/user.type';
-import type { Staff } from '../types';
+import type { MatchingStaff, Staff } from '../types';
 
 const PATH = '/api/user/staffs';
 
@@ -35,4 +35,10 @@ export async function getStaffById(staffId: string): Promise<UserDTO> {
   return res.data;
 }
 
-export default { configureToken, getStaffs, getStaffById };
+export async function getMatchingStaffs(ward: string): Promise<MatchingStaff[]> {
+  const res = await client.get<MatchingStaff[]>(`api/staff-customer-matching?ward=${ward}&limit=5`);
+  return res.data;
+}
+
+
+export default { configureToken, getStaffs, getStaffById, getMatchingStaffs };

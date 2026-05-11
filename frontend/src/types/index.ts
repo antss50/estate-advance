@@ -21,6 +21,23 @@ export interface Staff {
   totalDeals?: number; // Tổng số giao dịch nếu có
 }
 
+export interface MatchingStaff {
+  staffId: number;
+  staffName: string;
+  phone: string;
+  workingArea: string;
+  areaScore: number;
+  performanceScore: number;
+  workloadScore: number;
+  newbieBonus: number;
+  totalScore: number;
+  currentWorkload: number;
+  totalDeals: number;
+  revenue: number;
+  daysWorked: number;
+  avgRevenuePerDeal: number;
+}
+
 export interface DemandFormValues {
   fullName: string;
   phone: string;

@@ -1,6 +1,7 @@
 import client, { setAuthToken } from './axiosClient';
 import type { BuildingDTO, BuildingSearchRequest, AssignmentBuildingDTO, BuildingSearchResponse } from '../types/building.type';
 import type {  ResponseDTO } from '../types/response.type';
+import type { MatchedStaffDTO } from '../types/user.type';
 // staff list response shape for building/{id}/staffs
 export type BuildingStaffEntry = { staffId: number; fullName: string; checked: boolean };
 const PATH = '/api/building';
@@ -66,6 +67,11 @@ export async function assignBuildingStaffs(payload: AssignmentBuildingDTO): Prom
   return res.data;
 }
 
+export async function matchingStaffs(buildingId: number): Promise<ResponseDTO<MatchedStaffDTO[]>> {
+  const res = await client.get<ResponseDTO<MatchedStaffDTO[]>>(`/api/staff-building-matching/building/${buildingId}`);
+  return res.data;
+}
+
 export default {
   configureToken,
   searchBuildings,
@@ -77,4 +83,5 @@ export default {
   assignBuildingStaffs,
   updateBuildingForm,
   createBuildingForm,
+  matchingStaffs,
 };

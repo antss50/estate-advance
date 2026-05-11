@@ -63,6 +63,37 @@ export interface AssignStaffDTO {
   checked?: boolean;
 }
 
+export interface MatchedStaffDTO {
+  staffId: number;
+  staffName: string;
+  phone?: string | null;
+  workingArea?: string;
+  areaScore?: number;
+  performanceScore?: number;
+  workloadScore?: number;
+  newbieBonus?: number;
+  totalScore?: number;
+  currentWorkload?: number;
+  totalDeals?: number;
+  revenue?: number;
+  daysWorked?: number;
+  avgRevenuePerDeal?: number;
+}
+
+export interface MatchingPayload {
+  customerId: number;
+  transactionType: string;
+  desiredPriceSale: number;
+  desiredArea: number;
+  desiredWard: string;
+  desiredProvince: string;
+  buildingType: string;
+  priorityType: string;
+  priceTolerance: number;
+  areaTolerance: number;
+  limit: number;
+}
+
 export type UserListResponse = ResponseDTO<UserDTO[]>;
 export type CustomerRequestListResponse = ResponseDTO<UserDemandDTO[]>;
 

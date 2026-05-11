@@ -15,6 +15,7 @@ import {
   InputNumber,
   Select,
   Upload,
+  Tag,
 } from "antd";
 import {
   SearchOutlined,
@@ -34,6 +35,8 @@ import type {
   AssignmentBuildingDTO,
 } from "../../types/building.type";
 import formatImageSrc from "../../utils/format/images";
+import type { MatchedStaffDTO } from "../../types/user.type";
+import type { ResponseDTO } from "../../types/response.type";
 
 const { Title } = Typography;
 
@@ -66,9 +69,7 @@ const BuildingManagement: React.FC = () => {
   const [formEdit] = Form.useForm();
   const [uploadList, setUploadList] = useState<UploadFile[]>([]);
 
-  const [staffOptions, setStaffOptions] = useState<
-    { label: string; value: number }[]
-  >([]);
+  const [staffOptions, setStaffOptions] = useState<MatchedStaffDTO[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<number | null>(null);
 
   const [form] = Form.useForm();
@@ -115,32 +116,41 @@ const BuildingManagement: React.FC = () => {
   };
 
   const openAssign = async (building: BuildingDTO) => {
-    setCurrentBuilding(building);
-    setAssignVisible(true);
-    setSelectedStaff(null);
-    setStaffOptions([]);
-    try {
-      const ass = await buildingApi.getBuildingStaffs(building.id as number);
-      if (ass && Array.isArray(ass.data)) {
-        const opts = ass.data.map(
-          (it: { staffId: number; fullName: string }) => ({
-            label: it.fullName || String(it.staffId),
-            value: Number(it.staffId),
-          }),
-        );
+  if (!building.id) return;
+  
+  setCurrentBuilding(building);
+  setAssignVisible(true);
+  setSelectedStaff(null);
+  setStaffOptions([]);
+  setAssigning(true); // Dùng loading state của modal để chờ fetch dữ liệu
 
-        const selected = ass.data
-          .filter((it: { checked: boolean }) => it.checked)
-          .map((it: { staffId: number }) => Number(it.staffId));
-        setSelectedStaff(selected?.[0] ?? null);
-        setStaffOptions(opts);
-      }
-      console.log(ass);
-    } catch (err) {
-      console.error("Error preparing assign modal", err);
-      message.error("Không thể tải danh sách nhân viên");
+  try {
+    // Gọi API matching nhân viên mới
+    const response = await buildingApi.matchingStaffs(Number(building.id));
+    const matchedData = Array.isArray(response) ? response : (response as ResponseDTO<MatchedStaffDTO[]>)?.data;
+
+    if (Array.isArray(matchedData)) {
+      // Sắp xếp nhân viên theo điểm totalScore giảm dần
+      const sortedStaff = [...matchedData].sort(
+        (a, b) => (b.totalScore || 0) - (a.totalScore || 0)
+      );
+      setStaffOptions(sortedStaff);
+
+      // Nếu cần hiển thị nhân viên đã gán trước đó (optional tùy logic backend)
+      // Hiện tại API matching trả về danh sách gợi ý, admin sẽ chọn mới
     }
-  };
+  } catch (err) {
+    console.error("Error matching staffs", err);
+    message.error("Không thể tải danh sách nhân viên phù hợp");
+    
+    // Xử lý hiển thị lỗi 500 nếu buildingId không tồn tại
+    if ((err as any).response?.status === 500) {
+      message.error("Lỗi server: Tòa nhà không tồn tại hệ thống matching");
+    }
+  } finally {
+    setAssigning(false);
+  }
+};
 
   const closeAssign = () => {
     setAssignVisible(false);
@@ -159,52 +169,61 @@ const BuildingManagement: React.FC = () => {
     (async () => {
       setEditLoading(true);
       try {
-        // 1. Fetch dữ liệu chi tiết từ Backend
-        const data = (await buildingApi.getBuilding(
-          String(building.id),
-        )) as unknown as BuildingDTO;
+        // 1. Fetch dữ liệu từ API
+        const response = await buildingApi.getBuilding(String(building.id));
 
-        if (data) {
-          setEditingBuilding(data);
+        // 2. Extract data từ ResponseDTO wrapper
+        const buildingData = response?.data;
 
-          // 2. Chuẩn hóa dữ liệu trước khi đổ vào Form
+        // 3. Kiểm tra buildingDetail có tồn tại trước khi xử lý typeCode
+        if (buildingData && typeof buildingData === "object") {
+          setEditingBuilding(buildingData);
+
+          // Mở Modal ngay sau khi xác nhận có data
+          setEditVisible(true);
+
+          // 4. Xử lý typeCode cực kỳ an toàn
+          let finalTypeCode: string[] = [];
+          const rawTypeCode = buildingData.typeCode;
+
+          if (Array.isArray(rawTypeCode)) {
+            finalTypeCode = rawTypeCode;
+          } else if (
+            typeof rawTypeCode === "string" &&
+            rawTypeCode.trim() !== ""
+          ) {
+            finalTypeCode = rawTypeCode.split(",").map((s: string) => s.trim());
+          }
+
+          // 5. Chuẩn hóa dữ liệu Form
           const formattedData = {
-            ...data,
-            // Đảm bảo typeCode luôn là mảng cho Select Multiple, xử lý cả string lẫn array
-            typeCode: Array.isArray(data.typeCode)
-              ? data.typeCode
-              : data.typeCode
-                ? data.typeCode
-                    .split(",")
-                    .filter((i: string) => i.trim() !== "")
-                : [],
+            ...buildingData,
+            typeCode: finalTypeCode,
           };
 
-          // Đổ dữ liệu vào Form
           formEdit.setFieldsValue(formattedData);
 
-          // 3. Xử lý danh sách ảnh (uploadList)
-          const imageUrlString = data.image || "";
-
-          // Tách chuỗi bằng dấu phẩy và loại bỏ các phần tử rỗng (tránh ghost images)
-          const urls = imageUrlString
-            .split(",")
-            .map((u: string) => u.trim())
-            .filter((u: string) => u !== "");
-
-          const files: UploadFile[] = urls.map((u: string, idx: number) => ({
-            uid: `existing-${idx}-${Date.now()}`, // Tạo UID duy nhất để tránh lỗi render
-            name: `image-${idx}.jpg`,
-            status: "done",
-            url: formatImageSrc(u), // Sử dụng hàm format thông minh ở trên
-          }));
-
-          setUploadList(files);
-          setEditVisible(true);
+          // 6. Xử lý ảnh an toàn
+          if (buildingData.image && typeof buildingData.image === "string") {
+            const urls = buildingData.image
+              .split(",")
+              .filter((u: string) => u.trim() !== "");
+            const files = urls.map((u: string, idx: number) => ({
+              uid: `existing-${idx}-${Date.now()}`,
+              name: `image-${idx}.png`,
+              status: "done",
+              url: formatImageSrc(u),
+            }));
+            setUploadList(files);
+          } else {
+            setUploadList([]);
+          }
+        } else {
+          message.error("Dữ liệu tòa nhà trả về không hợp lệ");
         }
       } catch (err) {
-        console.error("Failed load building detail", err);
-        message.error("Không thể tải chi tiết tòa nhà");
+        console.error("Open edit error:", err);
+        message.error("Lấy chi tiết tòa nhà thất bại");
       } finally {
         setEditLoading(false);
       }
@@ -220,60 +239,70 @@ const BuildingManagement: React.FC = () => {
   const handleSave = async (values: BuildingDTO) => {
     setEditLoading(true);
     try {
+      // 1. Clone payload và chuẩn hóa typeCode từ Array sang String
       const payload: BuildingDTO = {
         ...editingBuilding,
         ...values,
+        // Convert mảng typeCode thành chuỗi "TANG_TRET,VAN_PHONG"
+        typeCode: Array.isArray(values.typeCode)
+          ? values.typeCode.join(",")
+          : values.typeCode,
       };
 
+      // 2. Xử lý ảnh nếu có thay đổi
       if (uploadList.length > 0) {
-        // 1. Xử lý tất cả các ảnh trong list (không chỉ ảnh đầu tiên)
-        const imagePromises = uploadList.map(async (file) => {
+        const validFiles = uploadList.filter((f) => f.status === "done");
+
+        const imagePromises = validFiles.map(async (file) => {
+          // Nếu là file mới upload (originFileObj)
           if (file.originFileObj instanceof File) {
-            // Nếu là ảnh mới -> Chuyển sang Base64
             return await getBase64(file.originFileObj);
           }
-          // Nếu là ảnh cũ -> Tách base64 thô từ URL (loại bỏ prefix)
+          // Nếu là ảnh cũ đã có URL/Base64
           if (file.url) {
-            // file.url có thể là: "data:image/jpeg;base64,BASE64DATA" hoặc "http://..." hoặc "BASE64DATA"
-            if (file.url.startsWith("http")) return file.url; // URL tuyệt đối - giữ nguyên
             if (file.url.startsWith("data:image")) {
-              return file.url.split(",")[1] || file.url; // Lấy phần base64 thô (sau dấu phẩy)
+              return file.url.split(",")[1]; // Chỉ lấy phần base64 thô
             }
-            return file.url; // Nếu đã là base64 thô
+            // Nếu là URL từ server (ví dụ: /repository/building_1.jpg)
+            // Bạn nên giữ nguyên hoặc xử lý theo logic backend yêu cầu
+            return file.url.replace(window.location.origin, "");
           }
           return "";
         });
 
-        const images = await Promise.all(imagePromises);
+        const images = (await Promise.all(imagePromises)).filter(
+          (img) => img !== "",
+        );
 
-        // 2. Chuyển mảng thành chuỗi ngăn cách bởi dấu phẩy để khớp DTO
-        payload.image = images.filter((img) => img).join(",");
-
-        // 3. Nếu bạn có trường Avatar riêng (thường là ảnh đầu tiên)
+        // Gộp thành chuỗi LONGTEXT để lưu vào DB
+        payload.image = images.join(",");
         payload.avatar = images[0] || "";
       } else {
-        payload.image = ""; // Hoặc undefined tùy logic backend
+        payload.image = "";
         payload.avatar = "";
       }
 
-      // Gửi payload dạng JSON
+      // 3. Gửi request đến API
       let res;
       if (payload.id) {
+        // Đảm bảo truyền đúng ID và object payload
         res = await buildingApi.updateBuilding(String(payload.id), payload);
       } else {
         res = await buildingApi.createBuilding(payload);
       }
-      console.log("Save response", res);
+
       if (res) {
         message.success("Lưu tòa nhà thành công");
         closeEdit();
-        fetchBuildings(1, keyword);
+        fetchBuildings(page, keyword); // Refresh lại đúng trang hiện tại
       }
     } catch (err) {
       console.error("Save building error", err);
-      const msg =
-        (err as Error).message || "Lưu tòa nhà thất bại";
-      message.error(msg);
+      // Hiển thị lỗi chi tiết từ backend nếu có
+      const errorMsg =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Lưu tòa nhà thất bại";
+      message.error(errorMsg);
     } finally {
       setEditLoading(false);
     }
@@ -317,9 +346,22 @@ const BuildingManagement: React.FC = () => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const result = reader.result as string;
-        const base64String = result.split(",")[1];
-        resolve(base64String);
+        try {
+          const result = reader.result as string;
+          // Tách base64 thô từ data URL
+          const parts = result.split(",");
+          const base64String =
+            parts.length > 1 ? parts[parts.length - 1] : result;
+
+          if (!base64String) {
+            reject(new Error("Không thể chuyển ảnh sang Base64"));
+            return;
+          }
+
+          resolve(base64String);
+        } catch (error) {
+          reject(error);
+        }
       };
       reader.onerror = (error) => reject(error);
     });
@@ -488,28 +530,64 @@ const BuildingManagement: React.FC = () => {
       </Spin>
 
       <Modal
-        title={`Gán nhân viên cho: ${currentBuilding?.name || ""}`}
-        open={assignVisible}
-        onCancel={closeAssign}
-        onOk={handleAssign}
-        confirmLoading={assigning}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item label="Chọn nhân viên">
-            <Radio.Group
-              value={selectedStaff}
-              onChange={(e) => setSelectedStaff(Number(e.target.value))}
-              style={{ display: "flex", flexDirection: "column", gap: 8 }}
-            >
-              {staffOptions.map((opt) => (
-                <Radio key={opt.value} value={opt.value}>
-                  {opt.label} (ID: {opt.value})
+  title={
+    <span>
+      <TeamOutlined /> Đề xuất nhân viên phù hợp cho: <strong>{currentBuilding?.name}</strong>
+    </span>
+  }
+  open={assignVisible}
+  onCancel={closeAssign}
+  onOk={handleAssign}
+  confirmLoading={assigning}
+  width={600}
+>
+  <Spin spinning={assigning}>
+    <Form form={form} layout="vertical">
+      <Form.Item label="Danh sách nhân viên (Sắp xếp theo độ phù hợp)">
+        <Radio.Group
+          value={selectedStaff}
+          onChange={(e) => setSelectedStaff(Number(e.target.value))}
+          style={{ width: "100%" }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {staffOptions.length > 0 ? (
+              staffOptions.map((staff) => (
+                <Radio 
+                  key={staff.staffId} 
+                  value={staff.staffId}
+                  style={{ 
+                    padding: '12px', 
+                    border: '1px solid #f0f0f0', 
+                    borderRadius: '8px',
+                    width: '100%',
+                    margin: 0
+                  }}
+                >
+                  <div style={{ display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', position: 'relative' }}>
+                    <div>
+                      <strong style={{ fontSize: '15px' }}>{staff.staffName}</strong>
+                      <div style={{ fontSize: '12px', color: '#363636' }}>
+                        Khu vực làm việc: <strong>{staff.workingArea}</strong> | Giao dịch thành công: <strong>{staff.totalDeals}</strong> | Số khách phụ trách: <strong>{staff.currentWorkload}</strong>
+                      </div>
+                    </div>
+                    {/* Hiển thị điểm số Matching */}
+                    <div style={{ textAlign: 'right' }}>
+                      <Tag color={staff.totalScore! > 0.8 ? "green" : "orange"}>
+                        {Math.round(staff.totalScore! * 100)}% Match
+                      </Tag>
+                    </div>
+                  </div>
                 </Radio>
-              ))}
-            </Radio.Group>
-          </Form.Item>
-        </Form>
-      </Modal>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy nhân viên phù hợp</div>
+            )}
+          </div>
+        </Radio.Group>
+      </Form.Item>
+    </Form>
+  </Spin>
+</Modal>
 
       {/* Create / Edit Modal */}
       <Modal
@@ -518,7 +596,7 @@ const BuildingManagement: React.FC = () => {
             ? `Cập nhật tòa nhà: ${editingBuilding.name}`
             : "Tạo tòa nhà mới"
         }
-        open={editVisible}
+        visible={editVisible}
         onCancel={closeEdit}
         onOk={() => formEdit.submit()}
         confirmLoading={editLoading}
@@ -555,7 +633,7 @@ const BuildingManagement: React.FC = () => {
                     { label: "Nội thất", value: "NOI_THAT" },
                     { label: "Văn phòng", value: "VAN_PHONG" },
                     { label: "Shophouse", value: "SHOPHOUSE" },
-                    { label: "Nhà phố", value: "NHA_PHO" }
+                    { label: "Nhà phố", value: "NHA_PHO" },
                   ]}
                 />
               </Form.Item>

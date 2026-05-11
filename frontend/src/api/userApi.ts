@@ -1,7 +1,8 @@
 import client, { setAuthToken } from './axiosClient';
-import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload, UserDemandDTO } from '../types/user.type';
+import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload, UserDemandDTO, MatchingPayload } from '../types/user.type';
 import type { ResponseDTO, PaginatedResult } from '../types/response.type';
 import type { Staff } from '../types';
+import type { MatchingResponseDTO } from '../types/building.type';
 
 const PATH = '/api/user';
 
@@ -49,6 +50,10 @@ export async function changePassword(payload: PasswordDTO): Promise<ResponseDTO<
   return res.data;
 }
 
+export async function matchCustomerRequest(payload: MatchingPayload): Promise<ResponseDTO<MatchingResponseDTO>> {
+  const res = await client.post<ResponseDTO<MatchingResponseDTO>>(`/api/customer-matching/find-buildings`, payload);
+  return res.data;
+}
 export default {
   configureToken,
   listUsers,
@@ -59,4 +64,5 @@ export default {
   updateUser,
   deleteUser,
   changePassword,
+  matchCustomerRequest
 };
