@@ -85,15 +85,15 @@ export function BuildingDetailModal({
             <div className="detail-row">
               <span className="label">Địa chỉ:</span>
               <span className="value">
-                {building.address || `${building.ward}, ${building.district}`}
+                {building.address || `${building.ward}, ${building.province}`}
               </span>
             </div>
             <div className="detail-row">
-              <span className="label">Quận:</span>
-              <span className="value">{building.district}</span>
+              <span className="label">Tỉnh:</span>
+              <span className="value">{building.province}</span>
             </div>
             <div className="detail-row">
-              <span className="label">Phường:</span>
+              <span className="label">Phường/Xã:</span>
               <span className="value">{building.ward}</span>
             </div>
           </div>

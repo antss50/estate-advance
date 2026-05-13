@@ -19,18 +19,18 @@ export async function getStaffs(): Promise<Staff[]> {
       userName: item.userName, 
       email: item.email,
       phone: item.phone,
-      working_area: item.workingArea,
+      workingArea: item.workingArea,
       role: item.role || 'STAFF',
       revenue: item.revenue,
       performance: item.performance,
-      total_deals: item.totalDeals
+      totalDeals: item.totalDeals
     } as unknown as Staff));
   }
   
   return [];
 }
 
-export async function getStaffById(staffId: string): Promise<UserDTO> {
+export async function getStaffById(staffId: number): Promise<UserDTO> {
   const res = await client.get<UserDTO>(`${PATH}/${staffId}`);
   return res.data;
 }

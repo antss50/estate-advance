@@ -78,7 +78,7 @@
 }
 
 .custom-tab {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.7);
   padding: 12px 32px;
@@ -96,8 +96,8 @@
 }
 
 .custom-tab.active {
-  background: rgba(100, 100, 100, 0.4);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.4);
+  color: #000000;
   border-color: rgba(255, 255, 255, 0.3);
 }
 
@@ -286,6 +286,8 @@
   transition: all 0.3s ease;
   min-width: 100px;
   text-align: center;
+  background-color: transparent;
+  border: none;
 }
 
 .property-icon {
@@ -313,6 +315,25 @@
 
 .property-type-icon-item:hover .property-label {
   color: #1677ff;
+}
+
+.property-type-icon-item.active {
+  color: #fff;
+  background: rgba(22, 119, 255, 0.2); /* Nền xanh glass nhẹ */
+  border: 1px solid rgba(22, 119, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(22, 119, 255, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.property-type-icon-item.active .property-icon {
+  transform: scale(1.2);
+  color: #1677ff; /* Đổi icon sang màu xanh brand */
+  filter: drop-shadow(0 0 8px rgba(22, 119, 255, 0.8));
+}
+
+.property-type-icon-item.active .property-label {
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================================

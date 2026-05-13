@@ -8,7 +8,6 @@ import {
   Space,
   Modal,
   Form,
-  Radio,
   message,
   Typography,
   Spin,
@@ -16,6 +15,7 @@ import {
   Select,
   Upload,
   Tag,
+  Checkbox,
 } from "antd";
 import {
   SearchOutlined,
@@ -70,7 +70,7 @@ const BuildingManagement: React.FC = () => {
   const [uploadList, setUploadList] = useState<UploadFile[]>([]);
 
   const [staffOptions, setStaffOptions] = useState<MatchedStaffDTO[]>([]);
-  const [selectedStaff, setSelectedStaff] = useState<number | null>(null);
+  const [selectedStaffs, setSelectedStaffs] = useState<number[]>([]);
 
   const [form] = Form.useForm();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -116,41 +116,43 @@ const BuildingManagement: React.FC = () => {
   };
 
   const openAssign = async (building: BuildingDTO) => {
-  if (!building.id) return;
-  
-  setCurrentBuilding(building);
-  setAssignVisible(true);
-  setSelectedStaff(null);
-  setStaffOptions([]);
-  setAssigning(true); // Dùng loading state của modal để chờ fetch dữ liệu
+    if (!building.id) return;
 
-  try {
-    // Gọi API matching nhân viên mới
-    const response = await buildingApi.matchingStaffs(Number(building.id));
-    const matchedData = Array.isArray(response) ? response : (response as ResponseDTO<MatchedStaffDTO[]>)?.data;
+    setCurrentBuilding(building);
+    setAssignVisible(true);
+    // setSelectedStaffs([]);
+    // setStaffOptions([]);
+    setAssigning(true); // Dùng loading state của modal để chờ fetch dữ liệu
 
-    if (Array.isArray(matchedData)) {
-      // Sắp xếp nhân viên theo điểm totalScore giảm dần
-      const sortedStaff = [...matchedData].sort(
-        (a, b) => (b.totalScore || 0) - (a.totalScore || 0)
-      );
-      setStaffOptions(sortedStaff);
+    try {
+      // Gọi API matching nhân viên mới
+      const response = await buildingApi.matchingStaffs(Number(building.id));
+      const matchedData = Array.isArray(response)
+        ? response
+        : (response as ResponseDTO<MatchedStaffDTO[]>)?.data;
 
-      // Nếu cần hiển thị nhân viên đã gán trước đó (optional tùy logic backend)
-      // Hiện tại API matching trả về danh sách gợi ý, admin sẽ chọn mới
+      if (Array.isArray(matchedData)) {
+        // Sắp xếp nhân viên theo điểm totalScore giảm dần
+        const sortedStaff = [...matchedData].sort(
+          (a, b) => (b.totalScore || 0) - (a.totalScore || 0),
+        );
+        setStaffOptions(sortedStaff);
+
+        // Nếu cần hiển thị nhân viên đã gán trước đó (optional tùy logic backend)
+        // Hiện tại API matching trả về danh sách gợi ý, admin sẽ chọn mới
+      }
+    } catch (err) {
+      console.error("Error matching staffs", err);
+      message.error("Không thể tải danh sách nhân viên phù hợp");
+
+      // Xử lý hiển thị lỗi 500 nếu buildingId không tồn tại
+      if ((err as { response?: { status: number } }).response?.status === 500) {
+        message.error("Lỗi server: Tòa nhà không tồn tại hệ thống matching");
+      }
+    } finally {
+      setAssigning(false);
     }
-  } catch (err) {
-    console.error("Error matching staffs", err);
-    message.error("Không thể tải danh sách nhân viên phù hợp");
-    
-    // Xử lý hiển thị lỗi 500 nếu buildingId không tồn tại
-    if ((err as any).response?.status === 500) {
-      message.error("Lỗi server: Tòa nhà không tồn tại hệ thống matching");
-    }
-  } finally {
-    setAssigning(false);
-  }
-};
+  };
 
   const closeAssign = () => {
     setAssignVisible(false);
@@ -170,56 +172,45 @@ const BuildingManagement: React.FC = () => {
       setEditLoading(true);
       try {
         // 1. Fetch dữ liệu từ API
-        const response = await buildingApi.getBuilding(String(building.id));
-
+        const data = (await buildingApi.getBuilding(String(building.id),)) as BuildingDTO;
         // 2. Extract data từ ResponseDTO wrapper
-        const buildingData = response?.data;
-
         // 3. Kiểm tra buildingDetail có tồn tại trước khi xử lý typeCode
-        if (buildingData && typeof buildingData === "object") {
-          setEditingBuilding(buildingData);
+        if (data) {
+          setEditingBuilding(data);
 
-          // Mở Modal ngay sau khi xác nhận có data
-          setEditVisible(true);
-
-          // 4. Xử lý typeCode cực kỳ an toàn
-          let finalTypeCode: string[] = [];
-          const rawTypeCode = buildingData.typeCode;
-
-          if (Array.isArray(rawTypeCode)) {
-            finalTypeCode = rawTypeCode;
-          } else if (
-            typeof rawTypeCode === "string" &&
-            rawTypeCode.trim() !== ""
-          ) {
-            finalTypeCode = rawTypeCode.split(",").map((s: string) => s.trim());
-          }
-
-          // 5. Chuẩn hóa dữ liệu Form
           const formattedData = {
-            ...buildingData,
-            typeCode: finalTypeCode,
+            ...data,
+            // Đảm bảo typeCode luôn là mảng cho Select Multiple, xử lý cả string lẫn array
+            typeCode: Array.isArray(data.typeCode)
+              ? data.typeCode
+              : data.typeCode
+                ? data.typeCode
+                    .split(",")
+                    .filter((i: string) => i.trim() !== "")
+                : [],
           };
 
+          // Đổ dữ liệu vào Form
           formEdit.setFieldsValue(formattedData);
 
-          // 6. Xử lý ảnh an toàn
-          if (buildingData.image && typeof buildingData.image === "string") {
-            const urls = buildingData.image
-              .split(",")
-              .filter((u: string) => u.trim() !== "");
-            const files = urls.map((u: string, idx: number) => ({
-              uid: `existing-${idx}-${Date.now()}`,
-              name: `image-${idx}.png`,
-              status: "done",
-              url: formatImageSrc(u),
-            }));
-            setUploadList(files);
-          } else {
-            setUploadList([]);
-          }
-        } else {
-          message.error("Dữ liệu tòa nhà trả về không hợp lệ");
+          // 3. Xử lý danh sách ảnh (uploadList)
+          const imageUrlString = data.image || "";
+
+          // Tách chuỗi bằng dấu phẩy và loại bỏ các phần tử rỗng (tránh ghost images)
+          const urls = imageUrlString
+            .split(",")
+            .map((u: string) => u.trim())
+            .filter((u: string) => u !== "");
+
+          const files: UploadFile[] = urls.map((u: string, idx: number) => ({
+            uid: `existing-${idx}-${Date.now()}`, // Tạo UID duy nhất để tránh lỗi render
+            name: `image-${idx}.jpg`,
+            status: "done",
+            url: formatImageSrc(u), // Sử dụng hàm format thông minh ở trên
+          }));
+
+          setUploadList(files);
+          setEditVisible(true);
         }
       } catch (err) {
         console.error("Open edit error:", err);
@@ -239,11 +230,11 @@ const BuildingManagement: React.FC = () => {
   const handleSave = async (values: BuildingDTO) => {
     setEditLoading(true);
     try {
-      // 1. Clone payload và chuẩn hóa typeCode từ Array sang String
       const payload: BuildingDTO = {
         ...editingBuilding,
-        ...values,
-        // Convert mảng typeCode thành chuỗi "TANG_TRET,VAN_PHONG"
+        ...values,// Map provinceName từ form về district nếu backend vẫn dùng district
+        disctict: values.province || null,
+        ward: values.ward,
         typeCode: Array.isArray(values.typeCode)
           ? values.typeCode.join(",")
           : values.typeCode,
@@ -251,9 +242,8 @@ const BuildingManagement: React.FC = () => {
 
       // 2. Xử lý ảnh nếu có thay đổi
       if (uploadList.length > 0) {
-        const validFiles = uploadList.filter((f) => f.status === "done");
 
-        const imagePromises = validFiles.map(async (file) => {
+        const imagePromises = uploadList.map(async (file) => {
           // Nếu là file mới upload (originFileObj)
           if (file.originFileObj instanceof File) {
             return await getBase64(file.originFileObj);
@@ -261,21 +251,19 @@ const BuildingManagement: React.FC = () => {
           // Nếu là ảnh cũ đã có URL/Base64
           if (file.url) {
             if (file.url.startsWith("data:image")) {
-              return file.url.split(",")[1]; // Chỉ lấy phần base64 thô
+              return file.url.split(",")[1] || file.url; // Chỉ lấy phần base64 thô
             }
             // Nếu là URL từ server (ví dụ: /repository/building_1.jpg)
             // Bạn nên giữ nguyên hoặc xử lý theo logic backend yêu cầu
-            return file.url.replace(window.location.origin, "");
+            return file.url;
           }
           return "";
         });
 
-        const images = (await Promise.all(imagePromises)).filter(
-          (img) => img !== "",
-        );
+        const images = (await Promise.all(imagePromises))
 
         // Gộp thành chuỗi LONGTEXT để lưu vào DB
-        payload.image = images.join(",");
+         payload.image = images.filter((img) => img).join(",");
         payload.avatar = images[0] || "";
       } else {
         payload.image = "";
@@ -348,15 +336,7 @@ const BuildingManagement: React.FC = () => {
       reader.onload = () => {
         try {
           const result = reader.result as string;
-          // Tách base64 thô từ data URL
-          const parts = result.split(",");
-          const base64String =
-            parts.length > 1 ? parts[parts.length - 1] : result;
-
-          if (!base64String) {
-            reject(new Error("Không thể chuyển ảnh sang Base64"));
-            return;
-          }
+          const base64String = result.split(",")[1];
 
           resolve(base64String);
         } catch (error) {
@@ -368,11 +348,15 @@ const BuildingManagement: React.FC = () => {
 
   const handleAssign = async () => {
     if (!currentBuilding) return;
+    if (selectedStaffs.length === 0) {
+    message.warning("Vui lòng chọn ít nhất một nhân viên để gán");
+    return;
+  }
     setAssigning(true);
     try {
       const payload: AssignmentBuildingDTO = {
         buildingId: Number(currentBuilding.id),
-        staffIds: selectedStaff ? [selectedStaff] : [],
+        staffs: selectedStaffs
       };
       const res = await buildingApi.assignBuildingStaffs(payload);
       if (res && (res.success === true || res.success === undefined)) {
@@ -448,6 +432,12 @@ const BuildingManagement: React.FC = () => {
       title: "Giá thuê",
       dataIndex: "rentPrice",
       key: "rentPrice",
+      render: (v: number) => (v ? v.toLocaleString() + " VND" : "-"),
+    },
+    {
+      title: "Giá bán",
+      dataIndex: "salePrice",
+      key: "salePrice",
       render: (v: number) => (v ? v.toLocaleString() + " VND" : "-"),
     },
     {
@@ -530,64 +520,87 @@ const BuildingManagement: React.FC = () => {
       </Spin>
 
       <Modal
-  title={
-    <span>
-      <TeamOutlined /> Đề xuất nhân viên phù hợp cho: <strong>{currentBuilding?.name}</strong>
-    </span>
-  }
-  open={assignVisible}
-  onCancel={closeAssign}
-  onOk={handleAssign}
-  confirmLoading={assigning}
-  width={600}
->
-  <Spin spinning={assigning}>
-    <Form form={form} layout="vertical">
-      <Form.Item label="Danh sách nhân viên (Sắp xếp theo độ phù hợp)">
-        <Radio.Group
-          value={selectedStaff}
-          onChange={(e) => setSelectedStaff(Number(e.target.value))}
-          style={{ width: "100%" }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {staffOptions.length > 0 ? (
-              staffOptions.map((staff) => (
-                <Radio 
-                  key={staff.staffId} 
-                  value={staff.staffId}
-                  style={{ 
-                    padding: '12px', 
-                    border: '1px solid #f0f0f0', 
-                    borderRadius: '8px',
-                    width: '100%',
-                    margin: 0
-                  }}
+        title={
+          <span>
+            <TeamOutlined /> Đề xuất nhân viên phù hợp cho:{" "}
+            <strong>{currentBuilding?.name}</strong>
+          </span>
+        }
+        open={assignVisible}
+        onCancel={closeAssign}
+        onOk={handleAssign}
+        confirmLoading={assigning}
+        width={600}
+      >
+        <Spin spinning={assigning}>
+          <Form form={form} layout="vertical">
+            <Form.Item label="Danh sách nhân viên (Sắp xếp theo độ phù hợp)">
+              <Checkbox.Group
+                value={selectedStaffs}
+                onChange={(checkedValues) => setSelectedStaffs(checkedValues as number[])}
+                style={{ width: "100%" }}
+              >
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
                 >
-                  <div style={{ display: 'inline-flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', position: 'relative' }}>
-                    <div>
-                      <strong style={{ fontSize: '15px' }}>{staff.staffName}</strong>
-                      <div style={{ fontSize: '12px', color: '#363636' }}>
-                        Khu vực làm việc: <strong>{staff.workingArea}</strong> | Giao dịch thành công: <strong>{staff.totalDeals}</strong> | Số khách phụ trách: <strong>{staff.currentWorkload}</strong>
-                      </div>
+                  {staffOptions.length > 0 ? (
+                    staffOptions.map((staff) => (
+                      <Checkbox
+                        key={staff.staffId}
+                        value={staff.staffId}
+                        style={{
+                          padding: "12px",
+                          border: "1px solid #f0f0f0",
+                          borderRadius: "8px",
+                          width: "100%",
+                          margin: 0,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            alignItems: "center",
+                            position: "relative",
+                          }}
+                        >
+                          <div>
+                            <strong style={{ fontSize: "15px" }}>
+                              {staff.staffName}
+                            </strong>
+                            <div style={{ fontSize: "12px", color: "#363636" }}>
+                              Khu vực làm việc:{" "}
+                              <strong>{staff.workingArea}</strong> | Giao dịch
+                              thành công: <strong>{staff.totalDeals}</strong> |
+                              Số khách phụ trách:{" "}
+                              <strong>{staff.currentWorkload}</strong>
+                            </div>
+                          </div>
+                          {/* Hiển thị điểm số Matching */}
+                          <div style={{ textAlign: "right" }}>
+                            <Tag
+                              color={
+                                staff.totalScore! > 0.8 ? "green" : "orange"
+                              }
+                            >
+                              {Math.round(staff.totalScore! * 100)}% Match
+                            </Tag>
+                          </div>
+                        </div>
+                      </Checkbox>
+                    ))
+                  ) : (
+                    <div style={{ textAlign: "center", padding: "20px" }}>
+                      Không tìm thấy nhân viên phù hợp
                     </div>
-                    {/* Hiển thị điểm số Matching */}
-                    <div style={{ textAlign: 'right' }}>
-                      <Tag color={staff.totalScore! > 0.8 ? "green" : "orange"}>
-                        {Math.round(staff.totalScore! * 100)}% Match
-                      </Tag>
-                    </div>
-                  </div>
-                </Radio>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px' }}>Không tìm thấy nhân viên phù hợp</div>
-            )}
-          </div>
-        </Radio.Group>
-      </Form.Item>
-    </Form>
-  </Spin>
-</Modal>
+                  )}
+                </div>
+              </Checkbox.Group>
+            </Form.Item>
+          </Form>
+        </Spin>
+      </Modal>
 
       {/* Create / Edit Modal */}
       <Modal
@@ -596,7 +609,7 @@ const BuildingManagement: React.FC = () => {
             ? `Cập nhật tòa nhà: ${editingBuilding.name}`
             : "Tạo tòa nhà mới"
         }
-        visible={editVisible}
+        open={editVisible}
         onCancel={closeEdit}
         onOk={() => formEdit.submit()}
         confirmLoading={editLoading}
@@ -658,14 +671,14 @@ const BuildingManagement: React.FC = () => {
               </Form.Item>
             </Col>
 
-            {/* Địa chỉ (Quận - Phường - Đường) */}
+            {/* Địa chỉ (Tỉnh - Phường - Đường) */}
             <Col span={8}>
-              <Form.Item name="district" label="Quận">
+              <Form.Item name="provinceName" label="Tỉnh/Thành phố">
                 <Input />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="ward" label="Phường">
+              <Form.Item name="ward" label="Phường/Xã">
                 <Input />
               </Form.Item>
             </Col>
@@ -707,7 +720,24 @@ const BuildingManagement: React.FC = () => {
             {/* YÊU CẦU 2: Giá và các loại phí nằm trên 2 dòng (Mỗi dòng 3 cột) */}
             {/* Dòng phí 1 */}
             <Col span={8}>
-              <Form.Item name="rentPrice" label="Giá thuê (VND)">
+              <Form.Item name="propertyType" label="Loại nhà đất">
+                <Select
+                  mode="multiple"
+                  options={[
+                    { label: "Nhà đất thuê", value: "RENT" },
+                    { label: "Nhà đất bán", value: "SALE" },
+                    { label: "Nhà đất cho thuê và bán", value: "BOTH" },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="priceRent" label="Giá thuê (VND)">
+                <InputNumber style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="priceSale" label="Giá bán (VND)">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>

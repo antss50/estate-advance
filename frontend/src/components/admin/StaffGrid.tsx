@@ -61,7 +61,7 @@ const StaffGrid: React.FC<StaffGridProps> = ({
             danger: true,
             onClick: (e) => {
               e.domEvent?.stopPropagation();
-              onDelete?.(s.id);
+              onDelete?.(s.id as string);
             },
           },
         ];

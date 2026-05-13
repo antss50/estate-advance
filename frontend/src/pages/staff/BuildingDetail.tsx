@@ -46,7 +46,7 @@ const SpecsCard: React.FC<{ building: BuildingDTO }> = ({ building }) => {
     ["Loại công trình", building.structure ?? "-"],
     [
       "Khu vực",
-      `${building.district ?? ""} ${building.ward ?? ""}`.trim() || "-",
+      `${building.province ?? ""} ${building.ward ?? ""}`.trim() || "-",
     ],
     ["Địa chỉ", building.street ?? "-"],
   ];
@@ -333,7 +333,7 @@ const BuildingDetail: React.FC = () => {
                 }}
               >
                 <Text style={{ color: TEXT_MUTED }}>
-                  Mã loại: {building.typeCode?.join(", ")}
+                  Mã loại: {Array.isArray(building.typeCode) ? building.typeCode.join(", ") : building.typeCode}
                 </Text>
                 {/* <Text style={{ color: TEXT_MUTED }}>
                   Diện cho thuê: {building.rentArea ?? "-"}

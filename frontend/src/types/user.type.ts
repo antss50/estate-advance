@@ -1,7 +1,7 @@
 import type { ResponseDTO } from './response.type';
 
 export interface UserDTO {
-  id: string ;
+  id: number | string;
   userName: string;
   fullName: string;
   email?: string | null;
@@ -46,6 +46,8 @@ export interface DemandDTO {
   price?: number;
   location?: string;
   propertyType?: string;
+  transactionType?: string; // "SALE" hoặc "RENT"
+  priorityType?: string;
 }
 
 export interface UserDemandDTO {

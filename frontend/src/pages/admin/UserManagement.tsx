@@ -43,7 +43,7 @@ const UserManagement: React.FC = () => {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<UserDTO[]>([]);
+  const [data, setData] = useState<(UserDTO | Staff)[]>([]);
   const [total, setTotal] = useState(0);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,37 +51,49 @@ const UserManagement: React.FC = () => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
-  const selectedStaff = users.find((u) => u.id === selectedStaffId) as Staff | undefined;
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
+  const selectedStaff = (data as Staff[]).find(
+    (s) => s.id === selectedStaffId,
+  ) as Staff | undefined;
 
   const [form] = Form.useForm();
 
   const fetchUsers = async (p: number, kw: string, role?: string) => {
     setLoading(true);
     try {
-      const params = { page: p, size: PAGE_SIZE, keyword: kw, role };
-      const res = await (activeTab === "staff"
-        ? staffApi.getStaffs()
-        : userApi.getAllUsers());
-      if (Array.isArray(res)) {
-        setUsers(res);
-        setTotal((res as UserDTO[]).length || 0);
-        console.log("Fetched users:", res);
+      let finalRes: (UserDTO | Staff)[] = [];
+
+      if (activeTab === "staff") {
+        const res: any = await staffApi.getStaffs();
+        finalRes = Array.isArray(res) ? res : res?.data || [];
       } else {
-        setUsers([]);
-        setTotal(0);
+        const res = await userApi.getAllUsers();
+        if (res && res.data && Array.isArray(res.data)) {
+        finalRes = res.data;
+      } else if (Array.isArray(res)) {
+        finalRes = res;
       }
+      }
+
+      setData(finalRes);
+      setTotal(finalRes.length || 0);
+    
+      // Sử dụng tham số p (để hết lỗi 'p' is defined but never used)
+      console.log(`Fetching page ${p} for ${activeTab}:`, finalRes);
     } catch (error) {
       console.error("Error fetching users:", error);
       message.error("Lấy danh sách người dùng thất bại");
+      setData([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const role = activeTab === "staff" ? "STAFF || MANAGER" : "CUSTOMER";
     setPage(1);
+    setData([]); // Clear data khi chuyển tab
+    const role = activeTab === "staff" ? "STAFF || MANAGER" : "CUSTOMER";
     fetchUsers(1, keyword, role);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -105,14 +117,14 @@ const UserManagement: React.FC = () => {
     setModalVisible(true);
   };
   const openEdit = (user: UserDTO | Staff) => {
-    setEditingUserId(user.id);
+    setEditingUserId(user.id as string);
     form.setFieldsValue({
       fullName: user.fullName,
-      userName: user.userName,
+      userName: user.userName || "",
       role: user.role || "STAFF",
       status: user.status === "ACTIVE" ? 1 : 0,
-      email: user.email,
-      phone: user.phone,
+      email: user.email || "",
+      phone: user.phone || "",
     });
     setModalVisible(true);
   };
@@ -123,7 +135,7 @@ const UserManagement: React.FC = () => {
   };
 
   const openStaffDetail = (user: UserDTO | Staff) => {
-    setSelectedStaffId(user.id);
+    setSelectedStaffId(user.id as number);
     setDetailModalVisible(true);
   };
   const closeDetail = () => {
@@ -169,7 +181,7 @@ const UserManagement: React.FC = () => {
         message.success("Tạo nhân viên thành công");
       }
       closeModal();
-      fetchUsers(1, keyword, "STAFF");
+      fetchUsers(1, keyword, activeTab === "staff" ? "STAFF" : "CUSTOMER");
     } catch (err) {
       console.error("Submit user error", err);
       const axiosErr = err as Error & {
@@ -192,12 +204,12 @@ const UserManagement: React.FC = () => {
       cancelText: "Hủy",
       onOk: async () => {
         setDeletingId(id);
-        const targetId = users.find((u) => u.id === id)?.id || id;
+        const targetId = data.find((u) => u.id === id)?.id || id;
         console.log("Deleting user with id:", targetId);
         try {
           await userApi.deleteUser([targetId]);
           message.success("Xóa nhân viên thành công");
-          fetchUsers(1, keyword, "STAFF");
+          fetchUsers(1, keyword, activeTab === "staff" ? "STAFF" : "CUSTOMER");
         } catch (err) {
           console.error("Delete user error", err);
           message.error("Xóa thất bại");
@@ -261,7 +273,7 @@ const UserManagement: React.FC = () => {
           {activeTab === "staff" ? (
             <>
               <StaffGrid
-                staffList={users as Staff[]}
+                staffList={data as Staff[]}
                 type="staff"
                 onEdit={openEdit}
                 onViewDetail={openStaffDetail}
@@ -281,7 +293,7 @@ const UserManagement: React.FC = () => {
           ) : (
             <>
               <StaffGrid
-                staffList={users as UserDTO[]}
+                staffList={data as UserDTO[]}
                 type="customer"
                 // onEdit={openEdit}
                 onDelete={handleDelete}
@@ -312,8 +324,6 @@ const UserManagement: React.FC = () => {
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}/>
       </Modal> */}
-
-      
 
       <Modal
         title={
@@ -347,6 +357,9 @@ const UserManagement: React.FC = () => {
           <Form.Item name="phone" label="Số điện thoại">
             <Input />
           </Form.Item>
+          <Form.Item name="workingArea" label="Khu vực làm việc">
+            <Input />
+          </Form.Item>
           <Form.Item name="roleCode" label="Role" initialValue={"STAFF"}>
             <Select>
               <Select.Option value="STAFF">Staff</Select.Option>
@@ -376,7 +389,7 @@ const UserManagement: React.FC = () => {
       </Modal>
       {/* Staff Detail Modal */}
       {activeTab === "staff" && (
-          <StaffDetailModal
+        <StaffDetailModal
           visible={detailModalVisible}
           staffId={selectedStaffId}
           staffData={selectedStaff}

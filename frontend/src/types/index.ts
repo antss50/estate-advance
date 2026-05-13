@@ -13,7 +13,7 @@ export interface Staff {
   role: string;
   phone: string;
   email: string;
-  workingArea: string;
+  workingArea?: string;
   avatar?: string;
   performance?: number; // Thêm trường hiệu suất nếu có
   status?: string;
@@ -25,7 +25,7 @@ export interface MatchingStaff {
   staffId: number;
   staffName: string;
   phone: string;
-  workingArea: string;
+  workingArea?: string;
   areaScore: number;
   performanceScore: number;
   workloadScore: number;

@@ -8,13 +8,13 @@ import {
   Slider,
   Button,
   message,
+  Radio,
 } from "antd";
 import {
   HomeOutlined,
-  ShoppingOutlined,
+  DollarOutlined,
+  CarOutlined,
   InsertRowLeftOutlined,
-  BankOutlined,
-  ShopOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
 import {
@@ -25,18 +25,20 @@ import {
 } from "../../api/administrativeApi";
 import type { DemandFormValues } from "../../types";
 import "../../styles/DemandFormSection.css";
+import userApi from "../../api/userApi";
 
 interface CustomerRequestPayload {
-  customerId?: number; // Có thể có hoặc không, tùy vào logic của bạn
+  customerId?: string | number; // Có thể có hoặc không, tùy vào logic của bạn
   fullName: string;
   phone: string;
   email: string;
   demand: {
     propertyType: string;
+    transactionType?: string; // "SALE" hoặc "RENT"
     area: number;
     price: number;
     location: string;
-    // priorityType?: string;
+    priorityType?: string;
   };
   status: "NEW";
 }
@@ -48,12 +50,19 @@ const propertyTypeOptions = [
   { label: "Văn phòng", value: "OFFICE" },
 ];
 
-const propertyTypes = [
-  { icon: HomeOutlined, label: "Căn Hộ", value: "APARTMENT" },
-  { icon: BankOutlined, label: "Mặt bằng kinh doanh", value: "RETAIL" },
-  { icon: InsertRowLeftOutlined, label: "Kho bãi", value: "WAREHOUSE" },
-  { icon: ShoppingOutlined, label: "Văn phòng", value: "OFFICE" },
+const priorityTypes = [
+  { icon: HomeOutlined, label: "Mặc định", value: "DEFAULT" },
+  { icon: DollarOutlined, label: "Tiết kiệm", value: "SAVINGS" },
+  { icon: CarOutlined, label: "Tiện lợi", value: "PROFIT" },
+  { icon: InsertRowLeftOutlined, label: "Không gian thoải mái", value: "SPACE" },
 ];
+
+// const propertyTypes = [
+//   { icon: HomeOutlined, label: "Căn Hộ", value: "APARTMENT" },
+//   { icon: BankOutlined, label: "Mặt bằng kinh doanh", value: "RETAIL" },
+//   { icon: InsertRowLeftOutlined, label: "Kho bãi", value: "WAREHOUSE" },
+//   { icon: ShoppingOutlined, label: "Văn phòng", value: "OFFICE" },
+// ];
 interface DemandFormSectionProps {
   // Định nghĩa hàm onSubmit nhận dữ liệu nhu cầu khách hàng
   onSubmit?: () => void;
@@ -110,65 +119,64 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
   };
 
   const handleFinish = async (values: DemandFormValues) => {
-    setLoading(true);
+  setLoading(true);
+  try {
+    // --- BƯỚC 1: TỰ ĐỘNG TẠO USER 
+    let customerId: string | number | undefined;
+    
     try {
-      // Find the selected province and ward objects
-      const selectedProvinceObj = provinces.find(
-        (p) => p.code === values.province,
-      );
-      const selectedWardObj = wards.find((w) => w.code === values.ward);
-
-      // Build location string from ward and province names
-      const location =
-        selectedWardObj && selectedProvinceObj
-          ? `${selectedWardObj.name}, ${selectedProvinceObj.name}`
-          : "";
-
-      // Chuẩn bị payload theo yêu cầu API
-      const payload: CustomerRequestPayload = {
+      const userPayload = {
+        userName: values.email, // Dùng email làm username
+        password: "DefaultPassword123", // Mật khẩu tạm thời
         fullName: values.fullName,
         phone: values.phone,
         email: values.email,
-        demand: {
-          propertyType: values.propertyType,
-          area: Number(values.area),
-          price: priceRange[1], 
-          location: location,
-          // priorityType: "DEFAULT || SAVINGS || PROFIT || SPACE", 
-        },
-        status: "NEW",
+        status: 1,
+        roleCode: "CUSTOMER"
       };
-
-      console.log("Submitting customer request:", payload);
-
-      // Gọi API thực
-      await axiosClient.post("/api/customer/customer-request", payload);
-
-      message.success(
-        "Gửi yêu cầu tư vấn thành công! Chúng tôi sẽ liên hệ với bạn sớm.",
-      );
-      form.resetFields();
-      setPriceRange([1000000000, 5000000000]);
-      setWards([]);
-      setSelectedProvince(null);
-      onSubmit?.(); // Gọi callback nếu có
-    } catch (error) {
-      console.error("Error submitting customer request:", error);
-      const axiosErr = error as Error & {
-        response?: { data?: { message?: string } };
-      };
-      const errorMsg =
-        axiosErr?.response?.data?.message ||
-        axiosErr?.message ||
-        "Gửi yêu cầu thất bại. Vui lòng thử lại.";
-      message.error(errorMsg);
-    } finally {
-      setLoading(false);
+      
+      const userRes = await userApi.createUser(userPayload);
+      // Lấy ID vừa tạo từ ResponseDTO
+      customerId = userRes?.data?.id || userRes.data?.id;
+    } catch (err) {
+      // Nếu lỗi do User đã tồn tại, bạn có thể cần một API tìm User theo Email 
+      // để lấy lại ID cũ, hoặc backend trả về ID trong lỗi.
+      console.log("Lỗi khi tạo người dùng:", err);
+      console.log("Tiếp tục gửi demand...");
     }
-  };
+
+    // --- BƯỚC 2: GỬI YÊU CẦU TÌM NHÀ VỚI CUSTOMER ID ---
+    const provinceName = provinces.find(p => p.code === values.province)?.name || "";
+    const wardName = wards.find(w => w.code === values.ward)?.name || "";
+
+    const payload: CustomerRequestPayload = {
+      customerId: customerId, // ID lấy từ bước 1
+      fullName: values.fullName,
+      phone: values.phone,
+      email: values.email,
+      demand: {
+        propertyType: values.propertyType,
+        area: Number(values.area),
+        price: priceRange[1],
+        location: `${wardName}, ${provinceName}`,
+        transactionType: activeTab === "sale" ? "SALE" : "RENT",
+      },
+      status: "NEW",
+    };
+
+    await axiosClient.post("/api/customer/customer-request", payload);
+    message.success("Yêu cầu đã được gửi và tài khoản khách hàng đã được tạo!");
+    
+    form.resetFields();
+  } catch (error) {
+    message.error("Thao tác thất bại, vui lòng thử lại.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const formatPrice = (value: number) => {
-    return `${(value / 1000000000).toFixed(1)}B đ`;
+    return `${(value) < 1000000000 ? (value/1000000).toFixed(1) + " triệu" : (value/1000000000).toFixed(2) + " tỷ"} VNĐ`;
   };
 
   return (
@@ -330,7 +338,7 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                         range
                         min={0}
                         max={10000000000}
-                        step={100000000}
+                        step={10000000}
                         value={priceRange}
                         onChange={(val) =>
                           setPriceRange(val as [number, number])
@@ -398,6 +406,7 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
                     </Form.Item>
                   </Col>
                 </Row>
+                
               </div>
             </Col>
             <Col xs={24} lg={12} style={{ textAlign: "right" }}>
@@ -414,22 +423,31 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item
+          name="priorityType"
+          initialValue={"DEFAULT"}
+          className="no-margin"
+          rules={[
+            { required: true},
+          ]}>
+            {/* Property Types Grid */}
+            <div className="property-types-grid">
+              {priorityTypes.map((priority) => {
+                const IconComponent = priority.icon;
+                return (
+                  <Radio.Button key={priority.value} value={priority.value} className="property-type-icon-item">
+                    <div className="property-icon">
+                      <IconComponent />
+                    </div>
+                    <div className="property-label">{priority.label}</div>
+                  </Radio.Button>
+                );
+              })}
+            </div>
+        </Form.Item>
         </Form>
 
-        {/* Property Types Grid */}
-        <div className="property-types-grid">
-          {propertyTypes.map((property) => {
-            const IconComponent = property.icon;
-            return (
-              <div key={property.value} className="property-type-icon-item">
-                <div className="property-icon">
-                  <IconComponent />
-                </div>
-                <div className="property-label">{property.label}</div>
-              </div>
-            );
-          })}
-        </div>
+        
       </div>
     </section>
   );

@@ -27,7 +27,7 @@ const { Text, Title } = Typography;
 
 interface StaffDetailModalProps {
   visible: boolean;
-  staffId: string | null;
+  staffId: number | null;
   staffData?: Staff;
   onClose: () => void;
 }
@@ -51,12 +51,12 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
     }
   }, [visible, staffId, staffData]);
 
-  const fetchStaffDetails = async (id: string) => {
+  const fetchStaffDetails = async (id: number) => {
     setLoading(true);
     try {
       // Gọi API GET /api/staff/{id}
       const response = await staffApi.getStaffById(id);
-      setStaff(response as Staff);
+      setStaff(response as unknown as Staff);
     } catch (error) {
       console.error("Error fetching staff details:", error);
       message.error("Lấy thông tin nhân viên thất bại");

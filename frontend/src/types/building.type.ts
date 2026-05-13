@@ -4,7 +4,8 @@ export interface BuildingDTO {
   id?: number;
   name?: string;
   address?: string;
-  district?: string;
+  province?: string;
+  disctict?: string | null;
   ward?: string;
   street?: string;
   structure?: string;
@@ -81,8 +82,8 @@ export interface BuildingSearchResponse {
 
 export interface AssignmentBuildingDTO {
   buildingId: number | string;
-  staffIds: number[];
-  assignedBy?: string;
+  staffs: number[];
+  // assignedBy?: string;
 }
 
 export interface AssignmentStaffDTO {
