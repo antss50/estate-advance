@@ -11,24 +11,39 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<UserEntity, Long> , UserRepositoryCustom {
+public interface UserRepository extends JpaRepository<UserEntity, Long>, UserRepositoryCustom {
+
     UserEntity findOneByUserNameAndStatus(String name, int status);
-    Page<UserEntity> findByUserNameContainingIgnoreCaseOrFullNameContainingIgnoreCaseAndStatusNot(String userName, String fullName, int status,
-                                                                                                  Pageable pageable);
+
+    Page<UserEntity> findByUserNameContainingIgnoreCaseOrFullNameContainingIgnoreCaseAndStatusNot(
+            String userName, String fullName, int status, Pageable pageable);
+
     List<UserEntity> findByStatusAndRoles_Code(Integer status, String roleCode);
+
     Page<UserEntity> findByStatusNot(int status, Pageable pageable);
-    long countByUserNameContainingIgnoreCaseOrFullNameContainingIgnoreCaseAndStatusNot(String userName, String fullName, int status);
+
+    long countByUserNameContainingIgnoreCaseOrFullNameContainingIgnoreCaseAndStatusNot(
+            String userName, String fullName, int status);
+
     long countByStatusNot(int status);
+
     UserEntity findOneByUserName(String userName);
+
     List<UserEntity> findByIdIn(List<Long> id);
+
     boolean existsByUserName(String userName);
 
     boolean existsByEmail(String email);
+
     Optional<UserEntity> findByUserName(String userName);
 
     Optional<UserEntity> findByEmail(String email);
-    @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE r.code = :code AND u.status = 1")
+
+    // ============ SỬA DÒNG NÀY - THÊM DISTINCT ============
+    @Query("SELECT DISTINCT u FROM UserEntity u JOIN u.roles r WHERE r.code = :code AND u.status = 1")
     List<UserEntity> findStaffs(@Param("code") String code);
+    // ============ END ============
+
     @Query("SELECT u FROM UserEntity u JOIN u.roles r WHERE u.status = :status AND r.code = :roleCode")
     List<UserEntity> findByStatusAndRoleCode(@Param("status") Integer status, @Param("roleCode") String roleCode);
 }

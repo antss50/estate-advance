@@ -73,9 +73,23 @@ public class BuildingServiceImpl implements BuildingService {
 
     @Override
     public ResponseDTO listStaffs(Long buildingId) {
-        BuildingEntity building = buildingRepository.findById(buildingId).get();
+        BuildingEntity building = buildingRepository.findById(buildingId).orElse(null);
+        if (building == null) {
+            ResponseDTO responseDTO = new ResponseDTO();
+            responseDTO.setMessage("Building not found");
+            return responseDTO;
+        }
+
+        // Lấy danh sách staff (thêm distinct)
         List<UserEntity> staffs = userRepository.findByStatusAndRoles_Code(1, "STAFF");
+
+        // Loại bỏ staff trùng lặp bằng cách dùng Set
+        staffs = staffs.stream()
+                .distinct()  // <-- THÊM DÒNG NÀY
+                .collect(Collectors.toList());
+
         List<UserEntity> staffAssignment = building.getUsers();
+
         List<StaffResponseDTO> staffResponseDTOS = new ArrayList<>();
         ResponseDTO responseDTO = new ResponseDTO();
 
@@ -83,13 +97,15 @@ public class BuildingServiceImpl implements BuildingService {
             StaffResponseDTO staffResponseDTO = new StaffResponseDTO();
             staffResponseDTO.setStaffId(it.getId());
             staffResponseDTO.setFullName(it.getFullName());
-            if (staffAssignment.contains(it)) {
-                staffResponseDTO.setChecked("checked");
-            } else {
-                staffResponseDTO.setChecked("");
-            }
+
+            // Kiểm tra staff đã được gán chưa
+            boolean isAssigned = staffAssignment.stream()
+                    .anyMatch(staff -> staff.getId().equals(it.getId()));
+
+            staffResponseDTO.setChecked(isAssigned ? "checked" : "");
             staffResponseDTOS.add(staffResponseDTO);
         }
+
         responseDTO.setData(staffResponseDTOS);
         responseDTO.setMessage("Success");
         return responseDTO;
