@@ -3,6 +3,7 @@ package com.javaweb.service;
 import com.javaweb.model.dto.AssignmentBuildingDTO;
 import com.javaweb.model.dto.BuildingDTO;
 import com.javaweb.model.request.BuildingSearchRequest;
+import com.javaweb.model.response.BuildingByStaffResponse;
 import com.javaweb.model.response.BuildingSearchResponse;
 import com.javaweb.model.response.ResponseDTO;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,5 +19,5 @@ public interface BuildingService {
     void deleteBuilding(List<Long> ids);
     BuildingDTO getBuildingDetail(Long id);
     void assignBuilding(AssignmentBuildingDTO dto);
-
+    List<BuildingByStaffResponse> getBuildingsByStaffId(Long staffId);
 }

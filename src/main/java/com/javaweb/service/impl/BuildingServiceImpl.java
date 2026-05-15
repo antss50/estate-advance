@@ -28,6 +28,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.javaweb.model.response.BuildingByStaffResponse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -264,4 +265,63 @@ public class BuildingServiceImpl implements BuildingService {
             buildingRepository.deleteById(id);
         }
     }
+    @Override
+    public List<BuildingByStaffResponse> getBuildingsByStaffId(Long staffId) {
+        List<BuildingEntity> buildings = buildingRepository.findBuildingsByStaffId(staffId);
+
+        if (buildings == null || buildings.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return buildings.stream()
+                .map(this::convertToBuildingByStaffResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Chuyển đổi BuildingEntity sang BuildingByStaffResponse
+     */
+    private BuildingByStaffResponse convertToBuildingByStaffResponse(BuildingEntity entity) {
+        BuildingByStaffResponse response = new BuildingByStaffResponse();
+
+        response.setBuildingId(entity.getId());
+        response.setBuildingName(entity.getName());
+        response.setStreet(entity.getStreet());
+        response.setWardName(entity.getWardName());
+        response.setProvinceName(entity.getProvinceName());
+
+        // Tạo địa chỉ đầy đủ
+        String address = (entity.getStreet() != null ? entity.getStreet() : "") +
+                (entity.getWardName() != null ? ", " + entity.getWardName() : "") +
+                (entity.getProvinceName() != null ? ", " + entity.getProvinceName() : "");
+        response.setAddress(address);
+
+        response.setFloorArea(entity.getFloorArea());
+        response.setPriceSale(entity.getPriceSale());
+        response.setPriceRent(entity.getPriceRent());
+        response.setTransactionType(entity.getTransactionType());
+        response.setType(entity.getType());
+        response.setNote(entity.getNote());
+        response.setAvatar(entity.getAvatar());
+
+        // Xử lý danh sách ảnh
+        if (entity.getImage() != null && !entity.getImage().isEmpty()) {
+            List<String> imageList = Arrays.asList(entity.getImage().split(","));
+            response.setImageList(imageList);
+            if (!imageList.isEmpty()) {
+                response.setImage(imageList.get(0)); // Ảnh đầu tiên làm đại diện
+            }
+        }
+
+        // Format ngày tháng
+        if (entity.getCreatedDate() != null) {
+            response.setCreatedDate(entity.getCreatedDate().toString());
+        }
+        if (entity.getModifiedDate() != null) {
+            response.setModifiedDate(entity.getModifiedDate().toString());
+        }
+
+        return response;
+    }
+
 }
