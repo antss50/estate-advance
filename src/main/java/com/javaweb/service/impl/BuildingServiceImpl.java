@@ -115,8 +115,10 @@ public class BuildingServiceImpl implements BuildingService {
 
         List<UserEntity> validStaffs = userRepository.findStaffs("STAFF");
 
+        // SỬA: Thêm distinct() để loại bỏ trùng lặp
         Map<Long, UserEntity> staffMap = validStaffs.stream()
-                .collect(Collectors.toMap(UserEntity::getId, item -> item));
+                .distinct()  // <-- THÊM DÒNG NÀY
+                .collect(Collectors.toMap(UserEntity::getId, item -> item, (existing, replacement) -> existing));
 
         List<UserEntity> newStaffs = new ArrayList<>();
 
