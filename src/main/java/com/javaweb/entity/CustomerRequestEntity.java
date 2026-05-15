@@ -1,9 +1,7 @@
 package com.javaweb.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Embedded;
+import com.javaweb.enums.CustomerPriorityType;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "customer_request")
@@ -24,9 +22,19 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "status")
     private String status; // NEW, PROCESSING, DONE
 
+    // ============ THÊM CÁC FIELD MỚI ============
+    @Enumerated(EnumType.STRING)
+    @Column(name = "customer_priority_type")  // ĐỔI TÊN: priority_type -> customer_priority_type
+    private CustomerPriorityType priorityType;
 
+    @Column(name = "customer_transaction_type")  // ĐỔI TÊN: transaction_type -> customer_transaction_type
+    private String transactionType;
 
-    // ===== Getter & Setter =====
+    @Column(name = "customer_property_type")  // ĐỔI TÊN: property_type -> customer_property_type
+    private String propertyType;
+    // ============ END ============
+
+    // ===== Getters & Setters =====
 
     public String getFullName() {
         return fullName;
@@ -66,5 +74,29 @@ public class CustomerRequestEntity extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public CustomerPriorityType getPriorityType() {
+        return priorityType;
+    }
+
+    public void setPriorityType(CustomerPriorityType priorityType) {
+        this.priorityType = priorityType;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public String getPropertyType() {
+        return propertyType;
+    }
+
+    public void setPropertyType(String propertyType) {
+        this.propertyType = propertyType;
     }
 }

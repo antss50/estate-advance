@@ -1,37 +1,67 @@
 package com.javaweb.entity;
 
-import javax.persistence.Embeddable;
+import com.javaweb.enums.CustomerPriorityType;
+import javax.persistence.*;
 
-@Embeddable
+@Embeddable  // Quan trọng: dùng @Embeddable thay vì @Entity
 public class Demand {
 
-    private Double area;     // diện tích
-    private Double price;    // giá
-    private String location; // vị trí
+    // Diện tích, giá
+    private Double area;
+    private Double price;
 
-    public Demand() {}
+    // Địa chỉ (sau sáp nhập)
+    private String ward;        // Phường/Xã
+    private String province;    // Tỉnh/Thành phố
 
-    public Double getArea() {
-        return area;
-    }
+    // Loại hình
+    private String buildingType;
+    private String transactionType;
+    private String propertyType;
 
-    public void setArea(Double area) {
-        this.area = area;
-    }
+    @Enumerated(EnumType.STRING)
+    private CustomerPriorityType priorityType;
 
-    public Double getPrice() {
-        return price;
-    }
+    // Thông tin bổ sung
+    private Integer numberOfBasement;
+    private String direction;
+    private String legalStatus;
+    private Double brokerageFee;
 
-    public void setPrice(Double price) {
-        this.price = price;
-    }
+    // Getters and Setters
+    public Double getArea() { return area; }
+    public void setArea(Double area) { this.area = area; }
 
-    public String getLocation() {
-        return location;
-    }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+    public String getWard() { return ward; }
+    public void setWard(String ward) { this.ward = ward; }
+
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
+
+    public String getBuildingType() { return buildingType; }
+    public void setBuildingType(String buildingType) { this.buildingType = buildingType; }
+
+    public String getTransactionType() { return transactionType; }
+    public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
+
+    public String getPropertyType() { return propertyType; }
+    public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
+
+    public CustomerPriorityType getPriorityType() { return priorityType; }
+    public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }
+
+    public Integer getNumberOfBasement() { return numberOfBasement; }
+    public void setNumberOfBasement(Integer numberOfBasement) { this.numberOfBasement = numberOfBasement; }
+
+    public String getDirection() { return direction; }
+    public void setDirection(String direction) { this.direction = direction; }
+
+    public String getLegalStatus() { return legalStatus; }
+    public void setLegalStatus(String legalStatus) { this.legalStatus = legalStatus; }
+
+    public Double getBrokerageFee() { return brokerageFee; }
+    public void setBrokerageFee(Double brokerageFee) { this.brokerageFee = brokerageFee; }
 }
