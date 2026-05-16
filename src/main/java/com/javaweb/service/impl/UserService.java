@@ -85,6 +85,7 @@ public class UserService implements IUserService {
         List<UserEntity> users = userRepository.findByStatusAndRoles_Code(1, "STAFF");
 
         return users.stream()
+                .distinct()
                 .map(this::convertToStaffDTO)
                 .collect(Collectors.toList());
     }
