@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/commission")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class CommissionAPI {
 
     @Autowired

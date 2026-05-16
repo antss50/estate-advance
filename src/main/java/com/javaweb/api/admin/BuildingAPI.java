@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController(value = "buildingAPIOfAdmin")
 @RequestMapping("/api/building")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class BuildingAPI {
 
     @Autowired
