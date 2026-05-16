@@ -7,11 +7,19 @@ import java.util.Date;
 
 @Entity
 @Table(name = "customer")
-public class CustomerEntity extends BaseEntity{
+public class CustomerEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // ============ THÊM 2 FIELD MỚI CHO ĐĂNG NHẬP ============
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+    // ============ END ============
 
     @Column(name = "fullname", nullable = false)
     private String fullName;
@@ -30,24 +38,14 @@ public class CustomerEntity extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private CustomerStatus status = CustomerStatus.NEW;  // Mặc định là NEW
+    private CustomerStatus status = CustomerStatus.NEW;
 
     @Column(name = "is_active")
-    private Integer isActive;
+    private Integer isActive = 1;
 
-    @Column(name = "createddate")
+    @Column(name = "last_login")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
-
-    @Column(name = "modifieddate")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date modifiedDate;
-
-    @Column(name = "createdby")
-    private String createdBy;
-
-    @Column(name = "modifiedby")
-    private String modifiedBy;
+    private Date lastLogin;
 
     // ===== Getter & Setter =====
 
@@ -57,6 +55,22 @@ public class CustomerEntity extends BaseEntity{
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getFullName() {
@@ -115,35 +129,11 @@ public class CustomerEntity extends BaseEntity{
         this.isActive = isActive;
     }
 
-    public Date getCreatedDate() {
-        return createdDate;
+    public Date getLastLogin() {
+        return lastLogin;
     }
 
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public Date getModifiedDate() {
-        return modifiedDate;
-    }
-
-    public void setModifiedDate(Date modifiedDate) {
-        this.modifiedDate = modifiedDate;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public String getModifiedBy() {
-        return modifiedBy;
-    }
-
-    public void setModifiedBy(String modifiedBy) {
-        this.modifiedBy = modifiedBy;
+    public void setLastLogin(Date lastLogin) {
+        this.lastLogin = lastLogin;
     }
 }
