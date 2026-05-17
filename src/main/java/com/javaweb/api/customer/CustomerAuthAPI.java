@@ -13,7 +13,7 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/customer/auth")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")  // <-- XÓA dòng này đi
 public class CustomerAuthAPI {
 
     @Autowired
