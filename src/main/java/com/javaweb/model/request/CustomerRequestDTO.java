@@ -5,6 +5,7 @@ import com.javaweb.model.dto.DemandDTO;
 public class CustomerRequestDTO {
 
     private Long id;
+    private Long customerId;  // THÊM DÒNG NÀY
     private String fullName;
     private String phone;
     private String email;
@@ -14,6 +15,9 @@ public class CustomerRequestDTO {
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

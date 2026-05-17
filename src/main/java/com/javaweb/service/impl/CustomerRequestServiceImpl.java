@@ -72,10 +72,16 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
             CustomerRequestDTO dto = new CustomerRequestDTO();
             dto.setId(item.getId());
 
+            // Lấy customerId và thông tin từ customer
             if (item.getCustomer() != null) {
+                dto.setCustomerId(item.getCustomer().getId());
                 dto.setFullName(item.getCustomer().getFullName());
                 dto.setPhone(item.getCustomer().getPhone());
                 dto.setEmail(item.getCustomer().getEmail());
+            } else {
+                dto.setFullName(item.getFullName());
+                dto.setPhone(item.getPhone());
+                dto.setEmail(item.getEmail());
             }
 
             dto.setStatus(item.getStatus());
