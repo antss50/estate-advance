@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/customer-matching")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class CustomerMatchingAPI {
 
     @Autowired
