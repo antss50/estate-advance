@@ -7,6 +7,14 @@ import javax.persistence.*;
 @Table(name = "customer_request")
 public class CustomerRequestEntity extends BaseEntity {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private CustomerEntity customer;
+
     @Column(name = "fullname")
     private String fullName;
 
@@ -20,83 +28,27 @@ public class CustomerRequestEntity extends BaseEntity {
     private Demand demand;
 
     @Column(name = "status")
-    private String status; // NEW, PROCESSING, DONE
+    private String status;
 
-    // ============ THÊM CÁC FIELD MỚI ============
-    @Enumerated(EnumType.STRING)
-    @Column(name = "customer_priority_type")  // ĐỔI TÊN: priority_type -> customer_priority_type
-    private CustomerPriorityType priorityType;
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    @Column(name = "customer_transaction_type")  // ĐỔI TÊN: transaction_type -> customer_transaction_type
-    private String transactionType;
+    public CustomerEntity getCustomer() { return customer; }
+    public void setCustomer(CustomerEntity customer) { this.customer = customer; }
 
-    @Column(name = "customer_property_type")  // ĐỔI TÊN: property_type -> customer_property_type
-    private String propertyType;
-    // ============ END ============
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    // ===== Getters & Setters =====
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public String getFullName() {
-        return fullName;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+    public Demand getDemand() { return demand; }
+    public void setDemand(Demand demand) { this.demand = demand; }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Demand getDemand() {
-        return demand;
-    }
-
-    public void setDemand(Demand demand) {
-        this.demand = demand;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public CustomerPriorityType getPriorityType() {
-        return priorityType;
-    }
-
-    public void setPriorityType(CustomerPriorityType priorityType) {
-        this.priorityType = priorityType;
-    }
-
-    public String getTransactionType() {
-        return transactionType;
-    }
-
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
-    }
-
-    public String getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(String propertyType) {
-        this.propertyType = propertyType;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

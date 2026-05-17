@@ -1,8 +1,5 @@
 package com.javaweb.model.request;
 
-import com.javaweb.enums.CustomerPriorityType;
-import com.javaweb.enums.TransactionType;
-import com.javaweb.enums.TypeCode;
 import com.javaweb.model.dto.DemandDTO;
 
 public class CustomerRequestDTO {
@@ -14,10 +11,7 @@ public class CustomerRequestDTO {
     private DemandDTO demand;
     private String status;
 
-    private CustomerPriorityType priorityType;
-    private TransactionType transactionType;
-    private TypeCode propertyType;
-
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -31,45 +25,8 @@ public class CustomerRequestDTO {
     public void setEmail(String email) { this.email = email; }
 
     public DemandDTO getDemand() { return demand; }
-
-    public void setDemand(DemandDTO demand) {
-        this.demand = demand;
-
-        if (demand != null) {
-            // Map priorityType
-            if (demand.getPriorityType() != null) {
-                this.priorityType = demand.getPriorityType();
-            }
-
-            // Map transactionType
-            if (demand.getTransactionType() != null) {
-                try {
-                    this.transactionType = TransactionType.valueOf(demand.getTransactionType().toUpperCase());
-                } catch (IllegalArgumentException e) {}
-            }
-
-            // Map propertyType
-            String propertyTypeValue = demand.getPropertyType();
-            if (propertyTypeValue == null) {
-                propertyTypeValue = demand.getBuildingType();
-            }
-            if (propertyTypeValue != null) {
-                try {
-                    this.propertyType = TypeCode.valueOf(propertyTypeValue.toUpperCase());
-                } catch (IllegalArgumentException e) {}
-            }
-        }
-    }
+    public void setDemand(DemandDTO demand) { this.demand = demand; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-
-    public CustomerPriorityType getPriorityType() { return priorityType; }
-    public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }
-
-    public TransactionType getTransactionType() { return transactionType; }
-    public void setTransactionType(TransactionType transactionType) { this.transactionType = transactionType; }
-
-    public TypeCode getPropertyType() { return propertyType; }
-    public void setPropertyType(TypeCode propertyType) { this.propertyType = propertyType; }
 }

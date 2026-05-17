@@ -3,24 +3,18 @@ package com.javaweb.model.dto;
 import com.javaweb.enums.CustomerPriorityType;
 
 public class DemandDTO {
-    private Double area;           // Diện tích mong muốn
-    private Double price;          // Giá mong muốn (mua hoặc thuê)
-    private String ward;           // Phường/Xã mong muốn (thay vì location)
-    private String province;       // Tỉnh/Thành phố mong muốn
-
-    // Loại hình
-    private String buildingType;   // Loại building: OFFICE, RETAIL, WAREHOUSE, APARTMENT
-    private String transactionType; // SALE, RENT, BOTH
-    private String propertyType;   // OFFICE, RETAIL, WAREHOUSE, APARTMENT
-
-    // Thông tin bổ sung
+    private Double area;
+    private Double price;
+    private String ward;
+    private String province;
+    private String buildingType;
+    private String transactionType;
+    private String propertyType;
+    private CustomerPriorityType priorityType;
     private Integer numberOfBasement;
     private String direction;
     private String legalStatus;
     private Double brokerageFee;
-    private CustomerPriorityType priorityType;
-
-    public DemandDTO() {}
 
     // Getters and Setters
     public Double getArea() { return area; }
@@ -44,6 +38,9 @@ public class DemandDTO {
     public String getPropertyType() { return propertyType; }
     public void setPropertyType(String propertyType) { this.propertyType = propertyType; }
 
+    public CustomerPriorityType getPriorityType() { return priorityType; }
+    public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }
+
     public Integer getNumberOfBasement() { return numberOfBasement; }
     public void setNumberOfBasement(Integer numberOfBasement) { this.numberOfBasement = numberOfBasement; }
 
@@ -55,7 +52,4 @@ public class DemandDTO {
 
     public Double getBrokerageFee() { return brokerageFee; }
     public void setBrokerageFee(Double brokerageFee) { this.brokerageFee = brokerageFee; }
-
-    public CustomerPriorityType getPriorityType() { return priorityType; }
-    public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }
 }

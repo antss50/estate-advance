@@ -3,18 +3,13 @@ package com.javaweb.entity;
 import com.javaweb.enums.CustomerPriorityType;
 import javax.persistence.*;
 
-@Embeddable  // Quan trọng: dùng @Embeddable thay vì @Entity
+@Embeddable
 public class Demand {
 
-    // Diện tích, giá
     private Double area;
     private Double price;
-
-    // Địa chỉ (sau sáp nhập)
-    private String ward;        // Phường/Xã
-    private String province;    // Tỉnh/Thành phố
-
-    // Loại hình
+    private String ward;
+    private String province;
     private String buildingType;
     private String transactionType;
     private String propertyType;
@@ -22,7 +17,6 @@ public class Demand {
     @Enumerated(EnumType.STRING)
     private CustomerPriorityType priorityType;
 
-    // Thông tin bổ sung
     private Integer numberOfBasement;
     private String direction;
     private String legalStatus;
