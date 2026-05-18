@@ -10,7 +10,7 @@ public class Demand {
     private Double price;
     private String ward;
     private String province;
-    private String buildingType;
+    // private String buildingType;  // ĐÃ XÓA
     private String transactionType;
     private String propertyType;
 
@@ -35,8 +35,7 @@ public class Demand {
     public String getProvince() { return province; }
     public void setProvince(String province) { this.province = province; }
 
-    public String getBuildingType() { return buildingType; }
-    public void setBuildingType(String buildingType) { this.buildingType = buildingType; }
+    // Xóa getter/setter buildingType
 
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }

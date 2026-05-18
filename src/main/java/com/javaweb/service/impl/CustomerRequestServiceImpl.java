@@ -26,18 +26,16 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
     @Override
     public Long save(CustomerRequestDTO dto, Long customerId) {
 
-        // 1. Lấy customer từ database
         CustomerEntity customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + customerId));
 
-        // 2. KIỂM TRA DEMAND KHÔNG ĐƯỢC NULL
         if (dto.getDemand() == null) {
             throw new RuntimeException("Demand không được để trống");
         }
 
         DemandDTO demandDTO = dto.getDemand();
 
-        // 3. KIỂM TRA CÁC TRƯỜNG BẮT BUỘC (KHÔNG ĐƯỢC NULL)
+        // Kiểm tra các trường bắt buộc
         if (demandDTO.getArea() == null || demandDTO.getArea() <= 0) {
             throw new RuntimeException("Diện tích (area) là bắt buộc");
         }
@@ -54,10 +52,7 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
             throw new RuntimeException("Tỉnh/Thành phố (province) là bắt buộc");
         }
 
-        // ============ KIỂM TRA CÁC TRƯỜNG KHÔNG ĐƯỢC NULL ============
-        if (demandDTO.getBuildingType() == null || demandDTO.getBuildingType().trim().isEmpty()) {
-            throw new RuntimeException("Loại building (buildingType) là bắt buộc");
-        }
+        // ĐÃ XÓA KIỂM TRA buildingType
 
         if (demandDTO.getTransactionType() == null || demandDTO.getTransactionType().trim().isEmpty()) {
             throw new RuntimeException("Loại giao dịch (transactionType) là bắt buộc");
@@ -70,22 +65,21 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         if (demandDTO.getPriorityType() == null) {
             throw new RuntimeException("Loại ưu tiên (priorityType) là bắt buộc");
         }
-        // ============ END ============
 
-        // 4. Tạo CustomerRequestEntity
+        // Tạo CustomerRequestEntity
         CustomerRequestEntity entity = new CustomerRequestEntity();
         entity.setCustomer(customer);
         entity.setFullName(customer.getFullName());
         entity.setPhone(customer.getPhone());
         entity.setEmail(customer.getEmail());
 
-        // 5. Map DemandDTO -> Demand
+        // Map DemandDTO -> Demand
         Demand demand = new Demand();
         demand.setArea(demandDTO.getArea());
         demand.setPrice(demandDTO.getPrice());
         demand.setWard(demandDTO.getWard());
         demand.setProvince(demandDTO.getProvince());
-        demand.setBuildingType(demandDTO.getBuildingType());
+        // demand.setBuildingType(demandDTO.getBuildingType()); // ĐÃ XÓA
         demand.setTransactionType(demandDTO.getTransactionType());
         demand.setPropertyType(demandDTO.getPropertyType());
         demand.setPriorityType(demandDTO.getPriorityType());
@@ -130,7 +124,7 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
                 demandDTO.setPrice(item.getDemand().getPrice());
                 demandDTO.setWard(item.getDemand().getWard());
                 demandDTO.setProvince(item.getDemand().getProvince());
-                demandDTO.setBuildingType(item.getDemand().getBuildingType());
+                // demandDTO.setBuildingType(item.getDemand().getBuildingType()); // ĐÃ XÓA
                 demandDTO.setTransactionType(item.getDemand().getTransactionType());
                 demandDTO.setPropertyType(item.getDemand().getPropertyType());
                 demandDTO.setPriorityType(item.getDemand().getPriorityType());
