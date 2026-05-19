@@ -89,20 +89,19 @@ public class BuildingScoringService {
      */
     private double calculatePriceScore(BuildingEntity building, String transactionType) {
         // BƯỚC 1: Kiểm tra building có hỗ trợ loại giao dịch này không
-        String buildingTxType = building.getTransactionType();
+        // SỬA: Chuyển enum sang String
+        String buildingTxType = building.getTransactionType() != null ?
+                building.getTransactionType().name() : null;
 
         if (buildingTxType == null || buildingTxType.isEmpty()) {
-            // Building không xác định loại giao dịch -> không tính
             return 0;
         }
 
         if ("SALE".equalsIgnoreCase(transactionType)) {
-            // Building phải hỗ trợ SALE hoặc BOTH
             if (!"SALE".equalsIgnoreCase(buildingTxType) && !"BOTH".equalsIgnoreCase(buildingTxType)) {
                 return 0;
             }
         } else if ("RENT".equalsIgnoreCase(transactionType)) {
-            // Building phải hỗ trợ RENT hoặc BOTH
             if (!"RENT".equalsIgnoreCase(buildingTxType) && !"BOTH".equalsIgnoreCase(buildingTxType)) {
                 return 0;
             }
@@ -116,24 +115,21 @@ public class BuildingScoringService {
 
         if ("SALE".equalsIgnoreCase(transactionType)) {
             price = building.getPriceSale();
-            maxPrice = commissionConfig.getMaxPriceSale(); // 5 tỷ
+            maxPrice = commissionConfig.getMaxPriceSale();
         } else if ("RENT".equalsIgnoreCase(transactionType)) {
             price = building.getPriceRent();
-            maxPrice = commissionConfig.getMaxPriceRent(); // 15 triệu
+            maxPrice = commissionConfig.getMaxPriceRent();
         } else {
             return 0;
         }
 
-        // BƯỚC 3: Kiểm tra có giá không
         if (price == null || price <= 0 || maxPrice <= 0) {
             return 0;
         }
 
-        // BƯỚC 4: Tính điểm
         double score = price / maxPrice;
         double result = Math.min(1.0, Math.max(0, score));
 
-        // Làm tròn 2 chữ số thập phân
         return Math.round(result * 100.0) / 100.0;
     }
 

@@ -1,6 +1,7 @@
 package com.javaweb.entity;
 
 import com.javaweb.enums.LegalStatus;
+import com.javaweb.enums.TransactionType;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -47,8 +48,10 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "numberofbasement")
     private Integer numberOfBasement;
 
+    // ============ ĐÃ ĐỔI TỪ Integer SANG Double ============
     @Column(name = "floorarea")
-    private Integer floorArea;
+    private Double floorArea;
+    // ============ END ============
 
     @Column(name = "direction")
     private String direction;
@@ -56,29 +59,33 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "level")
     private String level;
 
+    // ============ ĐÃ ĐỔI TỪ Integer SANG Double ============
     @Column(name = "rentprice")
-    private Integer rentPrice;
+    private Double rentPrice;
+    // ============ END ============
 
     @Column(name = "rentpricedescription", columnDefinition = "TEXT")
     private String rentPriceDescription;
 
+    // ============ ĐÃ ĐỔI TỪ String SANG Double ============
     @Column(name = "servicefee")
-    private String serviceFee;
+    private Double serviceFee;
 
     @Column(name = "carfee")
-    private String carFee;
+    private Double carFee;
 
     @Column(name = "motofee")
-    private String motoFee;
+    private Double motoFee;
 
     @Column(name = "overtimefee")
-    private String overtimeFee;
+    private Double overtimeFee;
 
     @Column(name = "waterfee")
-    private String waterFee;
+    private Double waterFee;
 
     @Column(name = "electricityfee")
-    private String electricityFee;
+    private Double electricityFee;
+    // ============ END ============
 
     @Column(name = "deposit")
     private String deposit;
@@ -95,9 +102,9 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "brokeragefee")
     private Double brokerageFee;
 
-    // ============ TYPE LƯU DƯỚI DẠNG STRING, CÓ NHIỀU GIÁ TRỊ CÁCH NHAU BẰNG DẤU PHẨY ============
-    @Column(name = "type")
-    private String type;  // Ví dụ: "TANG_TRET,NGUYEN_CAN"
+    // ============ ĐÃ ĐỔI TỪ type THÀNH propertyType ============
+    @Column(name = "type")  // Vẫn map với cột "type" trong database
+    private String propertyType;  // Ví dụ: "TANG_TRET,NGUYEN_CAN"
     // ============ END ============
 
     @Column(name = "note")
@@ -115,16 +122,18 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "image")
     private String image;
 
-    // ============ THÊM 3 FIELD MỚI ============
+    // ============ CÁC FIELD MỚI ============
     @Column(name = "price_sale")
     private Double priceSale;
 
     @Column(name = "price_rent")
     private Double priceRent;
 
+    // ============ ĐÃ ĐỔI TỪ String SANG Enum TransactionType ============
+    @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type")
-    private String transactionType;
-    // ============ END FIELD MỚI ============
+    private TransactionType transactionType;
+    // ============ END ============
 
     @Column(name = "managername")
     private String managerName;
@@ -265,11 +274,11 @@ public class BuildingEntity extends BaseEntity {
         this.numberOfBasement = numberOfBasement;
     }
 
-    public Integer getFloorArea() {
+    public Double getFloorArea() {
         return floorArea;
     }
 
-    public void setFloorArea(Integer floorArea) {
+    public void setFloorArea(Double floorArea) {
         this.floorArea = floorArea;
     }
 
@@ -289,11 +298,11 @@ public class BuildingEntity extends BaseEntity {
         this.level = level;
     }
 
-    public Integer getRentPrice() {
+    public Double getRentPrice() {
         return rentPrice;
     }
 
-    public void setRentPrice(Integer rentPrice) {
+    public void setRentPrice(Double rentPrice) {
         this.rentPrice = rentPrice;
     }
 
@@ -305,51 +314,51 @@ public class BuildingEntity extends BaseEntity {
         this.rentPriceDescription = rentPriceDescription;
     }
 
-    public String getServiceFee() {
+    public Double getServiceFee() {
         return serviceFee;
     }
 
-    public void setServiceFee(String serviceFee) {
+    public void setServiceFee(Double serviceFee) {
         this.serviceFee = serviceFee;
     }
 
-    public String getCarFee() {
+    public Double getCarFee() {
         return carFee;
     }
 
-    public void setCarFee(String carFee) {
+    public void setCarFee(Double carFee) {
         this.carFee = carFee;
     }
 
-    public String getMotoFee() {
+    public Double getMotoFee() {
         return motoFee;
     }
 
-    public void setMotoFee(String motoFee) {
+    public void setMotoFee(Double motoFee) {
         this.motoFee = motoFee;
     }
 
-    public String getOvertimeFee() {
+    public Double getOvertimeFee() {
         return overtimeFee;
     }
 
-    public void setOvertimeFee(String overtimeFee) {
+    public void setOvertimeFee(Double overtimeFee) {
         this.overtimeFee = overtimeFee;
     }
 
-    public String getWaterFee() {
+    public Double getWaterFee() {
         return waterFee;
     }
 
-    public void setWaterFee(String waterFee) {
+    public void setWaterFee(Double waterFee) {
         this.waterFee = waterFee;
     }
 
-    public String getElectricityFee() {
+    public Double getElectricityFee() {
         return electricityFee;
     }
 
-    public void setElectricityFee(String electricityFee) {
+    public void setElectricityFee(Double electricityFee) {
         this.electricityFee = electricityFee;
     }
 
@@ -393,12 +402,12 @@ public class BuildingEntity extends BaseEntity {
         this.brokerageFee = brokerageFee;
     }
 
-    public String getType() {
-        return type;
+    public String getPropertyType() {
+        return propertyType;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setPropertyType(String propertyType) {
+        this.propertyType = propertyType;
     }
 
     public String getNote() {
@@ -457,11 +466,11 @@ public class BuildingEntity extends BaseEntity {
         this.priceRent = priceRent;
     }
 
-    public String getTransactionType() {
+    public TransactionType getTransactionType() {
         return transactionType;
     }
 
-    public void setTransactionType(String transactionType) {
+    public void setTransactionType(TransactionType transactionType) {
         this.transactionType = transactionType;
     }
 

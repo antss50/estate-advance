@@ -9,7 +9,7 @@ public class BuildingByStaffResponse {
     private String street;
     private String wardName;
     private String provinceName;
-    private Integer floorArea;
+    private Double floorArea;  // Đổi từ Integer sang Double
     private Double priceSale;
     private Double priceRent;
     private String transactionType;
@@ -23,28 +23,6 @@ public class BuildingByStaffResponse {
 
     // Constructors
     public BuildingByStaffResponse() {}
-
-    public BuildingByStaffResponse(Long buildingId, String buildingName, String address,
-                                   String street, String wardName, String provinceName,
-                                   Integer floorArea, Double priceSale, Double priceRent,
-                                   String transactionType, String type, String note,
-                                   String image, String avatar, List<String> imageList) {
-        this.buildingId = buildingId;
-        this.buildingName = buildingName;
-        this.address = address;
-        this.street = street;
-        this.wardName = wardName;
-        this.provinceName = provinceName;
-        this.floorArea = floorArea;
-        this.priceSale = priceSale;
-        this.priceRent = priceRent;
-        this.transactionType = transactionType;
-        this.type = type;
-        this.note = note;
-        this.image = image;
-        this.avatar = avatar;
-        this.imageList = imageList;
-    }
 
     // Getters and Setters
     public Long getBuildingId() { return buildingId; }
@@ -65,8 +43,8 @@ public class BuildingByStaffResponse {
     public String getProvinceName() { return provinceName; }
     public void setProvinceName(String provinceName) { this.provinceName = provinceName; }
 
-    public Integer getFloorArea() { return floorArea; }
-    public void setFloorArea(Integer floorArea) { this.floorArea = floorArea; }
+    public Double getFloorArea() { return floorArea; }
+    public void setFloorArea(Double floorArea) { this.floorArea = floorArea; }
 
     public Double getPriceSale() { return priceSale; }
     public void setPriceSale(Double priceSale) { this.priceSale = priceSale; }

@@ -1,9 +1,11 @@
 package com.javaweb.entity;
 
+import com.javaweb.enums.LegalStatus;
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "user")
@@ -45,6 +47,12 @@ public class UserEntity extends BaseEntity {
     @Column(name = "performance")
     private Double performance;
 
+    // ============ THÊM FIELD LAST_LOGIN ============
+    @Column(name = "last_login")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastLogin;
+    // ============ END ============
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_role",
             joinColumns = @JoinColumn(name = "user_id", nullable = false),
@@ -55,111 +63,47 @@ public class UserEntity extends BaseEntity {
     private List<AssignmentBuildingEntity> assignmentBuildings = new ArrayList<>();
 
     // Getters and Setters
-    public static long getSerialVersionUID() {
-        return serialVersionUID;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getUserName() {
-        return userName;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
 
-    public String getFullName() {
-        return fullName;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public String getPassword() {
-        return password;
-    }
+    public String getWorkingArea() { return workingArea; }
+    public void setWorkingArea(String workingArea) { this.workingArea = workingArea; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public BigDecimal getRevenue() { return revenue; }
+    public void setRevenue(BigDecimal revenue) { this.revenue = revenue; }
 
-    public Integer getStatus() {
-        return status;
-    }
+    public Integer getTotalDeals() { return totalDeals; }
+    public void setTotalDeals(Integer totalDeals) { this.totalDeals = totalDeals; }
 
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
+    public Double getPerformance() { return performance; }
+    public void setPerformance(Double performance) { this.performance = performance; }
 
-    public String getEmail() {
-        return email;
-    }
+    // ============ GETTER & SETTER CHO LAST_LOGIN ============
+    public Date getLastLogin() { return lastLogin; }
+    public void setLastLogin(Date lastLogin) { this.lastLogin = lastLogin; }
+    // ============ END ============
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public List<RoleEntity> getRoles() { return roles; }
+    public void setRoles(List<RoleEntity> roles) { this.roles = roles; }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getWorkingArea() {
-        return workingArea;
-    }
-
-    public void setWorkingArea(String workingArea) {
-        this.workingArea = workingArea;
-    }
-
-    public BigDecimal getRevenue() {
-        return revenue;
-    }
-
-    public void setRevenue(BigDecimal revenue) {
-        this.revenue = revenue;
-    }
-
-    public Integer getTotalDeals() {
-        return totalDeals;
-    }
-
-    public void setTotalDeals(Integer totalDeals) {
-        this.totalDeals = totalDeals;
-    }
-
-    public Double getPerformance() {
-        return performance;
-    }
-
-    public void setPerformance(Double performance) {
-        this.performance = performance;
-    }
-
-    public List<RoleEntity> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<RoleEntity> roles) {
-        this.roles = roles;
-    }
-
-    public List<AssignmentBuildingEntity> getAssignmentBuildings() {
-        return assignmentBuildings;
-    }
-
-    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) {
-        this.assignmentBuildings = assignmentBuildings;
-    }
+    public List<AssignmentBuildingEntity> getAssignmentBuildings() { return assignmentBuildings; }
+    public void setAssignmentBuildings(List<AssignmentBuildingEntity> assignmentBuildings) { this.assignmentBuildings = assignmentBuildings; }
 }

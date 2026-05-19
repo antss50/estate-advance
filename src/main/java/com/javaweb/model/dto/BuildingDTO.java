@@ -1,6 +1,7 @@
 package com.javaweb.model.dto;
 
 import com.javaweb.enums.LegalStatus;
+import com.javaweb.enums.TransactionType;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -21,14 +22,14 @@ public class BuildingDTO extends AbstractDTO {
     // ============ END ============
 
     private String structure;
-    private Integer floorArea;
+    private Double floorArea;
     private String rentArea;
 
     // ============ GIÁ (HỖ TRỢ CẢ MUA VÀ THUÊ) ============
-    private Integer rentPrice;      // Giá thuê cũ (giữ lại)
-    private Double priceSale;       // Giá bán
-    private Double priceRent;       // Giá thuê mới
-    private String transactionType; // "SALE", "RENT", "BOTH"
+    private Double rentPrice;
+    private Double priceSale;
+    private Double priceRent;
+    private TransactionType transactionType;
     // ============ END ============
 
     private Integer numberOfBasement;
@@ -37,12 +38,16 @@ public class BuildingDTO extends AbstractDTO {
     private String level;
     private String managerName;
     private String managerPhone;
-    private String serviceFee;
-    private String carFee;
-    private String motoFee;
-    private String overtimeFee;
-    private String waterFee;
-    private String electricityFee;
+
+    // ============ CÁC LOẠI PHÍ ============
+    private Double serviceFee;
+    private Double carFee;
+    private Double motoFee;
+    private Double overtimeFee;
+    private Double waterFee;
+    private Double electricityFee;
+    // ============ END ============
+
     private String deposit;
     private String payment;
     private String rentTime;
@@ -53,16 +58,23 @@ public class BuildingDTO extends AbstractDTO {
     private String map;
 
     // THÊM FIELD AVATAR VÀ IMAGE
-    private String avatar;      // Lưu đường dẫn avatar (1 ảnh)
-    private String image;       // Lưu đường dẫn images (nhiều ảnh)
+    private String avatar;
+    private String image;
 
     private LegalStatus legal;
-    private String[] typeCode;   // Mảng type code
+
+    // ============ PROPERTY TYPE (THAY THẾ typeCode) ============
+    private String propertyType;
+    // ============ END ============
+
     private Long staffId;
 
     // Thêm 2 field để nhận file upload
-    private MultipartFile avatarFile;      // File avatar (1 ảnh)
-    private List<MultipartFile> imageFiles; // Danh sách file images (nhiều ảnh)
+    private MultipartFile avatarFile;
+    private List<MultipartFile> imageFiles;
+
+    // ============ CONSTRUCTORS ============
+    public BuildingDTO() {}
 
     // ============ GETTERS AND SETTERS ============
 
@@ -74,7 +86,6 @@ public class BuildingDTO extends AbstractDTO {
         this.name = name;
     }
 
-    // Địa chỉ mới
     public String getStreet() {
         return street;
     }
@@ -113,7 +124,7 @@ public class BuildingDTO extends AbstractDTO {
 
     public void setWardName(String wardName) {
         this.wardName = wardName;
-        this.ward = wardName; // Đồng bộ với field ward cũ
+        this.ward = wardName;
     }
 
     public String getWard() {
@@ -127,7 +138,6 @@ public class BuildingDTO extends AbstractDTO {
         }
     }
 
-    // Field cũ (migration)
     public String getDistrict() {
         return district;
     }
@@ -136,12 +146,35 @@ public class BuildingDTO extends AbstractDTO {
         this.district = district;
     }
 
-    // Giá
-    public Integer getRentPrice() {
+    public String getStructure() {
+        return structure;
+    }
+
+    public void setStructure(String structure) {
+        this.structure = structure;
+    }
+
+    public Double getFloorArea() {
+        return floorArea;
+    }
+
+    public void setFloorArea(Double floorArea) {
+        this.floorArea = floorArea;
+    }
+
+    public String getRentArea() {
+        return rentArea;
+    }
+
+    public void setRentArea(String rentArea) {
+        this.rentArea = rentArea;
+    }
+
+    public Double getRentPrice() {
         return rentPrice;
     }
 
-    public void setRentPrice(Integer rentPrice) {
+    public void setRentPrice(Double rentPrice) {
         this.rentPrice = rentPrice;
     }
 
@@ -161,36 +194,12 @@ public class BuildingDTO extends AbstractDTO {
         this.priceRent = priceRent;
     }
 
-    public String getTransactionType() {
+    public TransactionType getTransactionType() {
         return transactionType;
     }
 
-    public void setTransactionType(String transactionType) {
+    public void setTransactionType(TransactionType transactionType) {
         this.transactionType = transactionType;
-    }
-
-    public String getStructure() {
-        return structure;
-    }
-
-    public void setStructure(String structure) {
-        this.structure = structure;
-    }
-
-    public Integer getFloorArea() {
-        return floorArea;
-    }
-
-    public void setFloorArea(Integer floorArea) {
-        this.floorArea = floorArea;
-    }
-
-    public String getRentArea() {
-        return rentArea;
-    }
-
-    public void setRentArea(String rentArea) {
-        this.rentArea = rentArea;
     }
 
     public Integer getNumberOfBasement() {
@@ -241,51 +250,51 @@ public class BuildingDTO extends AbstractDTO {
         this.managerPhone = managerPhone;
     }
 
-    public String getServiceFee() {
+    public Double getServiceFee() {
         return serviceFee;
     }
 
-    public void setServiceFee(String serviceFee) {
+    public void setServiceFee(Double serviceFee) {
         this.serviceFee = serviceFee;
     }
 
-    public String getCarFee() {
+    public Double getCarFee() {
         return carFee;
     }
 
-    public void setCarFee(String carFee) {
+    public void setCarFee(Double carFee) {
         this.carFee = carFee;
     }
 
-    public String getMotoFee() {
+    public Double getMotoFee() {
         return motoFee;
     }
 
-    public void setMotoFee(String motoFee) {
+    public void setMotoFee(Double motoFee) {
         this.motoFee = motoFee;
     }
 
-    public String getOvertimeFee() {
+    public Double getOvertimeFee() {
         return overtimeFee;
     }
 
-    public void setOvertimeFee(String overtimeFee) {
+    public void setOvertimeFee(Double overtimeFee) {
         this.overtimeFee = overtimeFee;
     }
 
-    public String getWaterFee() {
+    public Double getWaterFee() {
         return waterFee;
     }
 
-    public void setWaterFee(String waterFee) {
+    public void setWaterFee(Double waterFee) {
         this.waterFee = waterFee;
     }
 
-    public String getElectricityFee() {
+    public Double getElectricityFee() {
         return electricityFee;
     }
 
-    public void setElectricityFee(String electricityFee) {
+    public void setElectricityFee(Double electricityFee) {
         this.electricityFee = electricityFee;
     }
 
@@ -377,12 +386,12 @@ public class BuildingDTO extends AbstractDTO {
         this.legal = legal;
     }
 
-    public String[] getTypeCode() {
-        return typeCode;
+    public String getPropertyType() {
+        return propertyType;
     }
 
-    public void setTypeCode(String[] typeCode) {
-        this.typeCode = typeCode;
+    public void setPropertyType(String propertyType) {
+        this.propertyType = propertyType;
     }
 
     public Long getStaffId() {
@@ -408,4 +417,28 @@ public class BuildingDTO extends AbstractDTO {
     public void setImageFiles(List<MultipartFile> imageFiles) {
         this.imageFiles = imageFiles;
     }
+
+    // ============ PHƯƠNG THỨC TƯƠNG THÍCH VỚI CODE CŨ ============
+
+    /**
+     * Chuyển đổi từ String[] (cách dùng cũ) sang propertyType
+     * Ví dụ: ["OFFICE", "RETAIL"] -> "OFFICE,RETAIL"
+     */
+    public void setTypeCode(String[] typeCode) {
+        if (typeCode != null && typeCode.length > 0) {
+            this.propertyType = String.join(",", typeCode);
+        }
+    }
+
+    /**
+     * Lấy typeCode dưới dạng mảng (tương thích ngược)
+     */
+    public String[] getTypeCode() {
+        if (propertyType != null && !propertyType.isEmpty()) {
+            return propertyType.split(",");
+        }
+        return null;
+    }
+
+    // ============ END PHƯƠNG THỨC TƯƠNG THÍCH ============
 }

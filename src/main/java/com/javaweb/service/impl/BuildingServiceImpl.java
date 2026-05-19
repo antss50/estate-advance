@@ -1,7 +1,5 @@
 package com.javaweb.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javaweb.builder.BuildingSearchBuilder;
 import com.javaweb.converter.BuildingConverter;
 import com.javaweb.converter.BuildingSearchBuilderConverter;
@@ -9,10 +7,10 @@ import com.javaweb.converter.BuildingSearchResponseConverter;
 import com.javaweb.entity.BuildingEntity;
 import com.javaweb.entity.RentAreaEntity;
 import com.javaweb.entity.UserEntity;
-import com.javaweb.enums.TypeCode;
 import com.javaweb.model.dto.AssignmentBuildingDTO;
 import com.javaweb.model.dto.BuildingDTO;
 import com.javaweb.model.request.BuildingSearchRequest;
+import com.javaweb.model.response.BuildingByStaffResponse;
 import com.javaweb.model.response.BuildingSearchResponse;
 import com.javaweb.model.response.ResponseDTO;
 import com.javaweb.model.response.StaffResponseDTO;
@@ -23,18 +21,11 @@ import com.javaweb.repository.custom.BuildingRepositoryCustom;
 import com.javaweb.service.AssignmentBuildingService;
 import com.javaweb.service.BuildingService;
 import com.javaweb.service.RentAreaService;
-import com.javaweb.utils.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.javaweb.model.response.BuildingByStaffResponse;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,12 +71,10 @@ public class BuildingServiceImpl implements BuildingService {
             return responseDTO;
         }
 
-        // Lấy danh sách staff (thêm distinct)
         List<UserEntity> staffs = userRepository.findByStatusAndRoles_Code(1, "STAFF");
 
-        // Loại bỏ staff trùng lặp bằng cách dùng Set
         staffs = staffs.stream()
-                .distinct()  // <-- THÊM DÒNG NÀY
+                .distinct()
                 .collect(Collectors.toList());
 
         List<UserEntity> staffAssignment = building.getUsers();
@@ -98,7 +87,6 @@ public class BuildingServiceImpl implements BuildingService {
             staffResponseDTO.setStaffId(it.getId());
             staffResponseDTO.setFullName(it.getFullName());
 
-            // Kiểm tra staff đã được gán chưa
             boolean isAssigned = staffAssignment.stream()
                     .anyMatch(staff -> staff.getId().equals(it.getId()));
 
@@ -131,9 +119,8 @@ public class BuildingServiceImpl implements BuildingService {
 
         List<UserEntity> validStaffs = userRepository.findStaffs("STAFF");
 
-        // SỬA: Thêm distinct() để loại bỏ trùng lặp
         Map<Long, UserEntity> staffMap = validStaffs.stream()
-                .distinct()  // <-- THÊM DÒNG NÀY
+                .distinct()
                 .collect(Collectors.toMap(UserEntity::getId, item -> item, (existing, replacement) -> existing));
 
         List<UserEntity> newStaffs = new ArrayList<>();
@@ -154,110 +141,38 @@ public class BuildingServiceImpl implements BuildingService {
     public BuildingDTO getBuildingDetail(Long id) {
         BuildingEntity entity = buildingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Building not found"));
-
-        // Map thủ công - KHÔNG dùng ModelMapper
-        BuildingDTO buildingDTO = new BuildingDTO();
-
-        // Các field cơ bản
-        buildingDTO.setId(entity.getId());
-        buildingDTO.setName(entity.getName());
-        buildingDTO.setStreet(entity.getStreet());
-        buildingDTO.setStructure(entity.getStructure());
-        buildingDTO.setNote(entity.getNote());
-        buildingDTO.setImage(entity.getImage());
-        buildingDTO.setAvatar(entity.getAvatar());
-        buildingDTO.setFloorArea(entity.getFloorArea());
-        buildingDTO.setNumberOfBasement(entity.getNumberOfBasement());
-        buildingDTO.setDirection(entity.getDirection());
-        buildingDTO.setLevel(entity.getLevel());
-        buildingDTO.setRentPrice(entity.getRentPrice());
-        buildingDTO.setRentPriceDescription(entity.getRentPriceDescription());
-        buildingDTO.setServiceFee(entity.getServiceFee());
-        buildingDTO.setCarFee(entity.getCarFee());
-        buildingDTO.setMotoFee(entity.getMotoFee());
-        buildingDTO.setOvertimeFee(entity.getOvertimeFee());
-        buildingDTO.setWaterFee(entity.getWaterFee());
-        buildingDTO.setElectricityFee(entity.getElectricityFee());
-        buildingDTO.setDeposit(entity.getDeposit());
-        buildingDTO.setPayment(entity.getPayment());
-        buildingDTO.setRentTime(entity.getRentTime());
-        buildingDTO.setDecorationTime(entity.getDecorationTime());
-        buildingDTO.setBrokerageFee(entity.getBrokerageFee());
-        buildingDTO.setManagerName(entity.getManagerName());
-        buildingDTO.setManagerPhone(entity.getManagerPhone());
-        buildingDTO.setMap(entity.getMap());
-        buildingDTO.setLinkOfBuilding(entity.getLinkOfBuilding());
-        buildingDTO.setLegal(entity.getLegal());
-
-        // Địa chỉ mới
-        buildingDTO.setWard(entity.getWardName());          // ward = wardName
-        buildingDTO.setWardName(entity.getWardName());
-        buildingDTO.setWardCode(entity.getWardCode());
-        buildingDTO.setProvinceCode(entity.getProvinceCode());
-        buildingDTO.setProvinceName(entity.getProvinceName());
-        buildingDTO.setStreet(entity.getStreet());
-
-        // Field cũ (migration)
-        buildingDTO.setDistrict(entity.getDistrictLegacy());
-
-        // Giá
-        buildingDTO.setPriceSale(entity.getPriceSale());
-        buildingDTO.setPriceRent(entity.getPriceRent());
-        buildingDTO.setTransactionType(entity.getTransactionType());
-
-        // Xử lý type từ String -> String[]
-        if (entity.getType() != null && !entity.getType().isEmpty()) {
-            buildingDTO.setTypeCode(entity.getType().split(","));
-        }
-
-        // Xử lý rentArea từ List<RentAreaEntity> -> String
-        if (entity.getRentAreas() != null && !entity.getRentAreas().isEmpty()) {
-            String rentArea = entity.getRentAreas().stream()
-                    .map(item -> String.valueOf(item.getValue()))
-                    .reduce((a, b) -> a + "," + b)
-                    .orElse("");
-            buildingDTO.setRentArea(rentArea);
-        }
-
-        return buildingDTO;
+        // Dùng buildingConverter thay vì map thủ công
+        return buildingConverter.convertToDTO(entity);
     }
-
     @Override
     @Transactional
     public BuildingDTO addOrUpdateBuilding(BuildingDTO buildingDTO) {
         BuildingEntity buildingEntity;
 
-        // Nếu có ID -> update, không thì tạo mới
         if (buildingDTO.getId() != null) {
+            // Cập nhật: lấy entity cũ
             buildingEntity = buildingRepository.findById(buildingDTO.getId())
                     .orElse(new BuildingEntity());
+            // Dùng buildingConverter thay vì modelMapper
+            BuildingEntity converted = buildingConverter.convertEntity(buildingDTO);
+            converted.setId(buildingEntity.getId());
+            buildingEntity = converted;
         } else {
-            buildingEntity = new BuildingEntity();
+            // Thêm mới
+            buildingEntity = buildingConverter.convertEntity(buildingDTO);
         }
 
-        // Map các field cơ bản từ DTO sang Entity
-        modelMapper.map(buildingDTO, buildingEntity);
-
-        // Xử lý typeCode: từ String[] (trong DTO) -> String (lưu trong DB, cách nhau bằng dấu phẩy)
-        // Ví dụ: ["TANG_TRET", "NGUYEN_CAN"] -> "TANG_TRET,NGUYEN_CAN"
-        if (buildingDTO.getTypeCode() != null && buildingDTO.getTypeCode().length > 0) {
-            buildingEntity.setType(String.join(",", buildingDTO.getTypeCode()));
-        }
-
-        // Lưu building vào database
         buildingEntity = buildingRepository.save(buildingEntity);
         buildingDTO.setId(buildingEntity.getId());
 
         // Xử lý rentArea
         if (buildingDTO.getRentArea() != null && !buildingDTO.getRentArea().trim().isEmpty()) {
-            // Xóa rentArea cũ nếu có
             if (buildingDTO.getId() != null) {
                 List<RentAreaEntity> oldRentAreas = rentAreaRepository.findByBuildingId(buildingEntity.getId());
                 if (oldRentAreas != null && !oldRentAreas.isEmpty()) {
                     rentAreaRepository.deleteAll(oldRentAreas);
                 }
             }
-            // Thêm rentArea mới
             rentAreaService.addRentArea(buildingDTO);
         }
 
@@ -283,6 +198,7 @@ public class BuildingServiceImpl implements BuildingService {
             buildingRepository.deleteById(id);
         }
     }
+
     @Override
     public List<BuildingByStaffResponse> getBuildingsByStaffId(Long staffId) {
         List<BuildingEntity> buildings = buildingRepository.findBuildingsByStaffId(staffId);
@@ -296,9 +212,6 @@ public class BuildingServiceImpl implements BuildingService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Chuyển đổi BuildingEntity sang BuildingByStaffResponse
-     */
     private BuildingByStaffResponse convertToBuildingByStaffResponse(BuildingEntity entity) {
         BuildingByStaffResponse response = new BuildingByStaffResponse();
 
@@ -308,7 +221,6 @@ public class BuildingServiceImpl implements BuildingService {
         response.setWardName(entity.getWardName());
         response.setProvinceName(entity.getProvinceName());
 
-        // Tạo địa chỉ đầy đủ
         String address = (entity.getStreet() != null ? entity.getStreet() : "") +
                 (entity.getWardName() != null ? ", " + entity.getWardName() : "") +
                 (entity.getProvinceName() != null ? ", " + entity.getProvinceName() : "");
@@ -317,21 +229,25 @@ public class BuildingServiceImpl implements BuildingService {
         response.setFloorArea(entity.getFloorArea());
         response.setPriceSale(entity.getPriceSale());
         response.setPriceRent(entity.getPriceRent());
-        response.setTransactionType(entity.getTransactionType());
-        response.setType(entity.getType());
+
+        // SỬA: Chuyển enum sang String
+        if (entity.getTransactionType() != null) {
+            response.setTransactionType(entity.getTransactionType().name());
+        }
+
+        response.setType(entity.getPropertyType());
+
         response.setNote(entity.getNote());
         response.setAvatar(entity.getAvatar());
 
-        // Xử lý danh sách ảnh
         if (entity.getImage() != null && !entity.getImage().isEmpty()) {
             List<String> imageList = Arrays.asList(entity.getImage().split(","));
             response.setImageList(imageList);
             if (!imageList.isEmpty()) {
-                response.setImage(imageList.get(0)); // Ảnh đầu tiên làm đại diện
+                response.setImage(imageList.get(0));
             }
         }
 
-        // Format ngày tháng
         if (entity.getCreatedDate() != null) {
             response.setCreatedDate(entity.getCreatedDate().toString());
         }
@@ -341,5 +257,4 @@ public class BuildingServiceImpl implements BuildingService {
 
         return response;
     }
-
 }

@@ -44,14 +44,28 @@ public class BuildingSearchResponseConverter {
             res.setRentPrice(buildingEntity.getPriceRent().longValue());
         }
 
-        // Mô tả giá thuê và các loại phí
+        // Mô tả giá thuê
         res.setRentPriceDescription(buildingEntity.getRentPriceDescription());
-        res.setServiceFee(buildingEntity.getServiceFee());
-        res.setCarFee(buildingEntity.getCarFee());
-        res.setMotoFee(buildingEntity.getMotoFee());
-        res.setOvertimeFee(buildingEntity.getOvertimeFee());
-        res.setWaterFee(buildingEntity.getWaterFee());
-        res.setElectricityFee(buildingEntity.getElectricityFee());
+
+        // Các loại phí (chuyển Double sang String)
+        if (buildingEntity.getServiceFee() != null) {
+            res.setServiceFee(String.valueOf(buildingEntity.getServiceFee()));
+        }
+        if (buildingEntity.getCarFee() != null) {
+            res.setCarFee(String.valueOf(buildingEntity.getCarFee()));
+        }
+        if (buildingEntity.getMotoFee() != null) {
+            res.setMotoFee(String.valueOf(buildingEntity.getMotoFee()));
+        }
+        if (buildingEntity.getOvertimeFee() != null) {
+            res.setOvertimeFee(String.valueOf(buildingEntity.getOvertimeFee()));
+        }
+        if (buildingEntity.getWaterFee() != null) {
+            res.setWaterFee(String.valueOf(buildingEntity.getWaterFee()));
+        }
+        if (buildingEntity.getElectricityFee() != null) {
+            res.setElectricityFee(String.valueOf(buildingEntity.getElectricityFee()));
+        }
 
         // Tiền đặt cọc và thanh toán
         res.setDeposit(buildingEntity.getDeposit());
@@ -75,7 +89,9 @@ public class BuildingSearchResponseConverter {
 
         // Giá bán và loại giao dịch
         res.setPriceSale(buildingEntity.getPriceSale());
-        res.setTransactionType(buildingEntity.getTransactionType());
+        if (buildingEntity.getTransactionType() != null) {
+            res.setTransactionType(buildingEntity.getTransactionType().name());
+        }
 
         // Thông tin quản lý
         res.setManagerName(buildingEntity.getManagerName());
@@ -133,7 +149,6 @@ public class BuildingSearchResponseConverter {
                     return trimmed.substring(firstQuote + 1, secondQuote);
                 }
             }
-            // Nếu không có quotes, xử lý như mảng đơn giản
             String content = trimmed.substring(1, trimmed.length() - 1);
             if (content.contains(",")) {
                 return content.split(",")[0].trim();

@@ -2,7 +2,7 @@ package com.javaweb.service;
 
 import com.javaweb.entity.BuildingEntity;
 import com.javaweb.enums.CustomerPriorityType;
-import com.javaweb.enums.TypeCode;
+import com.javaweb.enums.PropertyType;
 import com.javaweb.model.request.CustomerMatchingRequest;
 import com.javaweb.model.response.BuildingMatchScore;
 import com.javaweb.model.response.CustomerMatchingResponse;
@@ -98,8 +98,7 @@ public class CustomerBuildingMatchingService {
                     ", " + (building.getProvinceName() != null ? building.getProvinceName() : "");
         }
 
-        // Lấy tên loại building để hiển thị
-        String buildingTypeName = getBuildingTypeDisplayName(building.getType());
+        String buildingTypeName = getBuildingTypeDisplayName(building.getPropertyType());
 
         return new BuildingMatchScore(
                 building.getId(),
@@ -201,26 +200,22 @@ public class CustomerBuildingMatchingService {
 
     /**
      * Tính điểm loại nhà (S_T)
-     * Hỗ trợ building có nhiều loại (lưu dạng "TANG_TRET,NGUYEN_CAN")
+     * Dùng PropertyType để so sánh
      */
     private double calculateTypeScore(BuildingEntity building, CustomerMatchingRequest request) {
         String desiredType = request.getBuildingType();
-        String buildingTypes = building.getType();
+        String buildingTypes = building.getPropertyType();
 
-        // Nếu khách hàng không yêu cầu loại cụ thể
         if (desiredType == null || desiredType.isEmpty()) {
             return 1.0;
         }
 
-        // Nếu building chưa có loại
         if (buildingTypes == null || buildingTypes.isEmpty()) {
             return 0.5;
         }
 
-        // Chuyển desiredType từ tên hiển thị sang enum name
         String desiredTypeEnum = convertToEnumName(desiredType);
 
-        // Kiểm tra building có chứa loại mong muốn không
         List<String> buildingTypeList = Arrays.asList(buildingTypes.split(","));
         if (buildingTypeList.contains(desiredTypeEnum)) {
             return 1.0;
@@ -230,14 +225,15 @@ public class CustomerBuildingMatchingService {
     }
 
     /**
-     * Chuyển tên hiển thị thành tên enum
-     * "Tầng trệt" -> "TANG_TRET"
-     * "Nguyên căn" -> "NGUYEN_CAN"
-     * "Nội thất" -> "NOI_THAT"
+     * Chuyển tên hiển thị thành tên enum PropertyType
+     * "Văn phòng" -> "OFFICE"
+     * "Mặt bằng kinh doanh" -> "RETAIL"
+     * "Kho bãi" -> "WAREHOUSE"
+     * "Căn hộ" -> "APARTMENT"
      */
     private String convertToEnumName(String displayName) {
-        for (TypeCode type : TypeCode.values()) {
-            if (type.getTypeCodeName().equals(displayName)) {
+        for (PropertyType type : PropertyType.values()) {
+            if (type.getValue().equals(displayName)) {
                 return type.name();
             }
         }
@@ -245,7 +241,7 @@ public class CustomerBuildingMatchingService {
     }
 
     /**
-     * Lấy tên hiển thị của loại building
+     * Lấy tên hiển thị của loại building từ PropertyType
      */
     private String getBuildingTypeDisplayName(String typeCodes) {
         if (typeCodes == null || typeCodes.isEmpty()) {
@@ -256,9 +252,9 @@ public class CustomerBuildingMatchingService {
         String[] codes = typeCodes.split(",");
 
         for (String code : codes) {
-            for (TypeCode type : TypeCode.values()) {
+            for (PropertyType type : PropertyType.values()) {
                 if (type.name().equals(code)) {
-                    typeNames.add(type.getTypeCodeName());
+                    typeNames.add(type.getValue());
                     break;
                 }
             }
