@@ -25,6 +25,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -141,31 +142,27 @@ public class BuildingServiceImpl implements BuildingService {
     public BuildingDTO getBuildingDetail(Long id) {
         BuildingEntity entity = buildingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Building not found"));
-        // Dùng buildingConverter thay vì map thủ công
         return buildingConverter.convertToDTO(entity);
     }
+
     @Override
     @Transactional
     public BuildingDTO addOrUpdateBuilding(BuildingDTO buildingDTO) {
         BuildingEntity buildingEntity;
 
         if (buildingDTO.getId() != null) {
-            // Cập nhật: lấy entity cũ
             buildingEntity = buildingRepository.findById(buildingDTO.getId())
                     .orElse(new BuildingEntity());
-            // Dùng buildingConverter thay vì modelMapper
             BuildingEntity converted = buildingConverter.convertEntity(buildingDTO);
             converted.setId(buildingEntity.getId());
             buildingEntity = converted;
         } else {
-            // Thêm mới
             buildingEntity = buildingConverter.convertEntity(buildingDTO);
         }
 
         buildingEntity = buildingRepository.save(buildingEntity);
         buildingDTO.setId(buildingEntity.getId());
 
-        // Xử lý rentArea
         if (buildingDTO.getRentArea() != null && !buildingDTO.getRentArea().trim().isEmpty()) {
             if (buildingDTO.getId() != null) {
                 List<RentAreaEntity> oldRentAreas = rentAreaRepository.findByBuildingId(buildingEntity.getId());
@@ -183,8 +180,7 @@ public class BuildingServiceImpl implements BuildingService {
     public BuildingDTO getBuildingById(Long id) {
         BuildingEntity buildingEntity = buildingRepository.findById(id).orElse(null);
         if (buildingEntity != null) {
-            BuildingDTO buildingDTO = buildingConverter.convertToDTO(buildingEntity);
-            return buildingDTO;
+            return buildingConverter.convertToDTO(buildingEntity);
         }
         return null;
     }
@@ -212,32 +208,72 @@ public class BuildingServiceImpl implements BuildingService {
                 .collect(Collectors.toList());
     }
 
+    // ============ CONVERT TO BUILDING BY STAFF RESPONSE (ĐẦY ĐỦ THÔNG TIN) ============
     private BuildingByStaffResponse convertToBuildingByStaffResponse(BuildingEntity entity) {
         BuildingByStaffResponse response = new BuildingByStaffResponse();
 
+        // ============ THÔNG TIN CƠ BẢN ============
         response.setBuildingId(entity.getId());
         response.setBuildingName(entity.getName());
         response.setStreet(entity.getStreet());
         response.setWardName(entity.getWardName());
         response.setProvinceName(entity.getProvinceName());
 
+        // Địa chỉ đầy đủ
         String address = (entity.getStreet() != null ? entity.getStreet() : "") +
                 (entity.getWardName() != null ? ", " + entity.getWardName() : "") +
                 (entity.getProvinceName() != null ? ", " + entity.getProvinceName() : "");
         response.setAddress(address);
 
+        // ============ DIỆN TÍCH VÀ GIÁ ============
         response.setFloorArea(entity.getFloorArea());
         response.setPriceSale(entity.getPriceSale());
         response.setPriceRent(entity.getPriceRent());
+        response.setRentPrice(entity.getRentPrice());
+        response.setRentPriceDescription(entity.getRentPriceDescription());
 
-        // SỬA: Chuyển enum sang String
+        // ============ LOẠI GIAO DỊCH VÀ LOẠI BĐS ============
         if (entity.getTransactionType() != null) {
             response.setTransactionType(entity.getTransactionType().name());
         }
-
         response.setType(entity.getPropertyType());
 
+        // ============ THÔNG SỐ KỸ THUẬT ============
+        response.setStructure(entity.getStructure());
+        response.setNumberOfBasement(entity.getNumberOfBasement());
+        response.setDirection(entity.getDirection());
+        response.setLevel(entity.getLevel());
+
+        // ============ PHÍ DỊCH VỤ ============
+        response.setServiceFee(entity.getServiceFee());
+        response.setCarFee(entity.getCarFee());
+        response.setMotoFee(entity.getMotoFee());
+        response.setOvertimeFee(entity.getOvertimeFee());
+        response.setWaterFee(entity.getWaterFee());
+        response.setElectricityFee(entity.getElectricityFee());
+
+        // ============ THÔNG TIN THANH TOÁN ============
+        response.setDeposit(entity.getDeposit());
+        response.setPayment(entity.getPayment());
+        response.setRentTime(entity.getRentTime());
+        response.setDecorationTime(entity.getDecorationTime());
+        response.setBrokerageFee(entity.getBrokerageFee());
+
+        // ============ THÔNG TIN QUẢN LÝ ============
+        response.setManagerName(entity.getManagerName());
+        response.setManagerPhone(entity.getManagerPhone());
+
+        // ============ PHÁP LÝ ============
+        if (entity.getLegal() != null) {
+            response.setLegal(entity.getLegal().name());
+        }
+
+        // ============ GHI CHÚ VÀ LINK ============
         response.setNote(entity.getNote());
+        response.setLinkOfBuilding(entity.getLinkOfBuilding());
+        response.setMap(entity.getMap());
+
+        // ============ HÌNH ẢNH ============
         response.setAvatar(entity.getAvatar());
 
         if (entity.getImage() != null && !entity.getImage().isEmpty()) {
@@ -248,6 +284,7 @@ public class BuildingServiceImpl implements BuildingService {
             }
         }
 
+        // ============ NGÀY THÁNG ============
         if (entity.getCreatedDate() != null) {
             response.setCreatedDate(entity.getCreatedDate().toString());
         }
@@ -257,4 +294,5 @@ public class BuildingServiceImpl implements BuildingService {
 
         return response;
     }
+    // ============ END ============
 }
