@@ -1,0 +1,895 @@
+﻿Admin
+
+
+Building Management
+API Contracts - Quản lý Tòa nhà (Building Management)
+I. Thông tin chung
+* Base URL (Admin/API): /api/building
+* Base URL (Web/View): /admin
+* Content-Type: application/json (cho tất cả các request có body)
+* Authentication: Yêu cầu xác thực (Session/Token)
+________________
+
+
+II. DTO Models
+BuildingDTO
+json
+{
+        "id": 1,
+        "name": "Tòa nhà ABC",
+        "district": "QUAN_1",
+        "ward": "Phường Bến Nghé",
+        "street": "123 Lê Lợi",
+        "structure": "Hạng A",
+        "numberOfBasement": 2,
+        "floorArea": 500,
+        "direction": "Đông Nam",
+        "level": 5,
+        "rentArea": "100, 200, 150",
+        "rentAreaDescriptions": ["100", "200", "150"],
+        "rentPrice": 15000000,
+        "rentPriceDescription": "15 triệu/m2",
+        "serviceFee": 1000000,
+        "carFee": 500000,
+        "motorbikeFee": 200000,
+        "overtimeFee": 300000,
+        "waterFee": 150000,
+        "electricityFee": 3500,
+        "deposit": 30000000,
+        "payment": "Tiền mặt",
+        "rentTime": "12 tháng",
+        "decorationTime": "1 tháng",
+        "brokerageFee": 15000000,
+        "note": "Ghi chú thêm",
+        "linkOfBuilding": "https://example.com/building",
+        "map": "https://maps.google.com/...",
+        "image": "base64_encoded_string_or_url",
+        "createdDate": "2026-03-12 10:30:00",
+        "modifiedDate": "2026-03-12 10:30:00",
+        "createdBy": "admin",
+        "modifiedBy": "admin",
+        "typeCode": ["TANG_TRET", "NOI_THAT"],
+        "type": "Tầng trệt, Nội thất"
+}
+AssignmentBuildingDTO
+json
+{
+        "buildingId": 1,
+        "staffs": [2, 3, 5]
+}
+BuildingSearchRequest (Query Parameters)
+Tên trường
+	Kiểu dữ liệu
+	Mô tả
+	name
+	string
+	Tên tòa nhà
+	floorArea
+	integer
+	Diện tích sàn
+	district
+	string
+	Quận
+	ward
+	string
+	Phường
+	street
+	string
+	Đường
+	numberOfBasement
+	integer
+	Số tầng hầm
+	direction
+	string
+	Hướng
+	level
+	integer
+	Hạng
+	rentAreaFrom
+	integer
+	Diện tích thuê từ
+	rentAreaTo
+	integer
+	Diện tích thuê đến
+	rentPriceFrom
+	integer
+	Giá thuê từ
+	rentPriceTo
+	integer
+	Giá thuê đến
+	managerName
+	string
+	Tên quản lý
+	managerPhone
+	string
+	SĐT quản lý
+	staffId
+	integer
+	ID nhân viên phụ trách
+	typeCode
+	array
+	Loại tòa nhà
+	BuildingSearchResponse
+json
+{
+        "id": 1,
+        "name": "Tòa nhà ABC",
+        "address": "123 Lê Lợi, Phường Bến Nghé, QUAN_1",
+        "managerName": "Nguyễn Văn A",
+        "managerPhone": "0901234567",
+        "floorArea": 500,
+        "rentArea": "100, 200",
+        "rentPrice": 15000000,
+        "serviceFee": 1000000,
+        "brokerageFee": 15000000,
+        "type": "Tầng trệt, Nội thất"
+}
+ResponseDTO
+json
+{
+        "data": [
+        {
+                "staffId": 2,
+                "fullName": "Nguyễn Văn B",
+                "checked": true
+            },
+            {
+                "staffId": 3,
+                "fullName": "Trần Thị C",
+                "checked": false
+            }
+        ],
+        "message": "Success"
+}
+________________
+
+
+III. API dành cho REST (JSON)
+1. Thêm mới / Cập nhật tòa nhà
+Thêm mới hoặc cập nhật thông tin tòa nhà. Nếu id = null → thêm mới, nếu có id → cập nhật.
+* URL: /api/building
+* Method: POST
+* Request Body: BuildingDTO
+Ví dụ thêm mới:
+json
+{
+        "name": "Tòa nhà Sunrise City",
+        "district": "QUAN_7",
+        "ward": "Phường Tân Phú",
+        "street": "123 Nguyễn Lương Bằng",
+        "structure": "Hạng A",
+        "numberOfBasement": 2,
+        "floorArea": 800,
+        "direction": "Đông",
+        "level": 5,
+        "rentArea": "200, 250, 300",
+        "rentPrice": 25000000,
+        "serviceFee": 2000000,
+        "carFee": 1000000,
+        "motorbikeFee": 300000,
+        "overtimeFee": 500000,
+        "waterFee": 200000,
+        "electricityFee": 4000,
+        "deposit": 50000000,
+        "payment": "Chuyển khoản",
+        "rentTime": "24 tháng",
+        "decorationTime": "2 tháng",
+        "brokerageFee": 25000000,
+        "note": "Gần khu chế xuất",
+        "typeCode": ["TANG_TRET", "NOI_THAT", "VAN_PHONG"]
+}
+Ví dụ cập nhật:
+json
+{
+        "id": 5,
+        "name": "Tòa nhà Sunrise City (Cập nhật)",
+        "rentPrice": 26000000,
+        "typeCode": ["TANG_TRET", "VAN_PHONG"]
+}
+* Response Thành công (200 OK):
+ Trả về BuildingDTO sau khi đã lưu.
+json
+{
+        "id": 5,
+        "name": "Tòa nhà Sunrise City",
+        "district": "QUAN_7",
+        "ward": "Phường Tân Phú",
+        "street": "123 Nguyễn Lương Bằng",
+        "structure": "Hạng A",
+        "numberOfBasement": 2,
+        "floorArea": 800,
+        "direction": "Đông",
+        "level": 5,
+        "rentArea": "200, 250, 300",
+        "rentAreaDescriptions": ["200", "250", "300"],
+        "rentPrice": 25000000,
+        "serviceFee": 2000000,
+        "carFee": 1000000,
+        "motorbikeFee": 300000,
+        "overtimeFee": 500000,
+        "waterFee": 200000,
+        "electricityFee": 4000,
+        "deposit": 50000000,
+        "payment": "Chuyển khoản",
+        "rentTime": "24 tháng",
+        "decorationTime": "2 tháng",
+        "brokerageFee": 25000000,
+        "note": "Gần khu chế xuất",
+        "typeCode": ["TANG_TRET", "NOI_THAT", "VAN_PHONG"],
+        "type": "Tầng trệt, Nội thất, Văn phòng",
+        "createdDate": "2026-03-12 10:30:00",
+        "modifiedDate": "2026-03-12 10:30:00",
+        "createdBy": "admin",
+        "modifiedBy": "admin"
+}
+   * Response Lỗi (400 Bad Request):
+json
+{
+        "timestamp": "2026-03-12T10:30:00",
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Tên tòa nhà không được để trống",
+        "path": "/api/building"
+}
+2. Xóa tòa nhà
+Xóa một hoặc nhiều tòa nhà theo ID.
+   * URL: /api/building/{ids}
+   * Method: DELETE
+   * Path Variable:
+   * ids (List<Long>): Danh sách ID các tòa nhà cần xóa, cách nhau bởi dấu phẩy. Ví dụ: 1,2,3
+   * Response Thành công (200 OK hoặc 204 No Content):
+json
+{
+        "message": "Xóa thành công",
+        "success": true
+}
+3. Lấy danh sách nhân viên có thể gán cho tòa nhà
+Lấy danh sách staff và đánh dấu những nhân viên đang được gán cho tòa nhà.
+   * URL: /api/building/{id}/staffs
+   * Method: GET
+   * Path Variable:
+   * id (Long): ID của tòa nhà
+   * Response Thành công (200 OK): ResponseDTO
+json
+{
+        "data": [
+            {
+                "staffId": 2,
+                "fullName": "Nguyễn Văn A",
+                "checked": true
+            },
+            {
+                "staffId": 3,
+                "fullName": "Trần Thị B",
+                "checked": false
+            },
+            {
+                "staffId": 5,
+                "fullName": "Lê Văn C",
+                "checked": true
+            }
+        ],
+        "message": "Success"
+}
+4. Gán nhân viên phụ trách tòa nhà
+Thêm hoặc cập nhật danh sách nhân viên phụ trách cho một tòa nhà.
+   * URL: /api/building/assignment
+   * Method: POST
+   * Request Body: AssignmentBuildingDTO
+json
+{
+        "buildingId": 5,
+        "staffs": [2, 5, 8]
+}
+   * Response Thành công (200 OK):
+json
+{
+        "success": true,
+        "message": "Gán nhân viên thành công"
+}
+   * Response Lỗi (400 Bad Request):
+json
+{
+        "success": false,
+        "message": "Không tìm thấy tòa nhà với ID: 5"
+}
+________________
+
+
+IV. Contracts cho View (Trả về giao diện HTML)
+1. Trang danh sách tòa nhà
+   * URL: /admin/building-list
+   * Method: GET
+   * Parameters (Query String - dùng cho tìm kiếm và phân trang):
+Tên tham số
+	Kiểu dữ liệu
+	Mô tả
+	name
+	string
+	Tên tòa nhà
+	floorArea
+	integer
+	Diện tích sàn
+	district
+	string
+	Quận
+	ward
+	string
+	Phường
+	street
+	string
+	Đường
+	numberOfBasement
+	integer
+	Số tầng hầm
+	direction
+	string
+	Hướng
+	level
+	integer
+	Hạng
+	rentAreaFrom
+	integer
+	Diện tích thuê từ
+	rentAreaTo
+	integer
+	Diện tích thuê đến
+	rentPriceFrom
+	integer
+	Giá thuê từ
+	rentPriceTo
+	integer
+	Giá thuê đến
+	managerName
+	string
+	Tên quản lý
+	managerPhone
+	string
+	SĐT quản lý
+	staffId
+	integer
+	ID nhân viên phụ trách
+	typeCode
+	array
+	Loại tòa nhà
+	   * Response (200 OK):
+ Trả về view admin/building/list.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	modelSearch
+	BuildingSearchRequest
+	Đối tượng chứa các tham số tìm kiếm
+	buildingList
+	List<BuildingSearchResponse>
+	Danh sách tòa nhà kết quả tìm kiếm
+	staffs
+	List<UserDTO>
+	Danh sách nhân viên (cho dropdown lọc)
+	districts
+	Map<String, String>
+	Danh sách quận (key: district code, value: district name)
+	typeCodes
+	Map<String, String>
+	Danh sách loại tòa nhà
+	2. Trang thêm tòa nhà
+      * URL: /admin/building-edit
+      * Method: GET
+      * Response (200 OK):
+ Trả về view admin/building/edit.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	buildingEdit
+	BuildingDTO
+	Đối tượng tòa nhà rỗng (cho form thêm mới)
+	districts
+	Map<String, String>
+	Danh sách quận (cho dropdown)
+	typeCodes
+	Map<String, String>
+	Danh sách loại tòa nhà (cho checkbox)
+	3. Trang chỉnh sửa tòa nhà
+         * URL: /admin/building-edit-{id}
+         * Method: GET
+         * Path Variable:
+         * id (Long): ID của tòa nhà cần sửa
+         * Response (200 OK):
+ Trả về view admin/building/edit.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	buildingEdit
+	BuildingDTO
+	Đối tượng tòa nhà cần sửa (đã có thông tin từ database)
+	districts
+	Map<String, String>
+	Danh sách quận (cho dropdown, tự động chọn quận hiện tại)
+	typeCodes
+	Map<String, String>
+	Danh sách loại tòa nhà (cho checkbox, tự động check các loại hiện có)
+	________________
+
+
+V. Enums
+District (Quận)
+Key
+	Value
+	QUAN_1
+	Quận 1
+	QUAN_2
+	Quận 2
+	QUAN_3
+	Quận 3
+	QUAN_4
+	Quận 4
+	QUAN_5
+	Quận 5
+	QUAN_6
+	Quận 6
+	QUAN_7
+	Quận 7
+	QUAN_8
+	Quận 8
+	QUAN_9
+	Quận 9
+	QUAN_10
+	Quận 10
+	QUAN_11
+	Quận 11
+	QUAN_12
+	Quận 12
+	BINH_THANH
+	Bình Thạnh
+	GO_VAP
+	Gò Vấp
+	PHU_NHUAN
+	Phú Nhuận
+	TAN_BINH
+	Tân Bình
+	TAN_PHU
+	Tân Phú
+	THU_DUC
+	Thủ Đức
+	TypeCode (Loại tòa nhà)
+Key
+	Value
+	TANG_TRET
+	Tầng trệt
+	NOI_THAT
+	Nội thất
+	NGUYEN_CAN
+	Nguyên căn
+	VAN_PHONG
+	Văn phòng
+	TRUNG_TAM
+	Trung tâm
+	CAO_OC
+	Cao ốc
+	KIOT
+	Ki-ốt
+	MAT_TIEN
+	Mặt tiền
+	BIET_THU
+	Biệt thự
+	CAN_HO
+	Căn hộ
+	KHO
+	Kho
+	SAN_VUON
+	Sân vườn
+	________________
+
+
+VI. Luồng xử lý (Flow)
+Luồng 1: Tìm kiếm và hiển thị danh sách
+            1. User truy cập /admin/building-list với các tham số tìm kiếm
+            2. Controller nhận BuildingSearchRequest và gọi buildingService.findAll()
+            3. Service trả về List<BuildingSearchResponse>
+            4. View hiển thị danh sách kèm filter
+Luồng 2: Thêm/Sửa tòa nhà
+            1. User click "Thêm mới" → vào /admin/building-edit (form trống)
+            2. User click "Sửa" → vào /admin/building-edit-{id} (form có dữ liệu)
+            3. User submit form → gọi API POST /api/building với BuildingDTO
+            4. API xử lý và redirect về trang danh sách kèm message
+Luồng 3: Gán nhân viên
+            1. User click "Giao nhân viên" trên danh sách
+            2. Gọi API GET /api/building/{id}/staffs lấy danh sách staff
+            3. Hiển thị modal với danh sách và trạng thái check
+            4. User chọn staff và submit → gọi API POST /api/building/assignment
+            5. Hiển thị thông báo thành công/thất bại
+ 
+
+
+User Management
+API Contracts - Quản lý Người dùng (User Management)
+I. Thông tin chung
+            * Base URL (Admin/API): /api/user
+            * Base URL (Web/View): /admin
+            * Content-Type: application/json (cho tất cả các request có body)
+            * Authentication: Yêu cầu xác thực (Session/Token) - dựa trên SecurityUtils.
+________________
+
+
+II. API dành cho REST (Response trả về dữ liệu JSON)
+1. Tạo mới người dùng
+Tạo một tài khoản người dùng mới trong hệ thống.
+            * URL: /api/user
+            * Method: POST
+            * Request Body (JSON):
+Tên trường
+	Kiểu dữ liệu
+	Bắt buộc
+	Mô tả
+	userName
+	string
+	Có
+	Tên đăng nhập
+	password
+	string
+	Có
+	Mật khẩu
+	fullName
+	string
+	Có
+	Họ và tên
+	status
+	integer
+	Không
+	Trạng thái hoạt động (1: Active, 0: Inactive)
+	roleDTOs
+	object
+	Có
+	Map các role với định dạng {"roleCode": "roleName"}
+	            * Ví dụ:
+            * json
+            * {
+            *         "userName": "johndoe",
+            *         "password": "secret123",
+            *         "fullName": "John Doe",
+            *         "status": 1,
+            *         "roleDTOs": {
+            *             "ADMIN": "Administrator",
+            *             "USER": "Người dùng"
+            *         }
+            * }
+            * Response Thành công (200 OK):
+ Trả về UserDTO của người dùng vừa tạo (bao gồm cả id đã được sinh ra).
+Ví dụ:
+json
+{
+        "id": 10,
+        "userName": "johndoe",
+        "fullName": "John Doe",
+        "password": null,
+        "status": 1,
+        "roles": [
+            {
+                "id": 1,
+                "name": "Administrator",
+                "code": "ADMIN"
+            }
+        ],
+        "roleName": "Administrator",
+        "roleCode": "ADMIN",
+        "roleDTOs": {
+            "ADMIN": "Administrator"
+        },
+        "createdDate": "2026-03-11 10:30:00",
+        "modifiedDate": "2026-03-11 10:30:00"
+}
+               * Response Lỗi (4xx/5xx):
+json
+{
+        "timestamp": "2026-03-11T10:30:00",
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Username already exists",
+        "path": "/api/user"
+}
+2. Cập nhật thông tin người dùng
+Cập nhật thông tin chi tiết của một người dùng cụ thể.
+               * URL: /api/user/{id}
+               * Method: PUT
+               * Path Variable:
+               * id (Long): ID của người dùng cần cập nhật.
+               * Request Body (JSON):
+Tên trường
+	Kiểu dữ liệu
+	Bắt buộc
+	Mô tả
+	fullName
+	string
+	Không
+	Họ và tên
+	status
+	integer
+	Không
+	Trạng thái hoạt động
+	roleDTOs
+	object
+	Không
+	Map các role
+	               * Ví dụ:
+               * json
+               * {
+               *         "fullName": "John Updated",
+               *         "status": 0,
+               *         "roleDTOs": {
+               *             "USER": "Người dùng"
+               *         }
+               * }
+               * Response Thành công (200 OK):
+ Trả về UserDTO sau khi đã cập nhật.
+3. Xóa người dùng
+Xóa một hoặc nhiều người dùng khỏi hệ thống.
+                  * URL: /api/user
+                  * Method: DELETE
+                  * Request Body (JSON): Một mảng các ID cần xóa.
+Ví dụ:
+json
+[5, 10, 15]
+                  * Response Thành công (204 No Content):
+ Không có nội dung trả về.
+4. Thay đổi mật khẩu
+Cho phép người dùng thay đổi mật khẩu của họ.
+                     * URL: /api/user/change-password/{id}
+                     * Method: PUT
+                     * Path Variable:
+                     * id (Long): ID của người dùng thực hiện đổi mật khẩu.
+                     * Request Body (JSON): (Sử dụng PasswordDTO)
+Tên trường
+	Kiểu dữ liệu
+	Bắt buộc
+	Mô tả
+	oldPassword
+	string
+	Có
+	Mật khẩu hiện tại
+	newPassword
+	string
+	Có
+	Mật khẩu mới
+	confirmPassword
+	string
+	Có
+	Xác nhận mật khẩu mới
+	                     * Ví dụ:
+                     * json
+                     * {
+                     *         "oldPassword": "old_secret",
+                     *         "newPassword": "new_secret123",
+                     *         "confirmPassword": "new_secret123"
+                     * }
+                     * Response Thành công (200 OK):
+                     * Body: "UPDATE_SUCCESS"
+                     * Response Lỗi (200 OK với nội dung lỗi - do try-catch):
+                     * Body: "Old password is incorrect" hoặc "Password and confirmation do not match"
+5. Reset mật khẩu
+Admin reset mật khẩu của một người dùng về mặc định.
+                     * URL: /api/user/password/{id}/reset
+                     * Method: PUT
+                     * Path Variable:
+                     * id (Long): ID của người dùng cần reset mật khẩu.
+                     * Response Thành công (200 OK):
+ Trả về UserDTO (mật khẩu mới đã được hash, không trả về plain text).
+6. Cập nhật hồ sơ cá nhân
+Người dùng tự cập nhật thông tin hồ sơ của chính mình.
+                        * URL: /api/user/profile/{username}
+                        * Method: PUT
+                        * Path Variable:
+                        * username (String): Tên đăng nhập của người dùng.
+                        * Request Body (JSON):
+Tên trường
+	Kiểu dữ liệu
+	Bắt buộc
+	Mô tả
+	fullName
+	string
+	Không
+	Họ và tên
+	                        * Ví dụ:
+                        * json
+                        * {
+                        *         "fullName": "My New Name"
+                        * }
+                        * Response Thành công (200 OK):
+ Trả về UserDTO sau khi cập nhật.
+________________
+
+
+III. Contracts cho View (Trả về giao diện HTML)
+1. Trang danh sách người dùng
+                           * URL: /admin/user-list
+                           * Method: GET
+                           * Parameters (Query String):
+Tên tham số
+	Kiểu dữ liệu
+	Bắt buộc
+	Mô tả
+	Giá trị mặc định
+	page
+	integer
+	Không
+	Số trang hiện tại
+	1
+	maxPageItems
+	integer
+	Không
+	Số item trên 1 trang
+	10
+	searchValue
+	string
+	Không
+	Từ khóa tìm kiếm
+	(trống)
+	message
+	string
+	Không
+	Mã thông báo (success, error, update_success, v.v.)
+	(trống)
+	                           * Response (200 OK):
+ Trả về view admin/user/list.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	model
+	UserDTO
+	Đối tượng chứa danh sách kết quả (listResult), tổng số (totalItems), và các tham số tìm kiếm.
+	alert
+	string
+	Loại thông báo (success, danger, warning).
+	messageResponse
+	string
+	Nội dung thông báo đã được map từ message properties.
+	2. Trang thêm người dùng
+                              * URL: /admin/user-edit
+                              * Method: GET
+                              * Parameters:
+                              * message (string, tùy chọn): Mã thông báo.
+                              * Response (200 OK):
+ Trả về view admin/user/edit.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	model
+	UserDTO
+	Đối tượng user rỗng, kèm theo danh sách role (roleDTOs là Map với key = roleCode, value = roleName) để hiển thị checkbox.
+	alert
+	string
+	Loại thông báo.
+	messageResponse
+	string
+	Nội dung thông báo.
+	3. Trang chỉnh sửa người dùng
+                                 * URL: /admin/user-edit-{id}
+                                 * Method: GET
+                                 * Path Variable:
+                                 * id (Long): ID của user cần sửa.
+                                 * Parameters:
+                                 * message (string, tùy chọn): Mã thông báo.
+                                 * Response (200 OK):
+ Trả về view admin/user/edit.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	model
+	UserDTO
+	Đối tượng user cần sửa (đã có thông tin), kèm theo danh sách role (roleDTOs) để hiển thị checkbox (các role đã chọn sẽ được checked).
+	alert
+	string
+	Loại thông báo.
+	messageResponse
+	string
+	Nội dung thông báo.
+	4. Trang hồ sơ cá nhân
+                                    * URL: /admin/profile-{username}
+                                    * Method: GET
+                                    * Path Variable:
+                                    * username (String): Tên đăng nhập của người dùng.
+                                    * Parameters:
+                                    * message (string, tùy chọn): Mã thông báo.
+                                    * Response (200 OK):
+ Trả về view admin/user/profile.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	model
+	UserDTO
+	Đối tượng user (thông tin cá nhân) và danh sách role (chỉ hiển thị, không cho sửa).
+	alert
+	string
+	Loại thông báo.
+	messageResponse
+	string
+	Nội dung thông báo.
+	5. Trang đổi mật khẩu
+                                       * URL: /admin/profile-password
+                                       * Method: GET
+                                       * Parameters:
+                                       * message (string, tùy chọn): Mã thông báo.
+                                       * Response (200 OK):
+ Trả về view admin/user/password.jsp với các thuộc tính:
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	model
+	UserDTO
+	Đối tượng user hiện tại (chỉ lấy thông tin cơ bản như userName, fullName).
+	alert
+	string
+	Loại thông báo.
+	messageResponse
+	string
+	Nội dung thông báo.
+	________________
+
+
+IV. Danh sách mã thông báo (Message Codes)
+Các mã thông báo được sử dụng trong parameter message:
+Mã
+	Ý nghĩa
+	Alert type
+	success
+	Thao tác thành công
+	success
+	error
+	Thao tác thất bại
+	danger
+	update_success
+	Cập nhật thành công
+	success
+	update_error
+	Cập nhật thất bại
+	danger
+	insert_success
+	Thêm mới thành công
+	success
+	insert_error
+	Thêm mới thất bại
+	danger
+	delete_success
+	Xóa thành công
+	success
+	delete_error
+	Xóa thất bại
+	danger
+	change_password_success
+	Đổi mật khẩu thành công
+	success
+	change_password_error
+	Đổi mật khẩu thất bại
+	danger
+	 
+
+
+
+
+Home
+API Contracts - Trang chủ Admin (Admin Home)
+I. Thông tin chung
+                                          * Base URL (Web/View): /admin
+                                          * Authentication: Yêu cầu xác thực (Session/Token) - người dùng đã đăng nhập với role ADMIN
+________________
+
+
+II. Contracts cho View (Trả về giao diện HTML)
+1. Trang chủ Admin
+Trang tổng quan (dashboard) hiển thị sau khi admin đăng nhập thành công vào hệ thống.
+                                          * URL: /admin/home
+                                          * Method: GET
+                                          * Response (200 OK):
+ Trả về view admin/home.jsp - đây là trang dashboard chính của khu vực quản trị.
+Tên thuộc tính
+	Kiểu dữ liệu
+	Mô tả
+	Không có thuộc tính đặc biệt
+	-
+	Trang home hiện tại chỉ là view tĩnh, không có dữ liệu động từ server
+	 
+
+
+Web
+
+
+home

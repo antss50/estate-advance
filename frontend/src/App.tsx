@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+﻿import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ConfigProvider } from "antd";
+import UserHomepage from "./pages/customer/UserHomepage";
+import AdminLayout from "./layouts/AdminLayout";
+import UserManagement from "./pages/admin/UserManagement";
+import BuildingManagement from "./pages/admin/BuildingManagement";
+import Dashboard from "./pages/admin/Dashboard";
+import StaffLayout from "./layouts/StaffLayout";
+import AssignedBuilding from "./pages/staff/AssignedBuilding";
+import Assignment from "./pages/staff/Assignment";
+import BuildingDetail from "./pages/staff/BuildingDetail";
+import CustomerDemand from "./pages/admin/CustomerDemand";
+import AssignmentManagement from "./pages/admin/AssignmentManagement";
+import { AuthPage } from "./pages/customer/AuthPage";
+import Login from "./pages/staff/Login";
+import StaffDashboardIndex from "./pages/staff/StaffDashboardIndex";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const App: React.FC = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <ConfigProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<UserHomepage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="users" replace />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="buildings" element={<BuildingManagement />} />
+            <Route path="buildings/:id" element={<BuildingDetail />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="customer/demands" element={<CustomerDemand />} />
+            <Route path="assignments" element={<AssignmentManagement />} />
+            {/* Future admin routes can be added here */}
+          </Route>
+          
+          <Route path="/staff/login" element={<Login />} />
 
-export default App
+          <Route path="/staff" element={<StaffLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            {/* <Route path="dashboard" element={<Dashboard />} /> */}
+            <Route path="dashboard" element={<StaffDashboardIndex />} />
+            <Route path="buildings" element={<AssignedBuilding />} />
+            <Route path="buildings/:id" element={<BuildingDetail />} />
+            <Route path="assignments" element={<Assignment />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ConfigProvider>
+  );
+};
+
+export default App;

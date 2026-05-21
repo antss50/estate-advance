@@ -1,0 +1,476 @@
+/* ============================================================
+   BROKER TEAM - 3D CAROUSEL SECTION
+   ============================================================ */
+
+.broker-team-section {
+  padding: 80px 24px;
+  background: linear-gradient(180deg, #f5f7fa 0%, #e8f0fe 100%);
+  position: relative;
+}
+
+.broker-team-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   HEADER SECTION
+   ============================================================ */
+
+.broker-team-header {
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.broker-team-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--pa-dark);
+  margin: 0 0 12px 0;
+  letter-spacing: -1px;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.title-highlight {
+  color: #ff4d4f;
+}
+
+.title-underline {
+  width: 60px;
+  height: 3px;
+  background: #ff4d4f;
+  margin: 12px 0 16px 0;
+  border-radius: 2px;
+}
+
+.broker-team-desc {
+  font-size: 16px;
+  color: var(--pa-muted);
+  margin: 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================================
+   3D CAROUSEL WRAPPER & TRACK
+   ============================================================ */
+
+.broker-carousel-wrapper {
+  position: relative;
+  perspective: 1000px;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 50px;
+}
+
+.carousel-track {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   CAROUSEL ITEMS - 3D STACKING
+   ============================================================ */
+
+.carousel-item {
+  position: absolute;
+  width: 320px;
+  height: 420px;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
+}
+
+/* ============================================================
+   BROKER CARD DESIGN
+   ============================================================ */
+
+.broker-card {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+/* Image Section - 70% of card height */
+.card-image {
+  width: 100%;
+  height: 65%;
+  background-size: cover;
+  background-position: center;
+  border-radius: 16px 16px 0 0;
+  flex-shrink: 0;
+}
+
+/* Info Section with Curved Background */
+.card-info-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  overflow: hidden;
+}
+
+.card-info-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: #fff;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  z-index: -1;
+}
+
+.card-info {
+  width: 100%;
+  padding: 0 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.broker-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--pa-dark);
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.broker-role {
+  font-size: 12px;
+  color: #1677ff;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.broker-contact {
+  font-size: 11px;
+  color: #666;
+  margin: 3px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.contact-icon {
+  font-size: 12px;
+}
+
+/* ============================================================
+   CARD ACTION BUTTONS
+   ============================================================ */
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-contact,
+.btn-intro {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1.5px solid #1677ff;
+  background: transparent;
+  color: #1677ff;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-contact:hover {
+  background: #1677ff;
+  color: #fff;
+}
+
+.btn-intro {
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+.btn-intro:hover {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+/* ============================================================
+   NAVIGATION ARROWS - BOTTOM CENTER
+   ============================================================ */
+
+.carousel-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.nav-arrow {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #1677ff 0%, #0050b3 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-arrow:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(22, 119, 255, 0.4);
+}
+
+/* ============================================================
+   INDICATORS
+   ============================================================ */
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #1677ff;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator.active {
+  background: #1677ff;
+  width: 28px;
+  border-radius: 5px;
+  transform: scale(1);
+}
+
+.indicator:hover {
+  transform: scale(1.2);
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+
+@media (max-width: 992px) {
+  .broker-team-section {
+    padding: 60px 16px;
+  }
+
+  .broker-team-title {
+    font-size: 28px;
+  }
+
+  .broker-carousel-wrapper {
+    min-height: 420px;
+  }
+
+  .carousel-track {
+    height: 380px;
+  }
+
+  .carousel-item {
+    width: 280px;
+    height: 360px;
+  }
+
+  .card-image {
+    height: 65%;
+  }
+}
+
+@media (max-width: 768px) {
+  .broker-team-section {
+    padding: 50px 16px;
+  }
+
+  .broker-team-title {
+    font-size: 24px;
+  }
+
+  .broker-team-desc {
+    font-size: 14px;
+  }
+
+  .title-underline {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .broker-carousel-wrapper {
+    min-height: 380px;
+    margin-bottom: 40px;
+  }
+
+  .carousel-track {
+    height: 340px;
+  }
+
+  .carousel-item {
+    width: 260px;
+    height: 320px;
+  }
+
+  .broker-name {
+    font-size: 14px;
+  }
+
+  .broker-role {
+    font-size: 11px;
+  }
+
+  .broker-contact {
+    font-size: 10px;
+  }
+
+  .card-actions {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .btn-contact,
+  .btn-intro {
+    padding: 5px 6px;
+    font-size: 10px;
+  }
+
+  .nav-arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .carousel-indicators {
+    gap: 8px;
+  }
+
+  .indicator.active {
+    width: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .broker-team-section {
+    padding: 40px 12px;
+  }
+
+  .broker-team-title {
+    font-size: 20px;
+  }
+
+  .broker-team-desc {
+    font-size: 13px;
+  }
+
+  .broker-carousel-wrapper {
+    min-height: 320px;
+    margin-bottom: 30px;
+  }
+
+  .carousel-track {
+    height: 280px;
+  }
+
+  /* On mobile, hide side cards, show only center */
+  .carousel-item {
+    width: 240px;
+    height: 280px;
+  }
+
+  .carousel-item[style*="opacity: 0.7"],
+  .carousel-item[style*="opacity: 0.4"] {
+    display: none;
+  }
+
+  .broker-name {
+    font-size: 13px;
+    margin: 0 0 2px 0;
+  }
+
+  .broker-role {
+    font-size: 10px;
+    margin: 0 0 6px 0;
+  }
+
+  .broker-contact {
+    font-size: 9px;
+    margin: 2px 0;
+  }
+
+  .card-actions {
+    gap: 3px;
+    margin-top: 4px;
+  }
+
+  .btn-contact,
+  .btn-intro {
+    padding: 4px 4px;
+    font-size: 9px;
+  }
+
+  .nav-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .carousel-navigation {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .carousel-indicators {
+    gap: 6px;
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+  }
+
+  .indicator.active {
+    width: 20px;
+  }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

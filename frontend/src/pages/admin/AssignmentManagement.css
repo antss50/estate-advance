@@ -1,0 +1,45 @@
+.assignment-management-page {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header-section {
+  margin-bottom: 20px;
+}
+
+.header-section .ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+}
+
+.stats-section {
+  margin-bottom: 20px;
+}
+
+.stats-section .ant-statistic {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-grid-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+}
+
+.assignment-grid-card .ant-card-head {
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+@media (max-width: 768px) {
+  .assignment-management-page {
+    padding: 12px;
+  }
+
+  .stats-section .ant-statistic {
+    margin-bottom: 12px;
+  }
+}
