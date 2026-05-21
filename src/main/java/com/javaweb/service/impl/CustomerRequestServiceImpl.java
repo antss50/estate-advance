@@ -5,6 +5,7 @@ import com.javaweb.entity.CustomerRequestEntity;
 import com.javaweb.entity.Demand;
 import com.javaweb.model.dto.DemandDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
+import com.javaweb.model.response.CustomerRequestResponseDTO;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.CustomerRequestRepository;
 import com.javaweb.service.CustomerRequestService;
@@ -52,8 +53,6 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
             throw new RuntimeException("Tỉnh/Thành phố (province) là bắt buộc");
         }
 
-        // ĐÃ XÓA KIỂM TRA buildingType
-
         if (demandDTO.getTransactionType() == null || demandDTO.getTransactionType().trim().isEmpty()) {
             throw new RuntimeException("Loại giao dịch (transactionType) là bắt buộc");
         }
@@ -79,7 +78,7 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         demand.setPrice(demandDTO.getPrice());
         demand.setWard(demandDTO.getWard());
         demand.setProvince(demandDTO.getProvince());
-        // demand.setBuildingType(demandDTO.getBuildingType()); // ĐÃ XÓA
+        // ĐÃ XÓA: demand.setBuildingType(demandDTO.getBuildingType());
         demand.setTransactionType(demandDTO.getTransactionType());
         demand.setPropertyType(demandDTO.getPropertyType());
         demand.setPriorityType(demandDTO.getPriorityType());
@@ -124,7 +123,7 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
                 demandDTO.setPrice(item.getDemand().getPrice());
                 demandDTO.setWard(item.getDemand().getWard());
                 demandDTO.setProvince(item.getDemand().getProvince());
-                // demandDTO.setBuildingType(item.getDemand().getBuildingType()); // ĐÃ XÓA
+                // ĐÃ XÓA: demandDTO.setBuildingType(item.getDemand().getBuildingType());
                 demandDTO.setTransactionType(item.getDemand().getTransactionType());
                 demandDTO.setPropertyType(item.getDemand().getPropertyType());
                 demandDTO.setPriorityType(item.getDemand().getPriorityType());
@@ -137,6 +136,56 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
 
             result.add(dto);
         }
+        return result;
+    }
+
+    @Override
+    public List<CustomerRequestResponseDTO> getCustomerRequestsByStaffId(Long staffId) {
+        List<CustomerRequestEntity> entities = customerRequestRepository.findByStaffId(staffId);
+        List<CustomerRequestResponseDTO> result = new ArrayList<>();
+
+        for (CustomerRequestEntity entity : entities) {
+            CustomerRequestResponseDTO dto = new CustomerRequestResponseDTO();
+            dto.setId(entity.getId());
+
+            // Set thông tin customer
+            if (entity.getCustomer() != null) {
+                dto.setCustomerId(entity.getCustomer().getId());
+                dto.setFullName(entity.getCustomer().getFullName());
+                dto.setPhone(entity.getCustomer().getPhone());
+                dto.setEmail(entity.getCustomer().getEmail());
+            }
+
+            dto.setStatus(entity.getStatus());
+
+            // Set ngày tháng
+            if (entity.getCreatedDate() != null) {
+                dto.setCreatedDate(entity.getCreatedDate().toString());
+            }
+            if (entity.getModifiedDate() != null) {
+                dto.setModifiedDate(entity.getModifiedDate().toString());
+            }
+
+            // Map Demand entity sang DemandDTO
+            if (entity.getDemand() != null) {
+                DemandDTO demandDTO = new DemandDTO();
+                demandDTO.setArea(entity.getDemand().getArea());
+                demandDTO.setPrice(entity.getDemand().getPrice());
+                demandDTO.setWard(entity.getDemand().getWard());
+                demandDTO.setProvince(entity.getDemand().getProvince());
+                demandDTO.setTransactionType(entity.getDemand().getTransactionType());
+                demandDTO.setPropertyType(entity.getDemand().getPropertyType());
+                demandDTO.setPriorityType(entity.getDemand().getPriorityType());
+                demandDTO.setNumberOfBasement(entity.getDemand().getNumberOfBasement());
+                demandDTO.setDirection(entity.getDemand().getDirection());
+                demandDTO.setLegalStatus(entity.getDemand().getLegalStatus());
+                demandDTO.setBrokerageFee(entity.getDemand().getBrokerageFee());
+                dto.setDemand(demandDTO);
+            }
+
+            result.add(dto);
+        }
+
         return result;
     }
 }

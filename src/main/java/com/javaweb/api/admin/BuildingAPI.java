@@ -38,6 +38,43 @@ public class BuildingAPI {
     public ResponseEntity<BuildingDTO> addOrUpdateBuilding(@RequestBody BuildingDTO buildingDTO) {
         return ResponseEntity.ok(buildingService.addOrUpdateBuilding(buildingDTO));
     }
+         // Thêm building mới
+    /**{
+    "name": "Tòa nhà Sunrise Tower",
+    "street": "123 Nguyễn Huệ",
+    "provinceCode": "79",
+    "provinceName": "Thành phố Hồ Chí Minh",
+    "wardCode": "00001",
+    "wardName": "Phường Bến Nghé",
+    "structure": "Khung bê tông cốt thép",
+    "floorArea": 250,
+    "numberOfBasement": 2,
+    "direction": "Đông Nam",
+    "level": "15",
+    "rentPrice": 55000000,
+    "priceSale": 5500000000,
+    "priceRent": 55000000,
+    "transactionType": "BOTH",
+    "propertyType": "OFFICE",
+    "serviceFee": 5000000,
+    "carFee": 1000000,
+    "motoFee": 500000,
+    "overtimeFee": 200000,
+    "waterFee": 300000,
+    "electricityFee": 400000,
+    "deposit": "3 tháng",
+    "payment": "Theo quý",
+    "rentTime": "12 tháng",
+    "decorationTime": "30 ngày",
+    "brokerageFee": 1.5,
+    "managerName": "Nguyễn Văn A",
+    "managerPhone": "0901234567",
+    "note": "Tòa nhà văn phòng hạng A",
+    "avatar": "avatar.jpg",
+    "image": "image1.jpg,image2.jpg",
+    "legal": "SO_HONG"
+}
+*/
 
     /**
      * Gán nhân viên cho building
