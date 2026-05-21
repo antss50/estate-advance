@@ -20,17 +20,16 @@ import { SearchOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import type {
   UserDTO,
   AssignStaffDTO,
-  DemandDTO,
   UserDemandDTO,
+  MatchedStaffDTO,
 } from "../../types/user.type";
-import { getStaffs } from "../../api/staffApi";
 import assignmentApi from "../../api/assignmentApi";
 import client from "../../api/axiosClient";
 import { getMatchingStaffs } from "../../api/staffApi";
+// import type { Staff } from "../../types";
 
 const { Text } = Typography;
 
-// --- Định nghĩa các hằng số màu sắc cho UI mới ---
 const RED_ALERT = "#ff4d4f";
 
 // Status type mapping
@@ -43,28 +42,37 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   PAID: { label: "Đã thanh toán", color: "#52c41a" },
 };
 
-const performanceConfig: Record<string, { label: string; color: string }> = {
-  EXCELLENT: { label: "Xuất sắc", color: "#ff4d4f" },
-  GOOD: { label: "Tốt", color: "#52c41a" },
-  AVERAGE: { label: "Trung bình", color: "#faad14" },
-};
+const propertyTypeConfig: Record<string, string> = {
+  APARTMENT: "Căn hộ",
+  RETAIL: "Mặt bằng kinh doanh",
+  WAREHOUSE: "Kho bãi",
+  OFFICE: "Văn phòng",
+}
+
+// const performanceConfig: Record<string, { label: string; color: string }> = {
+//   EXCELLENT: { label: "Xuất sắc", color: "#ff4d4f" },
+//   GOOD: { label: "Tốt", color: "#52c41a" },
+//   AVERAGE: { label: "Trung bình", color: "#faad14" },
+// };
 
 export const CustomerDemand: React.FC = () => {
-  const [customers, setCustomers] = useState<UserDTO[]>([]);
-  const [staffs, setStaffs] = useState<UserDTO[]>([]);
-  const [assignedStaffs, setAssignedStaffs] = useState<AssignStaffDTO[]>([]);
-  const [expandedDemands, setExpandedDemands] = useState<
-    Record<string, boolean>
-  >({});
+  const [customers, setCustomers] = useState<UserDemandDTO[]>([]); // Danh sách nhu cầu khách hàng 
+  const [staffs, setStaffs] = useState<MatchedStaffDTO[]>([]); // Danh sách nhân viên phù hợp với khách hàng đang chọn
+  const [assignedStaffs, setAssignedStaffs] = useState<Record<number, AssignStaffDTO[]>>([]); // Danh sách nhân viên đã được phân công cho khách hàng đang chọn
+
+  const [expandedDemands, setExpandedDemands] = useState<Record<string, boolean>>({});
+
   const [loading, setLoading] = useState(false);
   const [staffLoading, setStaffLoading] = useState(false);
+  const [assigningLoading, setAssigningLoading] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
+
   const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
-    null,
-  );
+
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null,);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
-  const [assigningLoading, setAssigningLoading] = useState(false);
+
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [pageSize, setPageSize] = useState(6);
 
@@ -72,127 +80,88 @@ export const CustomerDemand: React.FC = () => {
   const fetchCustomers = async (keyword: string = "", page: number = 1) => {
     setLoading(true);
     try {
-      // Chỉ gọi API customer-request để lấy dữ liệu gộp
       const res = await client.get("/api/customer-request");
       const data = res?.data ?? res;
-
-      if (Array.isArray(data)) {
-        const mappedData = data.map((item: any) => ({
-          ...item,
-          id: String(item.customerId || item.id),
-          customerRequestId: item.id,
-        }));
-
-        setCustomers(mappedData);
-        setTotalCustomers(mappedData.length);
-      }
+      
+      setCustomers(data);
+      // setSelectedCustomerId(data.customerId ?? null);
+      console.log("Fetched customer requests:", data );
+      setTotalCustomers(data.length);
     } catch (error) {
-      message.error("Lỗi khi tải danh sách khách hàng");
+      message.error("Lỗi khi tải danh sách nhu cầu khách hàng");
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStaffs = async () => {
-    setStaffLoading(true);
-    try {
-      const response = await getStaffs();
-      if (Array.isArray(response)) {
-        const staffsWithPerformance = response.map((staff) => ({
-          ...staff,
-          performance:
-            Object.keys(performanceConfig)[
-              Math.floor(Math.random() * Object.keys(performanceConfig).length)
-            ],
-          district: ["Quận 1, Quận 3", "Quận 1, Quận 4", "Quận 5, Quận 6"][
-            Math.floor(Math.random() * 3)
-          ],
-        }));
-        setStaffs(staffsWithPerformance as unknown as UserDTO[]);
-      } else {
-        setStaffs([]);
-      }
-    } catch (error) {
-      message.error("Lỗi khi tải danh sách nhân viên");
-      console.error(error);
-      setStaffs([]);
-    } finally {
-      setStaffLoading(false);
-    }
-  };
-
   // --- Effect xử lý khi chọn khách hàng ---
   useEffect(() => {
-    if (!selectedCustomerId) return;
+    if (!selectedCustomerId || isMatching) return;
     const status = getCustomerStatus(selectedCustomerId);
-    console.log(
-      "Selected customer status:",
-      status.label,
-      "Status key:",
-      status,
-    );
 
     if (status.label === "Chưa tiếp nhận") {
-      console.log("Status is PENDING - fetching all staffs");
-      setAssignedStaffs([]);
-      setStaffs([]);
-      fetchStaffs();
-      setSelectedStaffIds([]);
-    } else {
-      console.log("Status is NOT PENDING - fetching assigned staffs");
+      setIsMatching(false);
       fetchAssignedStaffs();
+    } else {
+      if (!isMatching) {
+      setSelectedStaffIds([]);
     }
-  }, [selectedCustomerId]);
+    }
+  }, [selectedCustomerId, isMatching]);
 
   // Hàm fetch nhân viên phụ trách
   const fetchAssignedStaffs = async () => {
-    setStaffLoading(true);
-    try {
-      const res = await assignmentApi.getCustomerAssignments(
-        Number(selectedCustomerId),
-      );
+  if (selectedCustomerId === null) return;
+  setStaffLoading(true);
+  try {
+    // Tìm customerRequest tương ứng để lấy đúng customerId thực tế
+    const currentRequest = customers.find(c => c.id === selectedCustomerId || c.customerId === selectedCustomerId);
+    const realCustomerId = currentRequest ? currentRequest.customerId : selectedCustomerId;
 
-      console.log("Assigned staffs response:", res);
-
-      // Lấy mảng dữ liệu từ response
-      let rawList: AssignStaffDTO[] = [];
-
-      if (Array.isArray(res)) {
-        rawList = res;
-      } else if (res && Array.isArray(res as AssignStaffDTO[])) {
-        rawList = res as AssignStaffDTO[];
-      }
-
-      const assignedList: AssignStaffDTO[] = rawList
-        .filter((item) => item.checked === true)
-        .map(
-          (item) =>
-            ({
-              id: String(item.staffId),
-              fullName: item.fullName,
-            }) as unknown as AssignStaffDTO,
-        );
-
-      console.log("Filtered assigned staffs:", assignedList);
-
-      setAssignedStaffs(assignedList);
-
-      // keep selectedStaffIds in sync so multi-selection UI can reflect existing assignments
-      const assignedIds = rawList
-        .filter((item) => item.checked === true)
-        .map((item) => String(item.staffId));
-      setSelectedStaffIds(assignedIds);
-      setStaffs([]);
-    } catch (err) {
-      console.error("Failed to fetch assigned staffs", err);
-      message.error("Không thể tải nhân viên phụ trách");
-      setAssignedStaffs([]);
-      setStaffs([]);
-    } finally {
-      setStaffLoading(false);
+    if (!realCustomerId) {
+      console.warn("Không tìm thấy Customer ID hợp lệ để gọi API assignment");
+      setAssignedStaffs(prev => ({ ...prev, [selectedCustomerId]: [] }));
+      return;
     }
-  };
+
+    console.log("Đang gọi API lấy nhân viên phụ trách cho Customer ID:", realCustomerId);
+    const res = await assignmentApi.getCustomerAssignments(Number(realCustomerId));
+    console.log("Assigned staffs response từ API:", res);
+
+    let rawList: AssignStaffDTO[] = [];
+    if (Array.isArray(res)) {
+      rawList = res;
+    } else if (res && typeof res === "object" && "data" in res && Array.isArray((res as { data: unknown }).data)) {
+
+      rawList = (res as { data: AssignStaffDTO[] }).data;
+    }
+
+    // Lọc ra các nhân viên thực sự đang được gán 
+    const assignedList: AssignStaffDTO[] = rawList
+      .filter((item) => item.checked === "checked")
+      .map((item) => ({
+        ...item,
+        staffId: item.staffId,
+        fullName: item.fullName,
+      }));
+
+    setAssignedStaffs(prev => ({ ...prev, [selectedCustomerId]: assignedList }));
+
+    const assignedIds = rawList
+      .filter((item) => item.checked === "checked")
+      .map((item) => String(item.staffId));
+    setSelectedStaffIds(assignedIds);
+    setStaffs([]);
+  } catch (err) {
+    console.error("Failed to fetch assigned staffs error:", err);
+    message.error("Không thể tải danh sách nhân viên phụ trách");
+    setAssignedStaffs([]);
+    setStaffs([]);
+  } finally {
+    setStaffLoading(false);
+  }
+};
 
   // --- Format tiền tệ ---
   const formatPrice = (p: number | string | undefined | null) => {
@@ -234,8 +203,11 @@ export const CustomerDemand: React.FC = () => {
 
     setAssigningLoading(true);
     try {
+      const currentRequest = customers.find(c => c.id === selectedCustomerId);
+      const realCustomerId = currentRequest ? currentRequest.customerId : selectedCustomerId;
+
       const payload = {
-        customerId: Number(selectedCustomerId),
+        customerId: Number(realCustomerId),
         staffIds: selectedStaffIds.map((s) => Number(s)),
       };
 
@@ -261,24 +233,12 @@ export const CustomerDemand: React.FC = () => {
   };
 
   const handleMatching = async (customerRequest: UserDemandDTO) => {
-    const rawLocation = customerRequest.demand?.location || "";
-
-    // Tách chuỗi bằng dấu phẩy
-    const locationParts = rawLocation.split(",").map((s: string) => s.trim());
-
-    // Lấy Ward (Phần tử đầu tiên) và chuẩn hóa
-    const ward = locationParts[0] || "";
-
-    if (!ward) {
-      message.warning("Dữ liệu vị trí không hợp lệ để tìm kiếm nhân viên");
-      return;
-    }
-
+    setIsMatching(true);
     setStaffLoading(true);
 
     try {
-      // Gọi API staff-customer-matching với Ward đã tách
-      const response = await getMatchingStaffs(ward);
+      // Gọi API staff-customer-matching 
+      const response = await getMatchingStaffs(customers.find(c => String(c.id) === String(customerRequest.id))?.demand?.ward || "");
 
       const staffData = response ?? [];
 
@@ -289,18 +249,15 @@ export const CustomerDemand: React.FC = () => {
         );
 
         const mappedStaffs = sortedStaff.map((s) => ({
-          id: String(s.staffId),
-          fullName: s.staffName,
-          phone: s.phone,
-          workingArea: s.workingArea,
+          ...s,
+          staffId: Number(s.staffId),
+          staffName: s.staffName,
           totalScore: s.totalScore,
-          performance: s.performanceScore,
-          workload: s.currentWorkload,
         }));
         console.log("Matched staffs:", mappedStaffs);
-        setStaffs(mappedStaffs as unknown as UserDTO[]);
-        setSelectedCustomerId(String(customerRequest.id));
-        message.success(`Tìm thấy ${staffData.length} nhân viên tại ${ward}`);
+        setStaffs(mappedStaffs);
+        setSelectedCustomerId(customerRequest.id);
+        message.success(`Tìm thấy ${staffData.length} nhân viên tại ${customerRequest.demand?.ward}`);
       } else {
         setStaffs([]);
         message.info("Không có nhân viên phù hợp tại phường này");
@@ -313,7 +270,7 @@ export const CustomerDemand: React.FC = () => {
     }
   };
 
-  const getCustomerStatus = (customerOrId: string | UserDTO | null) => {
+  const getCustomerStatus = (customerOrId: number | UserDTO | null) => {
     if (!customerOrId) return statusConfig.PENDING;
 
     let statusKey: string | undefined;
@@ -327,7 +284,7 @@ export const CustomerDemand: React.FC = () => {
         (c) => String(c.id) === String(customerOrId),
       );
       statusKey = found?.status;
-      customer = found;
+      // customer = found;
     }
 
     // Chuẩn hóa status key - convert to uppercase và trim
@@ -351,6 +308,10 @@ export const CustomerDemand: React.FC = () => {
       statusConfig.PENDING;
     console.log("Mapped status result:", result);
     return result;
+  };
+
+  const getPropertyTypeLabel = (propertyType: string | undefined) => {
+    return propertyTypeConfig[propertyType || ""] || propertyType || "Không xác định";
   };
 
   // --- Styles ---
@@ -412,7 +373,7 @@ export const CustomerDemand: React.FC = () => {
             {paginatedCustomers.map((customer) => {
               const status = getCustomerStatus(customer);
               const isSelected = selectedCustomerId === customer.id;
-
+              const currentPriority = customer?.demand?.priorityType?.toUpperCase() || "";
               return (
                 <div
                   key={customer.id}
@@ -456,9 +417,9 @@ export const CustomerDemand: React.FC = () => {
                           >
                             {customer.fullName}
                           </Text>
-                          <Text type="secondary" style={{ fontSize: "13px" }}>
+                          {/* <Text type="secondary" style={{ fontSize: "13px" }}>
                             @{customer.userName}
-                          </Text>
+                          </Text> */}
                         </Col>
                       </Row>
                     </Col>
@@ -524,8 +485,11 @@ export const CustomerDemand: React.FC = () => {
                               style={{ fontSize: "18px", color: "#8c8c8c" }}
                             />
                           }
-                          onClick={() =>
-                            setSelectedCustomerId(String(customer.id))
+                          onClick={() => {
+                            setIsMatching(false);
+                            setSelectedCustomerId(customer.id)
+                          }
+                            
                           }
                           style={{
                             display: "flex",
@@ -571,7 +535,10 @@ export const CustomerDemand: React.FC = () => {
                               <Text type="secondary" style={{ color: "black" }}>
                                 Mức giá
                               </Text>
-                              <Text strong>
+                              {currentPriority === "SAVINGS" && (
+                              <Tag color="cyan" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                              )}
+                              <Text strong >
                                 {formatPrice(customer?.demand?.price)}
                               </Text>
                             </div>
@@ -595,6 +562,9 @@ export const CustomerDemand: React.FC = () => {
                               <Text type="secondary" style={{ color: "black" }}>
                                 Diện tích
                               </Text>
+                              {currentPriority === "SPACE" && (
+                              <Tag color="volcano" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                              )}
                               <Text strong style={{ color: RED_ALERT }}>
                                 {customer?.demand?.area
                                   ? `${customer.demand.area} m²`
@@ -616,9 +586,12 @@ export const CustomerDemand: React.FC = () => {
                               <Text type="secondary" style={{ color: "black" }}>
                                 Vị trí
                               </Text>
+                              {currentPriority === "PROFIT" && (
+                              <Tag color="volcano" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                              )}
                               <Text>
                                 <strong>
-                                  {customer?.demand?.location || "-"}
+                                  {customer?.demand?.ward || "-"}, {customer?.demand?.province || "-"}
                                 </strong>
                               </Text>
                             </div>
@@ -639,8 +612,7 @@ export const CustomerDemand: React.FC = () => {
                               </Text>
                               <Text>
                                 <strong>
-                                  {(customer?.demand as DemandDTO)
-                                    ?.propertyType || "Chung cư"}
+                                  {getPropertyTypeLabel(customer?.demand?.propertyType) || "Chung cư"}
                                 </strong>
                               </Text>
                             </div>
@@ -661,7 +633,7 @@ export const CustomerDemand: React.FC = () => {
                               color: "#666",
                               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                             }}
-                            onClick={() => handleMatching(customer as unknown as UserDemandDTO)}
+                            onClick={() => handleMatching(customer as UserDemandDTO)}
                           >
                             Matching
                           </Button>
@@ -693,13 +665,12 @@ export const CustomerDemand: React.FC = () => {
           {selectedCustomerId ? (
             <Card
               title={
-                getCustomerStatus(selectedCustomerId).label === "Chưa tiếp nhận"
+                isMatching
                   ? "Danh sách nhân viên gán"
                   : "Nhân viên phụ trách"
               }
               extra={
-                getCustomerStatus(selectedCustomerId).label ===
-                  "Chưa tiếp nhận" && (
+                isMatching && (
                   <Button
                     type="primary"
                     onClick={handleAssign}
@@ -711,11 +682,10 @@ export const CustomerDemand: React.FC = () => {
               }
             >
               <Spin spinning={staffLoading}>
-                {getCustomerStatus(selectedCustomerId).label ===
-                "Chưa tiếp nhận"
+                {isMatching
                   ? staffs.map((s) => (
                       <div
-                        key={s.id}
+                        key={s.staffId}
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -724,40 +694,52 @@ export const CustomerDemand: React.FC = () => {
                         }}
                       >
                         <Checkbox
-                          checked={selectedStaffIds.includes(String(s.id))}
+                          checked={selectedStaffIds.includes(String(s.staffId))}
                           onChange={() =>
                             setSelectedStaffIds((prev) =>
-                              prev.includes(String(s.id))
-                                ? prev.filter((id) => id !== String(s.id))
-                                : [...prev, String(s.id)],
+                              prev.includes(String(s.staffId))
+                                ? prev.filter((id) => id !== String(s.staffId))
+                                : [...prev, String(s.staffId)],
                             )
                           }
                         />
                         <Avatar
                           size="small"
-                          src={s.avatar}
+                          // src={s.avatar}
                           style={{ margin: "0 8px" }}
                         />
-                        <Text>{s.fullName}</Text>
+                        <Text>{s.staffName}</Text>
+                        <div style={{ textAlign: "right", marginLeft: "auto" }}>
+                          <Tag 
+                            color ={(s.totalScore || 0) >= 0.8 ? "green" : "orange"}
+                         >
+                          {typeof s.totalScore === 'number' 
+                            ? `${Math.round(s.totalScore * 100)}% Match` 
+                            : "0% Match"}
+                        </Tag>
+                        </div>
+                        
                       </div>
                     ))
-                  : assignedStaffs.map((s) => (
+                  : (assignedStaffs[selectedCustomerId] || []).length > 0 ? (
+                      assignedStaffs[selectedCustomerId].map((s) => (
                       <div
                         key={s.staffId}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          padding: "8px 0",
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "8px 0",
                         }}
                       >
-                        <Avatar
-                          size="small"
-                          src={s.avatar}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text>{s.fullName}</Text>
+                      <Avatar size="small" style={{ marginRight: 8 }} />
+                      <Text>{s.fullName}</Text>
                       </div>
-                    ))}
+        ))
+  ) : (
+    <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: '12px 0' }}>
+      Chưa có nhân viên phụ trách cụ thể cho yêu cầu này
+    </Text>
+  )}
               </Spin>
             </Card>
           ) : (

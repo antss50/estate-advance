@@ -12,6 +12,9 @@ import Assignment from "./pages/staff/Assignment";
 import BuildingDetail from "./pages/staff/BuildingDetail";
 import CustomerDemand from "./pages/admin/CustomerDemand";
 import AssignmentManagement from "./pages/admin/AssignmentManagement";
+import { AuthPage } from "./pages/customer/AuthPage";
+import Login from "./pages/staff/Login";
+import StaffDashboardIndex from "./pages/staff/StaffDashboardIndex";
 
 const App: React.FC = () => {
   return (
@@ -19,6 +22,7 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<UserHomepage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/home" element={<Navigate to="/" replace />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
@@ -30,12 +34,17 @@ const App: React.FC = () => {
             <Route path="assignments" element={<AssignmentManagement />} />
             {/* Future admin routes can be added here */}
           </Route>
+          
+          <Route path="/staff/login" element={<Login />} />
+
           <Route path="/staff" element={<StaffLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             {/* <Route path="dashboard" element={<Dashboard />} /> */}
+            <Route path="dashboard" element={<StaffDashboardIndex />} />
             <Route path="buildings" element={<AssignedBuilding />} />
             <Route path="buildings/:id" element={<BuildingDetail />} />
             <Route path="assignments" element={<Assignment />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

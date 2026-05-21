@@ -17,28 +17,27 @@ import {
   InsertRowLeftOutlined,
 } from "@ant-design/icons";
 import axiosClient from "../../api/axiosClient";
-import {
-  getProvinces,
-  getWardsByProvince,
-  type Province,
-  type Ward,
-} from "../../api/administrativeApi";
+import { useNavigate } from "react-router-dom";
 import type { DemandFormValues } from "../../types";
 import "../../styles/DemandFormSection.css";
-import userApi from "../../api/userApi";
 
 interface CustomerRequestPayload {
-  customerId?: string | number; // Có thể có hoặc không, tùy vào logic của bạn
+  customerId: number;
   fullName: string;
   phone: string;
   email: string;
   demand: {
     propertyType: string;
-    transactionType?: string; // "SALE" hoặc "RENT"
+    transactionType: string;
     area: number;
     price: number;
-    location: string;
-    priorityType?: string;
+    ward: string; 
+    province: string;
+    priorityType: string;
+    numberOfBasement?: number;
+    direction?: string;
+    legalStatus?: string;
+    brokerageFee?: number;
   };
   status: "NEW";
 }
@@ -57,123 +56,93 @@ const priorityTypes = [
   { icon: InsertRowLeftOutlined, label: "Không gian thoải mái", value: "SPACE" },
 ];
 
-// const propertyTypes = [
-//   { icon: HomeOutlined, label: "Căn Hộ", value: "APARTMENT" },
-//   { icon: BankOutlined, label: "Mặt bằng kinh doanh", value: "RETAIL" },
-//   { icon: InsertRowLeftOutlined, label: "Kho bãi", value: "WAREHOUSE" },
-//   { icon: ShoppingOutlined, label: "Văn phòng", value: "OFFICE" },
-// ];
 interface DemandFormSectionProps {
-  // Định nghĩa hàm onSubmit nhận dữ liệu nhu cầu khách hàng
   onSubmit?: () => void;
+  isLoggedIn?: boolean;
 }
 
-const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
+const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit, isLoggedIn }) => {
   const [form] = Form.useForm<DemandFormValues>();
   const [activeTab, setActiveTab] = useState<"sale" | "rent">("sale");
   const [priceRange, setPriceRange] = useState<[number, number]>([
     1000000000, 5000000000,
   ]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // State for provinces and wards
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [wards, setWards] = useState<Ward[]>([]);
-  const [loadingProvinces, setLoadingProvinces] = useState(false);
-  const [loadingWards, setLoadingWards] = useState(false);
-  const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
-
-  // Fetch provinces on component mount
+  // Tự động điền (Pre-fill) thông tin cá nhân khi người dùng đã đăng nhập thành công
   useEffect(() => {
-    const fetchProvinces = async () => {
-      setLoadingProvinces(true);
-      try {
-        const data = await getProvinces();
-        setProvinces(data);
-      } catch (error) {
-        console.error("Error fetching provinces:", error);
-        message.error("Không thể tải danh sách tỉnh/thành phố");
-      } finally {
-        setLoadingProvinces(false);
+    if (isLoggedIn) {
+      const savedUser = localStorage.getItem("user");
+      if (savedUser) {
+        const userObj = JSON.parse(savedUser);
+        form.setFieldsValue({
+          customerId: userObj.id,
+          fullName: userObj.fullName,
+          phone: userObj.phone,
+          email: userObj.email,
+        });
       }
-    };
-
-    fetchProvinces();
-  }, []);
-
-  // Fetch wards when province changes
-  const handleProvinceChange = async (provinceCode: string) => {
-    setSelectedProvince(provinceCode);
-    form.setFieldValue("ward", undefined); // Reset ward when province changes
-    setLoadingWards(true);
-    try {
-      const data = await getWardsByProvince(provinceCode);
-      setWards(data);
-    } catch (error) {
-      console.error("Error fetching wards:", error);
-      message.error("Không thể tải danh sách phường/xã");
-      setWards([]);
-    } finally {
-      setLoadingWards(false);
+    } else {
+      // Nếu logout, reset toàn bộ form sạch sẽ
+      form.resetFields();
     }
-  };
+  }, [isLoggedIn, form]);
 
   const handleFinish = async (values: DemandFormValues) => {
-  setLoading(true);
-  try {
-    // --- BƯỚC 1: TỰ ĐỘNG TẠO USER 
-    let customerId: string | number | undefined;
-    
-    try {
-      const userPayload = {
-        userName: values.email, // Dùng email làm username
-        password: "DefaultPassword123", // Mật khẩu tạm thời
-        fullName: values.fullName,
-        phone: values.phone,
-        email: values.email,
-        status: 1,
-        roleCode: "CUSTOMER"
-      };
-      
-      const userRes = await userApi.createUser(userPayload);
-      // Lấy ID vừa tạo từ ResponseDTO
-      customerId = userRes?.data?.id || userRes.data?.id;
-    } catch (err) {
-      // Nếu lỗi do User đã tồn tại, bạn có thể cần một API tìm User theo Email 
-      // để lấy lại ID cũ, hoặc backend trả về ID trong lỗi.
-      console.log("Lỗi khi tạo người dùng:", err);
-      console.log("Tiếp tục gửi demand...");
+    if (!isLoggedIn) {
+      message.warning("Vui lòng đăng nhập tài khoản để gửi yêu cầu tìm kiếm bất động sản!");
+      navigate("/auth");
+      return;
     }
 
-    // --- BƯỚC 2: GỬI YÊU CẦU TÌM NHÀ VỚI CUSTOMER ID ---
-    const provinceName = provinces.find(p => p.code === values.province)?.name || "";
-    const wardName = wards.find(w => w.code === values.ward)?.name || "";
+    setLoading(true);
+    try {
+      const savedUser = localStorage.getItem("user");
+      const userObj = savedUser ? JSON.parse(savedUser) : null;
 
-    const payload: CustomerRequestPayload = {
-      customerId: customerId, // ID lấy từ bước 1
-      fullName: values.fullName,
-      phone: values.phone,
-      email: values.email,
-      demand: {
-        propertyType: values.propertyType,
-        area: Number(values.area),
-        price: priceRange[1],
-        location: `${wardName}, ${provinceName}`,
-        transactionType: activeTab === "sale" ? "SALE" : "RENT",
-      },
-      status: "NEW",
-    };
+      const customerIdForHeader = userObj?.id ? String(userObj.id) : "";
 
-    await axiosClient.post("/api/customer/customer-request", payload);
-    message.success("Yêu cầu đã được gửi và tài khoản khách hàng đã được tạo!");
-    
-    form.resetFields();
-  } catch (error) {
-    message.error("Thao tác thất bại, vui lòng thử lại.");
-  } finally {
-    setLoading(false);
-  }
-};
+      // Xây dựng payload lấy trực tiếp thông tin từ profile đã lưu hoặc từ form read-only
+      const payload: CustomerRequestPayload = {
+        customerId: userObj?.id || undefined, 
+        fullName: userObj?.fullName || values.fullName,
+        phone: userObj?.phone || values.phone,
+        email: userObj?.email || values.email,
+        demand: {
+          propertyType: values.propertyType,
+          area: Number(values.area),
+          price: priceRange[1], // Giá trị kéo slider tối đa
+          ward: values.ward, 
+          province: values.province,
+          transactionType: activeTab === "sale" ? "SALE" : "RENT",
+          priorityType: values.priorityType,
+          // numberOfBasement: values.numberOfBasement,
+          // direction: values.direction,
+          // legalStatus: values.legalStatus,
+          // brokerageFee: values.brokerageFee,
+        },
+        status: "NEW",
+      };
+
+      await axiosClient.post("/api/customer/customer-request", payload, {
+        headers: {
+          "customerId": customerIdForHeader
+        },
+      });
+      message.success("Gửi yêu cầu thành công!");
+      
+      // Giữ lại thông tin cá nhân, chỉ reset các thông tin nhu cầu vừa điền
+      form.resetFields(["propertyType", "area", "province", "ward", "priorityType"]);
+      setPriceRange([1000000000, 5000000000]); // Reset Slider về mặc định
+
+      if (onSubmit) onSubmit();
+    } catch (error) {
+      message.error("Có lỗi xảy ra, vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (value: number) => {
     return `${(value) < 1000000000 ? (value/1000000).toFixed(1) + " triệu" : (value/1000000000).toFixed(2) + " tỷ"} VNĐ`;
@@ -183,271 +152,97 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit }) => {
     <section className="demand-form-section">
       <div className="demand-form-bg" />
       <div className="demand-form-container">
-        {/* Header */}
         <div className="demand-form-header">
           <h2 className="demand-form-title">Hãy Chia Sẻ Nhu Cầu Của Bạn</h2>
-          <p className="demand-form-desc">
-            Khám phá những căn nhà, biệt thự và bất động sản tuyệt vời
-          </p>
         </div>
 
-        {/* Custom Tabs */}
         <div className="custom-tabs-container">
-          <button
-            className={`custom-tab ${activeTab === "sale" ? "active" : ""}`}
-            onClick={() => setActiveTab("sale")}
-          >
-            Nhà đất bán
-          </button>
-          <button
-            className={`custom-tab ${activeTab === "rent" ? "active" : ""}`}
-            onClick={() => setActiveTab("rent")}
-          >
-            Nhà đất cho thuê
-          </button>
+          <button className={`custom-tab ${activeTab === "sale" ? "active" : ""}`} onClick={() => setActiveTab("sale")}>Nhà đất bán</button>
+          <button className={`custom-tab ${activeTab === "rent" ? "active" : ""}`} onClick={() => setActiveTab("rent")}>Nhà đất cho thuê</button>
         </div>
 
-        {/* Glassmorphic Form */}
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleFinish}
-          className="glassmorphic-form"
-        >
-          {/* Row 0: Contact Information */}
-          <Row gutter={[32, 0]} style={{ marginBottom: 40 }}>
-            <Col xs={24} md={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Họ và Tên</label>
-                <div className="form-input-wrapper">
-                  <Form.Item
-                    name="fullName"
-                    className="no-margin"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập họ và tên" },
-                    ]}
-                  >
-                    <Input
-                      className="form-input-glass"
-                      placeholder="Nguyễn Văn A"
-                    />
-                  </Form.Item>
-                </div>
-              </div>
+        <Form form={form} layout="vertical" onFinish={handleFinish} className="glassmorphic-form">
+          {/* HÀNG THÔNG TIN CÁ NHÂN: Khóa disabled khi đã đăng nhập */}
+          <Row gutter={[32, 0]} style={{ marginBottom: "24px"}}>
+            <Col xs={24} md={8}>
+              <Form.Item label="Họ và Tên" name="fullName">
+                <Input className="form-input-glass" disabled={isLoggedIn} placeholder="Họ và tên" />
+              </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Số Điện Thoại</label>
-                <div className="form-input-wrapper">
-                  <Form.Item
-                    name="phone"
-                    className="no-margin"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Vui lòng nhập số điện thoại",
-                      },
-                    ]}
-                  >
-                    <Input
-                      className="form-input-glass"
-                      placeholder="0987654321"
-                      type="tel"
-                    />
-                  </Form.Item>
-                </div>
-              </div>
+            <Col xs={24} md={8}>
+              <Form.Item label="Số Điện Thoại" name="phone">
+                <Input className="form-input-glass" disabled={isLoggedIn} placeholder="Số điện thoại" />
+              </Form.Item>
             </Col>
-          </Row>
-
-          {/* Row: Email + Property Type */}
-          <Row gutter={[32, 0]}>
-            <Col xs={24} md={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Email</label>
-                <div className="form-input-wrapper">
-                  <Form.Item
-                    name="email"
-                    className="no-margin"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập email" },
-                      { type: "email", message: "Email không hợp lệ" },
-                    ]}
-                  >
-                    <Input
-                      className="form-input-glass"
-                      placeholder="nguyenvana@email.com"
-                      type="email"
-                    />
-                  </Form.Item>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} md={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Loại Bất Động Sản</label>
-                <div className="form-input-wrapper">
-                  <Form.Item
-                    name="propertyType"
-                    className="no-margin"
-                    rules={[
-                      { required: true, message: "Vui lòng chọn loại BĐS" },
-                    ]}
-                  >
-                    <Select
-                      className="form-select-glass"
-                      placeholder="Chọn loại bất động sản"
-                      options={propertyTypeOptions}
-                    />
-                  </Form.Item>
-                </div>
-              </div>
-            </Col>
-          </Row>
-
-          {/* Row 1: Area + Price Range */}
-          <Row gutter={[32, 0]} align="middle">
-            <Col xs={24} lg={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Diện Tích (m²)</label>
-                <div className="form-input-wrapper">
-                  <Form.Item
-                    name="area"
-                    className="no-margin"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập diện tích" },
-                    ]}
-                  >
-                    <Input
-                      className="form-input-glass"
-                      placeholder="VD: 50"
-                      type="number"
-                    />
-                  </Form.Item>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} lg={12}>
-              <div className="form-group-inline">
-                <label className="form-label">Khoảng Giá</label>
-                <div className="form-input-wrapper">
-                  <div className="price-slider-wrapper">
-                    <Form.Item name="priceRange" className="no-margin">
-                      <Slider
-                        className="price-slider"
-                        range
-                        min={0}
-                        max={10000000000}
-                        step={10000000}
-                        value={priceRange}
-                        onChange={(val) =>
-                          setPriceRange(val as [number, number])
-                        }
-                        marks={{
-                          0: "0 VND",
-                          10000000000: "10 tỷ VND",
-                        }}
-                      />
-                    </Form.Item>
-                    <div className="price-display">
-                      {formatPrice(priceRange[0])} -{" "}
-                      {formatPrice(priceRange[1])}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Col>
-          </Row>
-
-          {/* Row 2: Location + Submit Button */}
-          <Row gutter={[32, 0]} align="bottom" className="form-row-2">
-            <Col xs={24} lg={12}>
-              <div className="location-group">
-                <label className="form-label">Vị Trí</label>
-                <Row gutter={[12, 0]}>
-                  <Col flex={1}>
-                    <Form.Item
-                      name="province"
-                      className="no-margin"
-                      rules={[
-                        { required: true, message: "Vui lòng chọn tỉnh" },
-                      ]}
-                    >
-                      <Select
-                        className="form-select-glass"
-                        placeholder="Tỉnh/Thành phố"
-                        loading={loadingProvinces}
-                        onChange={handleProvinceChange}
-                        options={provinces.map((province) => ({
-                          label: province.name,
-                          value: province.code,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col flex={1}>
-                    <Form.Item
-                      name="ward"
-                      className="no-margin"
-                      rules={[
-                        { required: true, message: "Vui lòng chọn phường/xã" },
-                      ]}
-                    >
-                      <Select
-                        className="form-select-glass"
-                        placeholder="Phường/Xã"
-                        loading={loadingWards}
-                        disabled={!selectedProvince}
-                        options={wards.map((ward) => ({
-                          label: ward.name,
-                          value: ward.code,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                
-              </div>
-            </Col>
-            <Col xs={24} lg={12} style={{ textAlign: "right" }}>
-              <Form.Item style={{ marginBottom: 0 }}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="btn-submit-glass"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  {loading ? "Đang gửi..." : "Gửi Yêu Cầu"}
-                </Button>
+            <Col xs={24} md={8}>
+              <Form.Item label="Email" name="email">
+                <Input className="form-input-glass" disabled={isLoggedIn} placeholder="email@example.com" />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item
-          name="priorityType"
-          initialValue={"DEFAULT"}
-          className="no-margin"
-          rules={[
-            { required: true},
-          ]}>
-            {/* Property Types Grid */}
-            <div className="property-types-grid">
-              {priorityTypes.map((priority) => {
-                const IconComponent = priority.icon;
-                return (
-                  <Radio.Button key={priority.value} value={priority.value} className="property-type-icon-item">
-                    <div className="property-icon">
-                      <IconComponent />
-                    </div>
-                    <div className="property-label">{priority.label}</div>
-                  </Radio.Button>
-                );
-              })}
-            </div>
-        </Form.Item>
-        </Form>
 
-        
+          <hr style={{ border: '0.5px solid rgba(255, 255, 255, 0.15)', marginBottom: '24px' }} />
+
+          {/* HÀNG THÔNG TIN YÊU CẦU ĐẰNG SAU (DEMAND FIELDS) */}
+          <Row gutter={[32, 0]}>
+            <Col xs={24} md={12}>
+              <Form.Item label="Loại Bất Động Sản" name="propertyType" rules={[{ required: true, message: "Vui lòng chọn loại BĐS" }]}>
+                <Select className="form-select-glass" placeholder="--- Chọn loại BĐS ---" options={propertyTypeOptions} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Diện Tích (m²)" name="area" rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}>
+                <Input className="form-input-glass" placeholder="Ví dụ: 80" type="number" min={1} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={[32, 0]} style={{marginTop: "50px"}}>
+            <Col xs={24} lg={12}>
+              <div className="location-group">
+                <label className="form-label">Vị Trí Mong Muốn</label>
+                <Row gutter={[12, 0]}>
+                  <Col span={12}>
+                    <Form.Item name="province" rules={[{ required: true, message: "Nhập Tỉnh/Thành phố" }]}>
+                      <Input className="form-input-glass" placeholder="Tỉnh/Thành phố" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item name="ward" rules={[{ required: true, message: "Nhập Phường/Xã" }]}>
+                      <Input className="form-input-glass" placeholder="Phường/Xã" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </div>
+            </Col>
+            <Col xs={24} lg={12}>
+              <label className="form-label">Khoảng Giá Mong Muốn</label>
+              <Slider range min={0} max={10000000000} step={10000000} value={priceRange} onChange={(val) => setPriceRange(val as [number, number])} />
+              <div className="price-display">{formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}</div>
+            </Col>
+          </Row>
+
+          <Row gutter={[32, 0]} align="bottom" style={{ marginTop: '16px' }}>
+            <Col xs={24} lg={16}>
+              <label className="form-label" style={{ marginBottom: '12px', display: 'block' }}>Chế Độ Ưu Tiên</label>
+              <Form.Item name="priorityType" initialValue="DEFAULT">
+                <Radio.Group className="property-types-grid" style={{ width: '100%' }}>
+                  {priorityTypes.map((priority) => (
+                    <Radio.Button key={priority.value} value={priority.value} className="property-type-icon-item" style={{ backgroundColor: "transparent" }}>
+                      <div className="property-icon"><priority.icon /></div>
+                      <div className="property-label">{priority.label}</div>
+                    </Radio.Button>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+            </Col>
+            <Col xs={24} lg={8} style={{ textAlign: "right", paddingBottom: '24px' }}>
+              <Button type="primary" htmlType="submit" className="btn-submit-glass" loading={loading} block size="large">
+                {isLoggedIn ? "Gửi Yêu Cầu Tìm Kiếm" : "Đăng nhập để gửi yêu cầu"}
+              </Button>
+            </Col>
+          </Row>
+        </Form>
       </div>
     </section>
   );

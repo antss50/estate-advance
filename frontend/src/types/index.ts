@@ -19,6 +19,7 @@ export interface Staff {
   status?: string;
   revenue?: number; // Doanh thu nếu có
   totalDeals?: number; // Tổng số giao dịch nếu có
+  checked?: boolean; // Trường này dùng để đánh dấu đã chọn trong UI
 }
 
 export interface MatchingStaff {
@@ -39,14 +40,21 @@ export interface MatchingStaff {
 }
 
 export interface DemandFormValues {
+  customerId: number;
   fullName: string;
   phone: string;
   email: string;
   propertyType: string;
+  priorityType: string;
+  transactionType: string;
   area: number;
   priceRange: [number, number];
   ward: string;
   province: string;
+  numberOfBasement?: number;
+  direction?: string;
+  legalStatus?: string;
+  brokerageFee?: number;
 }
 
 export default {};

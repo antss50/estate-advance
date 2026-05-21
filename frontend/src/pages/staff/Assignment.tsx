@@ -15,18 +15,16 @@ import {
   Space,
   Spin,
   message,
-  Tooltip,
   Empty,
 } from "antd";
-import { EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import MatchedBuildingItem from "../../components/staff/MatchedBuildingItem";
-import type { MatchingPayload, UserDTO } from "../../types/user.type";
+import type { MatchingPayload, UserDemandDTO} from "../../types/user.type";
 import client from "../../api/axiosClient";
 import type {
-  MatchingResponseDTO,
   SuggestedBuildingDTO,
 } from "../../types/building.type";
 import { matchCustomerRequest } from "../../api/userApi";
+import { formatPrice } from "../../utils/assignmentUtils";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -52,13 +50,25 @@ const statusTag = (status: string | undefined) => {
   return <Tag color={config.color}>{config.label}</Tag>;
 };
 
+const propertyTypeConfig: Record<string, string> = {
+  APARTMENT: "Căn hộ",
+  RETAIL: "Mặt bằng kinh doanh",
+  WAREHOUSE: "Kho bãi",
+  OFFICE: "Văn phòng",
+}
+
+ const getPropertyTypeLabel = (propertyType: string | undefined) => {
+    return propertyTypeConfig[propertyType || ""] || propertyType || "Không xác định";
+  };
+
+
 const Assignment: React.FC = () => {
   const [selectedCustomerPage, setSelectedCustomerPage] = useState<number>(1);
   const [selectedBuildingIds, setSelectedBuildingIds] = useState<string[]>([]);
   const [expandedCustomerIds, setExpandedCustomerIds] = useState<string[]>([]);
-  const [search, setSearch] = useState<string>("");
+  // const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<UserDTO[]>([]);
+  const [customers, setCustomers] = useState<UserDemandDTO[]>([]);
 
   // States cho Matching
   const [matchedBuildings, setMatchedBuildings] = useState<
@@ -72,24 +82,36 @@ const Assignment: React.FC = () => {
   const pageSize = 5;
 
   // Fetch customers demand
-  const fetchCustomers = async (keyword: string = "") => {
+  const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const res = await client.get("/api/customer-request");
+      const staffInfoStr = localStorage.getItem("staff_info");
+      if (!staffInfoStr) {
+        message.error("Không tìm thấy thông tin định danh nhân viên. Vui lòng đăng nhập lại.");
+        setCustomers([]);
+        return;
+      }
+      
+      const staffInfo = JSON.parse(staffInfoStr);
+      const staffId = staffInfo.id;
+
+      if (!staffId) {
+        message.error("Mã số nhân viên không hợp lệ.");
+        setCustomers([]);
+        return;
+      }
+
+      const res = await client.get(`/api/customer-request/staff/${staffId}`);
       const demands = res?.data ?? res;
 
-      if (Array.isArray(demands)) {
-        const mappedData = demands.map((d: any) => ({
-          ...d,
-          id: String(d.customerId || d.id),
-        }));
-        setCustomers(mappedData);
-        setTotalCustomers(mappedData.length);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const demandArray = Array.isArray(demands) ? demands : [];
+
+      setCustomers(demandArray);
+      setTotalCustomers(demandArray.length);
     } catch (error) {
       message.error("Lỗi khi tải danh sách khách hàng");
       setCustomers([]);
+      setTotalCustomers(0);
     } finally {
       setLoading(false);
     }
@@ -100,27 +122,22 @@ const Assignment: React.FC = () => {
   }, []);
 
   // --- Logic Matching Hoàn chỉnh ---
-  const handleMatching = async (customer: UserDTO) => {
+  const handleMatching = async (customer: UserDemandDTO) => {
     setIsMatchingLoading(true);
     setSelectedCustomerId(String(customer.id));
 
     try {
-      // 1. Tách địa chỉ từ location (Ví dụ: "Phường Bến Nghé, Hồ Chí Minh")
-      const rawLocation = (customer as UserDTO).demand?.location || "";
-      const locationParts = rawLocation.split(",").map((s: string) => s.trim());
-      const ward = locationParts[0] || "";
-      const province = locationParts[1] || "";
 
-      // 2. Chuẩn bị payload chuẩn theo API
+      // 1. Chuẩn bị payload chuẩn theo API
       const payload: MatchingPayload = {
         customerId: Number(customer.id),
         transactionType: "BOTH", 
-        desiredPriceSale: Number((customer as UserDTO).demand?.price || 0),
-        desiredArea: Number((customer as UserDTO).demand?.area || 0),
-        desiredWard: ward,
-        desiredProvince: province,
-        buildingType: (customer as UserDTO).demand?.propertyType || "Căn hộ",
-        priorityType: "DEFAULT",
+        desiredPriceSale: Number(customer.demand?.price || 0),
+        desiredArea: Number(customer.demand?.area || 0),
+        desiredWard: customer.demand?.ward,
+        desiredProvince: customer.demand?.province,
+        buildingType: customer.demand?.propertyType || "Căn hộ",
+        priorityType: customer.demand?.priorityType || "DEFAULT",
         priceTolerance: 0.2,
         areaTolerance: 0.2,
         limit: 10,
@@ -130,7 +147,7 @@ const Assignment: React.FC = () => {
       const response = await matchCustomerRequest(payload);
       console.log("Dữ liệu nhận được:", response);
 
-      const responseData = response?.data || response;
+      const responseData = response as unknown as { suggestedBuildings?: SuggestedBuildingDTO[] };
       const suggested = responseData?.suggestedBuildings || [];
 
     if (suggested && suggested.length > 0) {
@@ -147,12 +164,6 @@ const Assignment: React.FC = () => {
     } finally {
       setIsMatchingLoading(false);
     }
-  };
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setSelectedCustomerPage(1);
-    fetchCustomers(value);
   };
 
   return (
@@ -172,7 +183,7 @@ const Assignment: React.FC = () => {
               <Search
                 placeholder="Tìm khách hàng..."
                 allowClear
-                onSearch={handleSearch}
+                // onSearch={handleSearch}
                 style={{ borderRadius: 24, width: "100%" }}
               />
             </div>
@@ -184,12 +195,12 @@ const Assignment: React.FC = () => {
                     (selectedCustomerPage - 1) * pageSize,
                     selectedCustomerPage * pageSize,
                   )
-                  .map((c: UserDTO) => {
+                  .map((c) => {
                     const isExpanded = expandedCustomerIds.includes(
                       String(c.id),
                     );
                     const isSelected = selectedCustomerId === String(c.id);
-
+                    const currentPriority = c?.demand?.priorityType?.toUpperCase() || "";
                     return (
                       <Card
                         key={c.id}
@@ -241,51 +252,133 @@ const Assignment: React.FC = () => {
                         </Row>
 
                         {isExpanded && (
-                          <div
-                            style={{
-                              marginTop: 12,
-                              padding: 12,
-                              background: "#fafafa",
-                              borderRadius: 8,
-                            }}
-                          >
-                            <Row gutter={[12, 12]}>
-                              <Col span={12}>
-                                <Text type="secondary">Mức giá:</Text>{" "}
-                                <Text strong>
-                                  {new Intl.NumberFormat("vi-VN").format(
-                                    Number((c as UserDTO).demand?.price || 0),
-                                  )}{" "}
-                                  đ
-                                </Text>
-                              </Col>
-                              <Col span={12}>
-                                <Text type="secondary">Diện tích:</Text>{" "}
-                                <Text strong style={{ color: RED_ALERT }}>
-                                  {(c as UserDTO).demand?.area} m²
-                                </Text>
-                              </Col>
-                              <Col span={24}>
-                                <Text type="secondary">
-                                  <EnvironmentOutlined /> Vị trí:
-                                </Text>{" "}
-                                <Text strong>
-                                  {(c as UserDTO).demand?.location}
-                                </Text>
-                              </Col>
-                            </Row>
-                            <Divider style={{ margin: "12px 0" }} />
-                            <Button
-                              icon={<ThunderboltOutlined />}
-                              onClick={() => handleMatching(c)}
-                              loading={
-                                isMatchingLoading &&
-                                selectedCustomerId === String(c.id)
-                              }
-                            >
-                              Matching
-                            </Button>
-                          </div>
+                          <>
+                          <Divider style={{ margin: "12px 0" }} />
+                                                <Card
+                                                  type="inner"
+                                                  style={{
+                                                    borderRadius: 8,
+                                                    border: "1px solid #f0f0f0",
+                                                    boxShadow: "none",
+                                                  }}
+                                                >
+                                                  <Row gutter={[12, 12]}>
+                                                    <Col span={12}>
+                                                      <div
+                                                        style={{
+                                                          display: "flex",
+                                                          justifyContent: "space-between",
+                                                          marginBottom: 8,
+                                                        }}
+                                                      >
+                                                        <Text type="secondary" style={{ color: "black" }}>
+                                                          Mức giá
+                                                        </Text>
+                                                        {currentPriority === "SAVINGS" && (
+                                                        <Tag color="cyan" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                                                        )}
+                                                        <Text strong >
+                                                          {formatPrice(c?.demand?.price)}
+                                                        </Text>
+                                                      </div>
+                                                    </Col>
+                                                    {/* <Space>
+                                                      {(customer as UserDTO).priority && (
+                                                        <Tag color="success">Ưu tiên</Tag>
+                                                      )}
+                                                    </Space> */}
+                                                  </Row>
+                          
+                                                  <Row gutter={[12, 12]}>
+                                                    <Col span={12}>
+                                                      <div
+                                                        style={{
+                                                          display: "flex",
+                                                          justifyContent: "space-between",
+                                                          marginBottom: 8,
+                                                        }}
+                                                      >
+                                                        <Text type="secondary" style={{ color: "black" }}>
+                                                          Diện tích
+                                                        </Text>
+                                                        {currentPriority === "SPACE" && (
+                                                        <Tag color="volcano" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                                                        )}
+                                                        <Text strong style={{ color: RED_ALERT }}>
+                                                          {c?.demand?.area
+                                                            ? `${c.demand.area} m²`
+                                                            : "-"}
+                                                        </Text>
+                                                      </div>
+                                                    </Col>
+                                                  </Row>
+                          
+                                                  <Row gutter={[12, 12]}>
+                                                    <Col span={12}>
+                                                      <div
+                                                        style={{
+                                                          display: "flex",
+                                                          justifyContent: "space-between",
+                                                          marginBottom: 8,
+                                                        }}
+                                                      >
+                                                        <Text type="secondary" style={{ color: "black" }}>
+                                                          Vị trí
+                                                        </Text>
+                                                        {currentPriority === "PROFIT" && (
+                                                        <Tag color="volcano" style={{ fontSize: "11px", lineHeight: "16px" }}>Ưu tiên</Tag>
+                                                        )}
+                                                        <Text>
+                                                          <strong>
+                                                            {c?.demand?.ward || "-"}, {c?.demand?.province || "-"}
+                                                          </strong>
+                                                        </Text>
+                                                      </div>
+                                                    </Col>
+                                                  </Row>
+                          
+                                                  <Row gutter={[12, 12]}>
+                                                    <Col span={12}>
+                                                      <div
+                                                        style={{
+                                                          display: "flex",
+                                                          justifyContent: "space-between",
+                                                          marginBottom: 8,
+                                                        }}
+                                                      >
+                                                        <Text type="secondary" style={{ color: "black" }}>
+                                                          Loại nhà đất
+                                                        </Text>
+                                                        <Text>
+                                                          <strong>
+                                                            {getPropertyTypeLabel(c?.demand?.propertyType) || "Chung cư"}
+                                                          </strong>
+                                                        </Text>
+                                                      </div>
+                                                    </Col>
+                                                  </Row>
+                          
+                                                  <div
+                                                    style={{
+                                                      display: "flex",
+                                                      justifyContent: "space-between",
+                                                      alignItems: "center",
+                                                      marginTop: 12,
+                                                    }}
+                                                  >
+                                                    <Button
+                                                      style={{
+                                                        background: "#fff",
+                                                        color: "#666",
+                                                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                                                      }}
+                                                      onClick={() => handleMatching(c as UserDemandDTO)}
+                                                    >
+                                                      Matching
+                                                    </Button>
+                                                  </div>
+                                                </Card>
+                                                </>
                         )}
                       </Card>
                     );

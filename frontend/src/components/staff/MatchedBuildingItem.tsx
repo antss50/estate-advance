@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Tag, Space, Row, Col } from 'antd';
-import { EnvironmentOutlined, AreaChartOutlined, DollarOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, AreaChartOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
@@ -39,7 +39,7 @@ const MatchedBuildingItem: React.FC<MatchedBuildingItemProps> = ({ building }) =
         borderRadius: '12px',
         border: '1px solid #f0f0f0',
         width: '23.5vw',
-        height: '110px',
+        height: '125px',
         transition: 'all 0.3s'
       }}
     >
@@ -79,18 +79,20 @@ const MatchedBuildingItem: React.FC<MatchedBuildingItemProps> = ({ building }) =
               <Space size={4}>
                 {building.transactionType === 'BOTH' ? (
                     <>
-                        <DollarOutlined style={{ color: '#000000' }} />
-                        <Text strong style={{ color: '#c41a1a', fontSize: '13px' }}>{formatPrice(building.priceSale || 0)}</Text>
-                        <Text strong style={{ color: '#c41a1a', fontSize: '13px' }}>{formatPrice(building.priceRent || 0)}/tháng</Text>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá bán: <strong style={{color: '#d62121'}}>{formatPrice(building.priceSale || 0)}</strong></Text>
+                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá cho thuê: <strong style={{color: '#d62121'}}>{formatPrice(building.priceRent || 0)}/tháng</strong></Text>
+                    </div>
+                        
                     </>
                 ) : building.transactionType === 'SALE' ? (
-                    <Text strong style={{ color: '#c41a1a', fontSize: '13px' }}>{formatPrice(building.priceSale || 0)}</Text>   
+                    <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá bán: <strong style={{color: '#d62121'}}>{formatPrice(building.priceSale || 0)}</strong></Text>   
                 ) : (
-                  <Text strong style={{ color: '#c41a1a', fontSize: '13px' }}>{formatPrice(building.priceRent || 0)}/tháng</Text>
+                  <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá cho thuê: <strong style={{color: '#d62121'}}>{formatPrice(building.priceRent || 0)}/tháng</strong></Text>
                 )}
               </Space>
             </Col>
-            <Col span={8}>
+            <Col span={8} style={{textAlign: "right"}}>
               <Space size={4}>
                 <AreaChartOutlined style={{ color: '#1677ff' }} />
                 <Text strong style={{ fontSize: '13px' }}>{building.area} m²</Text>
@@ -99,14 +101,14 @@ const MatchedBuildingItem: React.FC<MatchedBuildingItemProps> = ({ building }) =
           </Row>
                 
           {/* Hiển thị các tiêu chí match tốt */}
-          <div style={{ marginTop: '6px' }}>
+          {/* <div style={{ marginTop: '6px' }}>
              {building.locationMatchScore && building.locationMatchScore > 0.9 && (
                <Tag color="cyan" style={{ fontSize: '10px', lineHeight: '16px' }}>Vị trí rất khớp</Tag>
              )}
              {building.priceMatchScore && building.priceMatchScore > 0.9 && (
                <Tag color="blue" style={{ fontSize: '10px', lineHeight: '16px' }}>Giá tối ưu</Tag>
              )}
-          </div>
+          </div> */}
         </Col>
       </Row>
     </Card>

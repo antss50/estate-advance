@@ -1,7 +1,7 @@
 import type { ResponseDTO } from './response.type';
 
 export interface UserDTO {
-  id: number | string;
+  id: number ;
   userName: string;
   fullName: string;
   email?: string | null;
@@ -28,6 +28,45 @@ export interface CreateUserPayload {
   phone?: string | null;
 }
 
+export interface RegisterUserPayload {
+  username: string; 
+  password: string;
+  fullName: string;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface RegisterUserResponse {
+  id: number;
+  username: string;
+  fullName: string;
+  email?: string | null;
+  phone?: string | null;
+  message: string;
+  success: boolean;
+}
+
+export interface LoginResponse {
+  id: number;
+  username: string;
+  fullName: string;
+  email?: string | null;
+  workingArea?: string;
+  phone?: string | null;
+  token: string;
+  success: boolean;
+  message?: string;
+}
+
+export interface RegisterStaffPayload {
+  userName?: string;
+  password?: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  workingArea?: string;
+}
+
 export interface UpdateUserPayload {
   fullName?: string;
   status?: number;
@@ -44,7 +83,8 @@ export interface PasswordDTO {
 export interface DemandDTO {
   area?: number;
   price?: number;
-  location?: string;
+  ward?: string;
+  province?: string;
   propertyType?: string;
   transactionType?: string; // "SALE" hoặc "RENT"
   priorityType?: string;
@@ -52,7 +92,9 @@ export interface DemandDTO {
 
 export interface UserDemandDTO {
   id: number;
+  customerId: number;
   fullName: string;
+  userName: string;
   phone?: string | null;
   email?: string | null;
   demand: DemandDTO;
@@ -62,7 +104,7 @@ export interface UserDemandDTO {
 export interface AssignStaffDTO {
   staffId: number;
   fullName: string;
-  checked?: boolean;
+  checked?: string ; // "checked" or true/false
 }
 
 export interface MatchedStaffDTO {
@@ -87,8 +129,8 @@ export interface MatchingPayload {
   transactionType: string;
   desiredPriceSale: number;
   desiredArea: number;
-  desiredWard: string;
-  desiredProvince: string;
+  desiredWard: string | undefined;
+  desiredProvince: string | undefined;
   buildingType: string;
   priorityType: string;
   priceTolerance: number;

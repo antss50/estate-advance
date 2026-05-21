@@ -117,7 +117,7 @@ const UserManagement: React.FC = () => {
     setModalVisible(true);
   };
   const openEdit = (user: UserDTO | Staff) => {
-    setEditingUserId(user.id as string);
+    setEditingUserId(user.id ? String(user.id) : null);
     form.setFieldsValue({
       fullName: user.fullName,
       userName: user.userName || "",
@@ -125,6 +125,7 @@ const UserManagement: React.FC = () => {
       status: user.status === "ACTIVE" ? 1 : 0,
       email: user.email || "",
       phone: user.phone || "",
+      workingArea: "workingArea" in user ? user.workingArea || "" : "",
     });
     setModalVisible(true);
   };
@@ -143,7 +144,7 @@ const UserManagement: React.FC = () => {
     setSelectedStaffId(null);
   };
 
-  const handleSubmit = async (values: UserFormValues) => {
+  const handleSubmit = async (values: UserFormValues & {workingArea?: string}) => {
     setSubmitting(true);
     try {
       if (editingUserId) {
@@ -161,11 +162,13 @@ const UserManagement: React.FC = () => {
         const fullName = (values.fullName || "").trim();
         const email = (values.email || "").trim();
         const phone = (values.phone || "").trim();
-        const roleCode = (values.roleCode || "").trim();
+        // const roleCode = (values.roleCode || "").trim();
+        const workingArea = (values.workingArea || "").trim();
+
         if (!userName) throw new Error("Tên đăng nhập không được để trống");
         if (!password) throw new Error("Mật khẩu không được để trống");
         if (!fullName) throw new Error("Họ và tên không được để trống");
-        if (!roleCode) throw new Error("Vui lòng chọn chức vụ");
+        // if (!roleCode) throw new Error("Vui lòng chọn chức vụ");
 
         const payload = {
           userName,
@@ -173,11 +176,12 @@ const UserManagement: React.FC = () => {
           fullName,
           email,
           phone,
-          status: Number(values.status ?? 1),
-          roleCode: values.roleCode,
+          // status: Number(values.status ?? 1),D
+          // roleCode: values.roleCode,
+          workingArea: workingArea,
         };
         console.log("Creating user with payload:", payload);
-        await userApi.createUser(payload);
+        await staffApi.registerStaff(payload);
         message.success("Tạo nhân viên thành công");
       }
       closeModal();
@@ -313,18 +317,6 @@ const UserManagement: React.FC = () => {
         </Spin>
       </div>
 
-      {/* <Modal
-        title={
-          editingUserId ? "Chỉnh sửa thông tin người dùng" : "Thêm người dùng"
-        }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}/>
-      </Modal> */}
-
       <Modal
         title={
           editingUserId ? "Chỉnh sửa thông tin người dùng" : "Thêm người dùng"
@@ -360,12 +352,14 @@ const UserManagement: React.FC = () => {
           <Form.Item name="workingArea" label="Khu vực làm việc">
             <Input />
           </Form.Item>
+          {editingUserId && (
           <Form.Item name="roleCode" label="Role" initialValue={"STAFF"}>
             <Select>
               <Select.Option value="STAFF">Staff</Select.Option>
               <Select.Option value="MANAGER">Manager</Select.Option>
             </Select>
-          </Form.Item>
+          </Form.Item> 
+          )}
           {!editingUserId && (
             <Form.Item
               name="password"

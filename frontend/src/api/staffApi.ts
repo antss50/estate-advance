@@ -1,6 +1,7 @@
 import client, { setAuthToken } from './axiosClient';
-import type { UserDTO } from '../types/user.type';
+import type { LoginResponse, RegisterStaffPayload, RegisterUserResponse, UserDTO } from '../types/user.type';
 import type { MatchingStaff, Staff } from '../types';
+import type { BuildingSearchResponse } from '../types/building.type';
 
 const PATH = '/api/user/staffs';
 
@@ -40,5 +41,19 @@ export async function getMatchingStaffs(ward: string): Promise<MatchingStaff[]> 
   return res.data;
 }
 
+export async function registerStaff(payload: RegisterStaffPayload): Promise<RegisterUserResponse> {
+  const res = await client.post<RegisterUserResponse>("/api/staff/auth/register", payload);
+  return res.data ?? res;
+}
 
-export default { configureToken, getStaffs, getStaffById, getMatchingStaffs };
+export async function loginStaff(userName: string, password: string): Promise<LoginResponse> {
+  const res = await client.post<LoginResponse>(`/api/staff/auth/login`, { userName, password });
+  return res.data;
+}
+
+export async function getBuildingByStaff(staffId: number): Promise<BuildingSearchResponse[]> {
+  const res = await client.get(`/api/building/staff/${staffId}`);
+  return res.data;
+}
+
+export default { configureToken, getStaffs, getStaffById, getMatchingStaffs, registerStaff, loginStaff, getBuildingByStaff };

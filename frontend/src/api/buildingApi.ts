@@ -1,9 +1,9 @@
 import client, { setAuthToken } from './axiosClient';
 import type { BuildingDTO, BuildingSearchRequest, AssignmentBuildingDTO, BuildingSearchResponse } from '../types/building.type';
 import type {  ResponseDTO } from '../types/response.type';
-import type { MatchedStaffDTO } from '../types/user.type';
+import type { AssignStaffDTO, MatchedStaffDTO } from '../types/user.type';
 // staff list response shape for building/{id}/staffs
-export type BuildingStaffEntry = { staffId: number; fullName: string; checked: boolean };
+
 const PATH = '/api/building';
 
 // Helper: include token when available
@@ -56,8 +56,8 @@ export async function deleteBuildings(ids: (string|number)[]): Promise<ResponseD
   return res.data;
 }
 
-export async function getBuildingStaffs(buildingId: string | number): Promise<ResponseDTO<BuildingStaffEntry[]>> {
-  const res = await client.get<ResponseDTO<BuildingStaffEntry[]>>(`${PATH}/${encodeURIComponent(String(buildingId))}/staffs`);
+export async function getBuildingStaffs(buildingId: string | number): Promise<ResponseDTO<AssignStaffDTO[]>> {
+  const res = await client.get<ResponseDTO<AssignStaffDTO[]>>(`${PATH}/${encodeURIComponent(String(buildingId))}/staffs`);
   return res.data;
 }
 

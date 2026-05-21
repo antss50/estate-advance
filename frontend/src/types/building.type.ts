@@ -5,8 +5,12 @@ export interface BuildingDTO {
   name?: string;
   address?: string;
   province?: string;
+  provinceCode?: string;
+  provinceName?: string;
   disctict?: string | null;
   ward?: string;
+  wardCode?: string;
+  wardName?: string;
   street?: string;
   structure?: string;
   numberOfBasement?: number;
@@ -16,8 +20,10 @@ export interface BuildingDTO {
   rentArea?: string;
   rentAreaDescriptions?: string[];
   imageUrls?: string[];
-  rentPrice?: number; // monthly VND
-  rentPriceDescription?: string;
+  rentPrice?: number; 
+  priceSale?: number;
+  priceRent?: number;
+  // rentPriceDescription?: string;
   serviceFee?: number;
   carFee?: number;
   motoFee?: number;
@@ -30,18 +36,21 @@ export interface BuildingDTO {
   decorationTime?: string;
   brokerageFee?: number;
   note?: string;
-  linkOfBuilding?: string;
+  // linkOfBuilding?: string;
   map?: string;
   avatar?: string;
   image?: string;
-  createdDate?: string;
-  modifiedDate?: string;
-  createdBy?: string;
-  modifiedBy?: string;
-  typeCode?: string | string[];
-  type?: string;
+  // createdDate?: string;
+  // modifiedDate?: string;
+  // createdBy?: string;
+  // modifiedBy?: string;
+  // typeCode?: string | string[];
+  // type?: string;
   managerName?: string | null;
   managerPhone?: string | null;
+  transactionType?: string;
+  propertyType?: string;
+  legal?: string;
 }
 
 export interface BuildingSearchRequest {
@@ -68,7 +77,8 @@ export interface BuildingSearchRequest {
 
 export interface BuildingSearchResponse {
   id?: number;
-  name: string;
+  buildingId?: number;
+  name?: string;
   address?: string;
   managerName?: string | null;
   managerPhone?: string | null;
@@ -78,18 +88,27 @@ export interface BuildingSearchResponse {
   serviceFee?: number;
   brokerageFee?: number;
   type?: string;
+  priceSale?: number;
+  priceRent?: number;
+  rentPriceDescription?: string;
+  imageUrls?: string[];
+  buildingName?: string;
+  transactionType?: string;
+  avatar?: string;
+  note?: string;
+  structure?: string;
 }
 
 export interface AssignmentBuildingDTO {
   buildingId: number | string;
-  staffs: number[];
+  staffIds: number[];
   // assignedBy?: string;
 }
 
 export interface AssignmentStaffDTO {
   staffId: number;
   fullName: string;
-  checked?: boolean;
+  checked?: string; // "checked" hoặc true/false
 }
 
 export interface SuggestedBuildingDTO {
@@ -120,6 +139,12 @@ export interface MatchingResponseDTO {
   suggestedBuildings: SuggestedBuildingDTO[];
 }
 
+export type BuildingStaffEntry = { 
+  staffId: number; 
+  fullName: string; 
+  checked: boolean;
+  
+};
 
 export type BuildingListResponse = ResponseDTO<PaginatedResult<BuildingDTO>>;
 

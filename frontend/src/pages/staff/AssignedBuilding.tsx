@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Layout,
   Typography,
   Input,
   Select,
-  Divider,
   Slider,
   Button,
   Row,
@@ -16,22 +15,27 @@ import {
 
 import type {
   BuildingSearchResponse,
-  BuildingSearchRequest,
 } from "../../types/building.type";
-import buildingApi from "../../api/buildingApi";
 import BuildingCard from "../../components/staff/BuildingCard";
 import { Link } from "react-router-dom";
+import staffApi from "../../api/staffApi";
 
 interface BuildingCardType {
   id: string;
+  buidlingId: number | string;
   title: string;
   price: string;
   area: string;
-  bedrooms: string;
-  baths: string;
   location: string;
   description: string;
-  imageUrl: string;
+  image: string;
+  buildingName: string;
+  rentPrice?: number;
+  salePrice?: number;
+  priceRent?: number;
+  priceSale?: number;
+  structure?: string;
+  note?: string;
 }
 
 const { Content } = Layout;
@@ -54,55 +58,91 @@ const AssignedBuilding: React.FC = () => {
   ]);
 
   // Map API response to BuildingCardType
-  const mapToBuildingCard = (
-    building: BuildingSearchResponse,
-  ): BuildingCardType => {
+  const mapToBuildingCard = (building: BuildingSearchResponse): BuildingCardType => {
+    const actualId = building.buildingId || building.id || "";
+
+    const rentPriceVal = building.priceRent || building.rentPrice;
+    const salePriceVal = building.priceSale || building.priceSale;
+
+    const displayPrice = rentPriceVal 
+      ? `${rentPriceVal.toLocaleString("vi-VN")} VNĐ/tháng`
+      : salePriceVal
+        ? `${salePriceVal.toLocaleString("vi-VN")} VNĐ`
+        : "Liên hệ";
+    
+    const finalImage = building.avatar || building.imageUrls?.[0] || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80&auto=format&fit=crop";
+    
     return {
-      id: String(building.id || ""),
-      title: building.name || "Chưa có tiêu đề",
-      price: building.rentPrice
-        ? `${building.rentPrice.toLocaleString("vi-VN")} đ/tháng`
-        : "Liên hệ",
+      id: String(actualId),
+      buidlingId: actualId,
+      title: building.name || building.buildingName || "Chưa có tiêu đề",
+      buildingName: building.name || building.buildingName || "Chưa có tiêu đề",
+      price: displayPrice,
+      rentPrice: rentPriceVal,
+      salePrice: salePriceVal,
+      priceRent: rentPriceVal,
+      priceSale: salePriceVal,
       area: building.floorArea ? `${building.floorArea} m2` : "---",
-      bedrooms: "---", // API không cung cấp
-      baths: "---", // API không cung cấp
       location: building.address || "---",
       description: building.type || "Bất động sản cho thuê",
-      imageUrl:
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80&auto=format&fit=crop", // Default image
+      image: finalImage, 
+      structure: building.structure || "Chưa có thông tin cấu trúc",
+      note: building.note || "Chưa có thông tin mô tả chi tiết",
     };
   };
 
   // Fetch buildings from API
-  const fetchBuildings = async (p: number, searchQuery: string) => {
+  const fetchBuildings = useCallback(async (currentPage: number, searchQuery: string) => {
     setLoading(true);
     try {
-      const request: BuildingSearchRequest = {
-        page: p - 1, // API expects 0-indexed page
-        size: PAGE_SIZE,
-        name: searchQuery || undefined,
-      };
-
-      const response = await buildingApi.searchBuildings(request);
-
-      if (Array.isArray(response)) {
-        // If response is array directly, map it
-        const mappedBuildings = response.map(mapToBuildingCard);
-        setBuildings(mappedBuildings);
-        setTotal(mappedBuildings.length * PAGE_SIZE); // Estimate total
-      } else if (response?.data) {
-        // If response has data structure
-        const mappedBuildings = (response.data || []).map(mapToBuildingCard);
-        setBuildings(mappedBuildings);
-        setTotal(response.total || mappedBuildings.length);
+      // 1. Lấy thông tin Staff đăng nhập từ bộ nhớ tạm để bóc tách ID
+      const staffInfoStr = localStorage.getItem("staff_info");
+      if (!staffInfoStr) {
+        message.error("Không tìm thấy thông tin định danh nhân viên. Vui lòng đăng nhập lại.");
+        return;
       }
+      const staffInfo = JSON.parse(staffInfoStr);
+      const staffId = staffInfo.id; 
+
+      if (!staffId) {
+        message.error("Mã số nhân viên không hợp lệ.");
+        return;
+      }
+
+      const response = await staffApi.getBuildingByStaff(staffId);
+      const rawBuildings = Array.isArray(response) ? response : [];
+
+      const filteredBuildings = rawBuildings.filter((b: BuildingSearchResponse) => {
+        const bName = b.name || b.buildingName || "";
+        const nameMatch = searchQuery
+          ? bName.toLowerCase().includes(searchQuery.toLowerCase())
+          : true;
+        
+        const price = b.priceRent || b.priceSale || 0;
+        const priceMatch = price >= sliderValue[0] && price <= sliderValue[1];
+
+        return nameMatch && priceMatch;
+      });
+
+      // 4. Phân trang dữ liệu hiển thị 
+      const startIndex = (currentPage - 1) * PAGE_SIZE;
+      const endIndex = startIndex + PAGE_SIZE;
+      const paginatedBuildings = filteredBuildings.slice(startIndex, endIndex);
+
+      // 5. Cập nhật dữ liệu chuyển đổi lên State giao diện
+      const mappedBuildings = paginatedBuildings.map(mapToBuildingCard);
+      
+      console.log("Mảng chuẩn bị truyền xuống giao diện Card con:", mappedBuildings);
+      setBuildings(mappedBuildings);
+      setTotal(filteredBuildings.length);
+
     } catch (err) {
-      console.error("Failed to fetch buildings:", err);
-      message.error("Không thể tải danh sách tòa nhà");
+      console.error("Failed to fetch buildings for staff:", err);
+      message.error("Không thể tải danh sách tòa nhà đang phụ trách");
     } finally {
       setLoading(false);
     }
-  };
+  }, [sliderValue]);
 
   useEffect(() => {
     fetchBuildings(page, searchName);
@@ -134,133 +174,87 @@ const AssignedBuilding: React.FC = () => {
         </div>
 
         {/* Filter Bar */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 32,
-            padding: "12px 8px",
-            background: "transparent",
-            marginBottom: 24,
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Search */}
-          <div style={{ minWidth: 420, flex: "0 0 420px" }}>
-            <Search
-              placeholder="Tìm kiếm toà nhà..."
-              enterButton
-              allowClear
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              onSearch={handleSearch}
-              style={{
-                borderRadius: 24,
-                height: 33,
-                boxShadow: "none",
-              }}
-            />
-          </div>
+        <div style={{ background: "#f8f9fa", padding: 16, borderRadius: 8, marginBottom: 24 }}>
+  <Row gutter={[16, 16]} align="middle">
+    {/* Ô tìm kiếm */}
+    <Col xs={24} lg={8}>
+      <Search
+        placeholder="Tìm kiếm toà nhà..."
+        enterButton
+        allowClear
+        value={searchName}
+        onChange={(e) => setSearchName(e.target.value)}
+        onSearch={handleSearch}
+        style={{ width: "100%" }}
+      />
+    </Col>
 
-          <Divider type="vertical" style={{ height: 40 }} />
+    {/* Các bộ lọc Select */}
+    <Col xs={24} sm={12} lg={4}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <Text style={{ color: MUTED, fontSize: 12 }}>Chọn loại nhà đất</Text>
+        <Select
+          defaultValue="All"
+          style={{ fontWeight: 700, width: "100%" }}
+          options={[
+            { value: "All", label: "Tất cả" },
+            { value: "APARTMENT", label: "Chung cư" },
+            { value: "OFFICE", label: "Văn phòng" },
+            { value: "RETAIL", label: "Mặt bằng kinh doanh" },
+            { value: "WAREHOUSE", label: "Kho bãi" },
+          ]}
+        />
+      </div>
+    </Col>
 
-          {/* Select blocks */}
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <Text style={{ color: MUTED, fontSize: 12 }}>
-                Chọn loại nhà đất
-              </Text>
-              <Select
-                defaultValue="Chung cư"
-                bordered={false}
-                style={{ fontWeight: 700, width: 160 }}
-                options={[
-                  { value: "Chung cư", label: "Chung cư" },
-                  { value: "Nhà riêng", label: "Nhà riêng" },
-                ]}
-              />
-            </div>
+    <Col xs={24} sm={12} lg={4}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <Text style={{ color: MUTED, fontSize: 12 }}>Khu vực</Text>
+        <Select
+          defaultValue="Hồ Chí Minh"
+          style={{ fontWeight: 700, width: "100%" }}
+          options={[
+            { value: "All", label: "Tất cả" },
+            { value: "Hồ Chí Minh", label: "Hồ Chí Minh" },
+            { value: "Hà Nội", label: "Hà Nội" },
+            { value: "Đà Nẵng", label: "Đà Nẵng" },
+            { value: "Hải Phòng", label: "Hải Phòng" },
+          ]}
+        />
+      </div>
+    </Col>
 
-            <Divider type="vertical" style={{ height: 40 }} />
+    {/* Khoảng giá */}
+    <Col xs={24} md={16} lg={6}>
+      <Text style={{ color: MUTED, fontSize: 12 }}>Khoảng giá</Text>
+      <Slider
+        range
+        min={0}
+        max={10000000000}
+        value={sliderValue}
+        onChange={(v) => setSliderValue(v as [number, number])}
+        trackStyle={[{ backgroundColor: PRIMARY }]}
+        handleStyle={[{ borderColor: PRIMARY }, { borderColor: PRIMARY }]}
+      />
+    </Col>
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <Text style={{ color: MUTED, fontSize: 12 }}>Khu vực</Text>
-              <Select
-                defaultValue="Hồ Chí Minh"
-                bordered={false}
-                style={{ fontWeight: 700, width: 160 }}
-                options={[
-                  { value: "Hồ Chí Minh", label: "Hồ Chí Minh" },
-                  { value: "Hà Nội", label: "Hà Nội" },
-                ]}
-              />
-            </div>
-
-            <Divider type="vertical" style={{ height: 40 }} />
-
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <Text style={{ color: MUTED, fontSize: 12 }}>Diện tích</Text>
-              <Select
-                defaultValue="50 - 70 m2"
-                bordered={false}
-                style={{ fontWeight: 700, width: 140 }}
-                options={[
-                  { value: "50-70", label: "50 - 70 m2" },
-                  { value: "70-100", label: "70 - 100 m2" },
-                ]}
-              />
-            </div>
-          </div>
-
-          <Divider type="vertical" style={{ height: 40 }} />
-
-          {/* Price slider */}
-          <div
-            style={{ display: "flex", flexDirection: "column", minWidth: 260 }}
-          >
-            <Text style={{ color: MUTED, fontSize: 12 }}>Khoảng giá</Text>
-            <div style={{ padding: "8px 0", width: 260 }}>
-              <Slider
-                range
-                min={0}
-                max={10000000000}
-                value={sliderValue}
-                onChange={(v) => setSliderValue(v as [number, number])}
-                trackStyle={[{ backgroundColor: PRIMARY }]}
-                handleStyle={[
-                  { borderColor: PRIMARY },
-                  { borderColor: PRIMARY },
-                ]}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 12,
-                  color: MUTED,
-                }}
-              >
-                <Text style={{ color: MUTED }}>0 đ</Text>
-                <Text style={{ color: MUTED }}>10 000 000 000 đ</Text>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginLeft: "auto" }}>
-            <Button
-              type="primary"
-              shape="round"
-              onClick={handleReset}
-              style={{
-                background: PRIMARY,
-                borderColor: PRIMARY,
-                borderRadius: 24,
-              }}
-            >
-              Đặt lại
-            </Button>
-          </div>
-        </div>
+    {/* Nút Đặt lại */}
+    <Col xs={24} md={8} lg={2} style={{ textAlign: "right" }}>
+      <Button
+        type="primary"
+        shape="round"
+        onClick={handleReset}
+        style={{
+          background: PRIMARY,
+          borderColor: PRIMARY,
+          width: "100%"
+        }}
+      >
+        Đặt lại
+      </Button>
+    </Col>
+  </Row>
+</div>
 
         {/* Grid */}
         <Spin spinning={loading} tip="Đang tải...">

@@ -63,7 +63,7 @@ const AppHeader: React.FC<HeaderProps> = ({
               </Space>
             ) : (
               <Space>
-                <span className="user-email">tangocanss50@gmail.com</span>
+                <span className="user-email">{localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").fullName : ""}</span>
                 <Avatar src="https://i.pravatar.cc/150?img=32" />
                 <Button onClick={onLogout} size="small">
                   Đăng xuất

@@ -9,15 +9,15 @@
  */
 
 import React from "react";
-import { Card, Row, Col, Statistic, Divider, Button, Tabs } from "antd";
+import { Card, Row, Col, Divider, Button } from "antd";
 import {
   FileTextOutlined,
-  BankOutlined,
-  TeamOutlined,
+
   SyncOutlined,
 } from "@ant-design/icons";
 import AssignmentGrid from "../../components/admin/AssignmentGrid";
 import "./AssignmentManagement.css";
+// import CustomerDemand from "./CustomerDemand";
 
 const AssignmentManagement: React.FC = () => {
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -54,7 +54,6 @@ const AssignmentManagement: React.FC = () => {
           >
             <p>
               Quản lý phân công nhân viên cho các nhu cầu khách hàng và toà nhà.
-              Click vào mỗi card để xem chi tiết và chỉnh sửa phân công.
             </p>
           </Card>
         </Col>
@@ -63,11 +62,11 @@ const AssignmentManagement: React.FC = () => {
       <Divider />
 
       {/* Statistics Section (Optional) */}
-      <Row gutter={[16, 16]} className="stats-section">
+      {/* <Row gutter={[16, 16]} className="stats-section">
         <Col xs={24} sm={12} md={6}>
           <Statistic
             title="Tổng Khách hàng"
-            value={0}
+            value={0} // Replace with actual count
             prefix={<TeamOutlined />}
             valueStyle={{ color: "#1890ff" }}
           />
@@ -96,7 +95,7 @@ const AssignmentManagement: React.FC = () => {
             valueStyle={{ color: "#f5222d" }}
           />
         </Col>
-      </Row>
+      </Row> */}
 
       <Divider />
 
