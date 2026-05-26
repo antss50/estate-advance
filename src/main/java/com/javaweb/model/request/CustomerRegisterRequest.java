@@ -1,5 +1,7 @@
 package com.javaweb.model.request;
 
+import com.javaweb.entity.Demand;
+
 import javax.validation.constraints.*;
 
 public class CustomerRegisterRequest {
@@ -24,7 +26,7 @@ public class CustomerRegisterRequest {
     private String email;
 
     private String companyName;
-    private String demand;
+    private Demand demand;
 
     // Getters and Setters
     public String getUsername() { return username; }
@@ -45,6 +47,11 @@ public class CustomerRegisterRequest {
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }
 
-    public String getDemand() { return demand; }
-    public void setDemand(String demand) { this.demand = demand; }
+    public Demand getDemand() {
+        return demand;
+    }
+
+    public void setDemand(Demand demand) {
+        this.demand = demand;
+    }
 }

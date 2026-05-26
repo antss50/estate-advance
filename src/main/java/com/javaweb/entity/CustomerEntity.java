@@ -1,6 +1,7 @@
 package com.javaweb.entity;
 
 import com.javaweb.enums.CustomerStatus;
+
 import javax.persistence.*;
 import java.util.Date;
 
@@ -30,8 +31,13 @@ public class CustomerEntity extends BaseEntity {
     @Column(name = "companyname")
     private String companyName;
 
-    @Column(name = "demand")
-    private String demand;
+    // ── THAY THẾ: String demand → @Embedded Demand ────────────────────────────
+    // Các cột của Demand sẽ nằm thẳng trong bảng customer:
+    //   demand_area, demand_price, demand_ward, demand_province,
+    //   demand_property_type, demand_priority_type, ...
+    @Embedded
+    private Demand demand;
+    // ─────────────────────────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -44,7 +50,8 @@ public class CustomerEntity extends BaseEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastLogin;
 
-    // Getters and Setters
+    // ── Getters & Setters ────────────────────────────────────────────────────
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -66,8 +73,8 @@ public class CustomerEntity extends BaseEntity {
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }
 
-    public String getDemand() { return demand; }
-    public void setDemand(String demand) { this.demand = demand; }
+    public Demand getDemand() { return demand; }
+    public void setDemand(Demand demand) { this.demand = demand; }
 
     public CustomerStatus getStatus() { return status; }
     public void setStatus(CustomerStatus status) { this.status = status; }
