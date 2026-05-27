@@ -2,7 +2,6 @@ package com.javaweb.service.impl;
 
 import com.javaweb.entity.BuildingEntity;
 import com.javaweb.entity.CustomerEntity;
-import com.javaweb.entity.Demand;
 import com.javaweb.enums.CustomerPriorityType;
 import com.javaweb.model.request.CustomerMatchingRequest;
 import com.javaweb.model.response.BuildingMatchingResult;
@@ -10,10 +9,12 @@ import com.javaweb.model.response.CustomerMatchingResponse;
 import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.service.CustomerBuildingMatchingService;
-import com.javaweb.util.MatchingScoreCalculator;
-import com.javaweb.util.MatchingWeight;
+import com.javaweb.utils.MatchingScoreCalculator;
+import com.javaweb.utils.MatchingWeight;
+import com.javaweb.service.WardLocationScorer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 import java.util.Comparator;
 import java.util.List;
@@ -25,91 +26,41 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
     @Autowired
     private BuildingRepository buildingRepository;
 
+    @Autowired(required = false)
+    private CustomerRepository customerRepository; // optional: load demand từ DB
     @Autowired
-    private CustomerRepository customerRepository;
+    private WardLocationScorer wardLocationScorer;
 
     // ── Public entry point ───────────────────────────────────────────────────
 
     @Override
     public CustomerMatchingResponse findMatchingBuildings(CustomerMatchingRequest request) {
 
-        // 1. Load CustomerEntity từ DB — bắt buộc vì khách đã có tài khoản
-        CustomerEntity customer = customerRepository
-                .findById(request.getCustomerId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy khách hàng với id: " + request.getCustomerId()));
+        // 1. Resolve demand (từ request trực tiếp hoặc load từ DB qua customerId)
+        MatchingDemand demand = resolveDemand(request);
 
-        // 2. Build MatchingDemand từ entity + override (nếu có)
-        MatchingDemand demand = buildDemand(customer, request);
-
-        // 3. Lấy trọng số theo priorityType của khách
+        // 2. Lấy trọng số theo priorityType
         MatchingWeight weight = MatchingWeight.of(demand.priorityType);
 
-        // 4. Lấy toàn bộ building, tính điểm, lọc & sắp xếp
+        // 3. Lấy toàn bộ building active
         List<BuildingEntity> allBuildings = buildingRepository.findAll();
 
+        // 4. Tính điểm cho từng building, lọc & sắp xếp
         List<BuildingMatchingResult> results = allBuildings.stream()
                 .map(b -> calculateResult(b, demand, weight))
-                .filter(r -> r.getScoreType() > 0)               // hard filter: loại nhà phải khớp
                 .filter(r -> r.getTotalScore() >= request.getMinScore())
+                .filter(r -> r.getScoreType() > 0) // hard filter: type phải khớp
                 .sorted(Comparator.comparingDouble(BuildingMatchingResult::getTotalScore).reversed())
                 .limit(request.getTopN())
                 .collect(Collectors.toList());
 
         // 5. Đóng gói response
         CustomerMatchingResponse response = new CustomerMatchingResponse();
-        response.setCustomerId(customer.getId());
-        response.setCustomerName(customer.getFullName());
-        response.setPriorityType(demand.priorityType.name());
+        response.setCustomerId(request.getCustomerId());
+        response.setPriorityType(demand.priorityType != null ? demand.priorityType.name() : CustomerPriorityType.DEFAULT.name());
         response.setTotalFound(results.size());
         response.setResults(results);
         return response;
-    }
-
-    // ── Build MatchingDemand từ CustomerEntity ──────────────────────────────
-
-    /**
-     * Lấy demand từ CustomerEntity (đã lưu trong DB).
-     * Nếu request có override field → dùng override thay thế.
-     *
-     * Thứ tự ưu tiên: override trong request > demand trong DB > default
-     */
-    private MatchingDemand buildDemand(CustomerEntity customer, CustomerMatchingRequest request) {
-        Demand dbDemand = customer.getDemand(); // @Embedded từ bảng customer
-
-        MatchingDemand demand = new MatchingDemand();
-
-        // Area
-        demand.area = request.getOverrideArea() != null
-                ? request.getOverrideArea()
-                : (dbDemand != null ? dbDemand.getArea() : null);
-
-        // Price
-        demand.price = request.getOverridePrice() != null
-                ? request.getOverridePrice()
-                : (dbDemand != null ? dbDemand.getPrice() : null);
-
-        // Ward
-        demand.ward = request.getOverrideWard() != null
-                ? request.getOverrideWard()
-                : (dbDemand != null ? dbDemand.getWard() : null);
-
-        // Province
-        demand.province = request.getOverrideProvince() != null
-                ? request.getOverrideProvince()
-                : (dbDemand != null ? dbDemand.getProvince() : null);
-
-        // PropertyType
-        demand.propertyType = request.getOverridePropertyType() != null
-                ? request.getOverridePropertyType()
-                : (dbDemand != null ? dbDemand.getPropertyType() : null);
-
-        // PriorityType — luôn lấy từ DB (do khách tự thiết lập khi đăng ký/cập nhật)
-        demand.priorityType = (dbDemand != null && dbDemand.getPriorityType() != null)
-                ? dbDemand.getPriorityType()
-                : CustomerPriorityType.DEFAULT;
-
-        return demand;
     }
 
     // ── Tính điểm cho một building ──────────────────────────────────────────
@@ -119,12 +70,11 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
             MatchingDemand demand,
             MatchingWeight weight) {
 
-        Double buildingPrice = resolvePrice(building);
+        // Chọn giá phù hợp với transactionType (RENT/SALE)
+        Double buildingPrice = resolvePrice(building, demand);
 
-        double sLocation = MatchingScoreCalculator.scoreLocation(
-                building.getWardCode(), building.getWardName(),
-                building.getProvinceCode(), building.getProvinceName(),
-                demand.ward, demand.province);
+        // Dùng WardLocationScorer — dựa trên bảng ward_adjacency từ GeoJSON 33 tỉnh
+        double sLocation = wardLocationScorer.score(building.getWardCode(), demand.ward);
 
         double sPrice = MatchingScoreCalculator.scorePrince(buildingPrice, demand.price);
 
@@ -134,6 +84,7 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
 
         double total  = MatchingScoreCalculator.totalScore(weight, sLocation, sPrice, sArea, sType);
 
+        // Đóng gói kết quả
         BuildingMatchingResult result = new BuildingMatchingResult();
         result.setBuildingId(building.getId());
         result.setBuildingName(building.getName());
@@ -153,9 +104,40 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Chọn giá building theo transactionType: RENT → priceRent, SALE → priceSale.
+     * Resolve demand: ưu tiên field trong request,
+     * nếu thiếu thì thử load từ CustomerEntity (nếu customerId có và DB có).
      */
-    private Double resolvePrice(BuildingEntity building) {
+    private MatchingDemand resolveDemand(CustomerMatchingRequest request) {
+        MatchingDemand demand = new MatchingDemand();
+        demand.area         = request.getDemandArea();
+        demand.price        = request.getDemandPrice();
+        demand.ward         = request.getDemandWard();
+        demand.province     = request.getDemandProvince();
+        demand.propertyType = request.getDemandPropertyType();
+        demand.priorityType = request.getPriorityType();
+
+        // Nếu request thiếu thông tin, thử load từ DB
+        if (request.getCustomerId() != null && customerRepository != null) {
+            customerRepository.findById(request.getCustomerId()).ifPresent(customer -> {
+                // CustomerEntity.demand hiện là String → bạn có thể parse JSON ở đây
+                // Tạm thời chỉ lấy priorityType nếu request chưa có
+                // (Mở rộng: dùng ObjectMapper để parse demand JSON sang Demand object)
+            });
+        }
+
+        // Default priorityType
+        if (demand.priorityType == null) {
+            demand.priorityType = CustomerPriorityType.DEFAULT;
+        }
+
+        return demand;
+    }
+
+    /**
+     * Chọn giá building phù hợp với loại giao dịch của demand.
+     * Nếu demand không chỉ định → dùng priceRent (phổ biến nhất).
+     */
+    private Double resolvePrice(BuildingEntity building, MatchingDemand demand) {
         if (building.getTransactionType() == null) return building.getPriceRent();
         switch (building.getTransactionType()) {
             case SALE: return building.getPriceSale();

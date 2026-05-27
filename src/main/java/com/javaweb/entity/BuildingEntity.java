@@ -1,9 +1,11 @@
 package com.javaweb.entity;
 
+import com.javaweb.enums.BuildingStatus;
 import com.javaweb.enums.LegalStatus;
 import com.javaweb.enums.TransactionType;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,6 +146,32 @@ public class BuildingEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "legal")
     private LegalStatus legal;
+
+    // ── THÊM VÀO BuildingEntity.java ─────────────────────────────────────────────
+// Thêm import:
+// import com.javaweb.enums.BuildingStatus;
+
+    // Thêm field (sau field "legal"):
+    @Enumerated(EnumType.STRING)
+    @Column(name = "building_status")
+    private BuildingStatus buildingStatus = BuildingStatus.AVAILABLE;
+    @Column(name = "rent_start_date")
+    private LocalDate rentStartDate;   // Ngày bắt đầu thuê (set khi SIGNED → PAID)
+
+    @Column(name = "rent_end_date")
+    private LocalDate rentEndDate;     // Ngày kết thúc thuê (rentStartDate + contractMonths)
+    // Scheduled Job kiểm tra hàng ngày
+
+    // Thêm getters & setters:
+    public LocalDate getRentStartDate() { return rentStartDate; }
+    public void setRentStartDate(LocalDate rentStartDate) { this.rentStartDate = rentStartDate; }
+
+    public LocalDate getRentEndDate() { return rentEndDate; }
+    public void setRentEndDate(LocalDate rentEndDate) { this.rentEndDate = rentEndDate; }
+
+    // Thêm getter & setter:
+    public BuildingStatus getBuildingStatus() { return buildingStatus; }
+    public void setBuildingStatus(BuildingStatus buildingStatus) { this.buildingStatus = buildingStatus; }
 
     // Quan hệ ManyToMany với UserEntity (staffs)
     @ManyToMany(fetch = FetchType.LAZY)

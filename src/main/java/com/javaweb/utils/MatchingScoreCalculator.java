@@ -1,4 +1,4 @@
-package com.javaweb.util;
+package com.javaweb.utils;
 
 /**
  * Engine tính điểm matching theo công thức:

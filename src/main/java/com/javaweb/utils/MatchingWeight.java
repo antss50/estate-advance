@@ -1,4 +1,4 @@
-package com.javaweb.util;
+package com.javaweb.utils;
 
 import com.javaweb.enums.CustomerPriorityType;
 

@@ -1,50 +1,48 @@
 package com.javaweb.model.request;
 
+import com.javaweb.enums.CustomerPriorityType;
+
 /**
- * Request tìm building phù hợp.
- *
- * Vì khách đã có tài khoản, chỉ cần gửi customerId.
- * Toàn bộ demand (area, price, ward, priorityType...) sẽ được
- * load từ CustomerEntity.demand trong DB.
- *
- * Các field override là tuỳ chọn — dùng khi muốn thử matching
- * với thông số khác mà không thay đổi dữ liệu trong DB.
+ * Request gửi lên để tìm building phù hợp với nhu cầu của khách.
  */
 public class CustomerMatchingRequest {
 
-    // ── Bắt buộc ─────────────────────────────────────────────────────────────
-    private Long customerId;
+    private Long customerId;          // (tuỳ chọn) nếu muốn lấy demand từ DB
 
-    // ── Tuỳ chọn: override demand từ DB (nếu null → dùng giá trị trong DB) ──
-    private Double overrideArea;
-    private Double overridePrice;
-    private String overrideWard;
-    private String overrideProvince;
-    private String overridePropertyType;
+    // ── Thông tin nhu cầu (override hoặc dùng trực tiếp) ────────────────────
+    private Double demandArea;        // Diện tích mong muốn (m²)
+    private Double demandPrice;       // Giá mong muốn (triệu/m² hoặc tỷ)
+    private String demandWard;        // Ward code hoặc name
+    private String demandProvince;    // Province code hoặc name
+    private String demandPropertyType;// Loại nhà: TANG_TRET, NGUYEN_CAN, …
 
-    // ── Cấu hình kết quả ─────────────────────────────────────────────────────
-    private double minScore = 0.0; // Chỉ trả về building có score ≥ minScore
-    private int    topN     = 10;  // Số kết quả tối đa (sắp xếp giảm dần)
+    private CustomerPriorityType priorityType; // Loại ưu tiên → chọn bộ trọng số
+
+    private double minScore = 0.0;    // Lọc kết quả: chỉ trả về building có score ≥ minScore
+    private int    topN     = 10;     // Trả về tối đa N kết quả (sắp xếp giảm dần theo score)
 
     // ── Getters & Setters ────────────────────────────────────────────────────
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
-    public Double getOverrideArea() { return overrideArea; }
-    public void setOverrideArea(Double overrideArea) { this.overrideArea = overrideArea; }
+    public Double getDemandArea() { return demandArea; }
+    public void setDemandArea(Double demandArea) { this.demandArea = demandArea; }
 
-    public Double getOverridePrice() { return overridePrice; }
-    public void setOverridePrice(Double overridePrice) { this.overridePrice = overridePrice; }
+    public Double getDemandPrice() { return demandPrice; }
+    public void setDemandPrice(Double demandPrice) { this.demandPrice = demandPrice; }
 
-    public String getOverrideWard() { return overrideWard; }
-    public void setOverrideWard(String overrideWard) { this.overrideWard = overrideWard; }
+    public String getDemandWard() { return demandWard; }
+    public void setDemandWard(String demandWard) { this.demandWard = demandWard; }
 
-    public String getOverrideProvince() { return overrideProvince; }
-    public void setOverrideProvince(String overrideProvince) { this.overrideProvince = overrideProvince; }
+    public String getDemandProvince() { return demandProvince; }
+    public void setDemandProvince(String demandProvince) { this.demandProvince = demandProvince; }
 
-    public String getOverridePropertyType() { return overridePropertyType; }
-    public void setOverridePropertyType(String overridePropertyType) { this.overridePropertyType = overridePropertyType; }
+    public String getDemandPropertyType() { return demandPropertyType; }
+    public void setDemandPropertyType(String demandPropertyType) { this.demandPropertyType = demandPropertyType; }
+
+    public CustomerPriorityType getPriorityType() { return priorityType; }
+    public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }
 
     public double getMinScore() { return minScore; }
     public void setMinScore(double minScore) { this.minScore = minScore; }
