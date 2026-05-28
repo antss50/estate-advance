@@ -1,6 +1,7 @@
 package com.javaweb.service.impl;
 
 import com.javaweb.entity.CustomerEntity;
+import com.javaweb.entity.DemandEntity;
 import com.javaweb.model.request.CustomerLoginRequest;
 import com.javaweb.model.request.CustomerRegisterRequest;
 import com.javaweb.model.response.CustomerLoginResponse;
@@ -25,19 +26,19 @@ public class CustomerAuthServiceImpl implements CustomerAuthService {
 
     @Override
     public CustomerRegisterResponse register(CustomerRegisterRequest request) {
-        // Kiểm tra username đã tồn tại
-        if (customerRepository.existsByUsername(request.getUsername())) {
-            return new CustomerRegisterResponse(null, null, null, null, null, "Tên đăng nhập đã tồn tại", false);
-        }
 
-        // Kiểm tra email đã tồn tại (nếu có email)
+        if (customerRepository.existsByUsername(request.getUsername())) {
+            return new CustomerRegisterResponse(null, null, null, null, null,
+                    "Tên đăng nhập đã tồn tại", false);
+        }
         if (request.getEmail() != null && !request.getEmail().isEmpty()) {
             if (customerRepository.existsByEmail(request.getEmail())) {
-                return new CustomerRegisterResponse(null, null, null, null, null, "Email đã được sử dụng", false);
+                return new CustomerRegisterResponse(null, null, null, null, null,
+                        "Email đã được sử dụng", false);
             }
         }
 
-        // Tạo customer mới
+        // Tạo CustomerEntity
         CustomerEntity customer = new CustomerEntity();
         customer.setUsername(request.getUsername());
         customer.setPassword(passwordEncoderUtil.encode(request.getPassword()));
@@ -45,9 +46,15 @@ public class CustomerAuthServiceImpl implements CustomerAuthService {
         customer.setPhone(request.getPhone());
         customer.setEmail(request.getEmail());
         customer.setCompanyName(request.getCompanyName());
-        customer.setDemand(request.getDemand());
         customer.setIsActive(1);
         customer.setCreatedDate(new Date());
+
+        // ── Gắn Demand nếu request có gửi ────────────────────────────────────
+        // Demand là @Entity riêng, cần setCustomer() để thiết lập quan hệ
+        if (request.getDemand() != null) {
+            DemandEntity demand = request.getDemand();
+            customer.addDemand(demand); // addDemand() tự gọi demand.setCustomer(this)
+        }
 
         CustomerEntity saved = customerRepository.save(customer);
 
@@ -64,31 +71,29 @@ public class CustomerAuthServiceImpl implements CustomerAuthService {
 
     @Override
     public CustomerLoginResponse login(CustomerLoginRequest request) {
-        // Tìm customer theo username
+
         Optional<CustomerEntity> customerOpt = customerRepository.findByUsername(request.getUsername());
 
-        // SỬA: dùng !customerOpt.isPresent() thay vì customerOpt.isEmpty()
         if (!customerOpt.isPresent()) {
-            return new CustomerLoginResponse(null, null, null, null, null, null, "Tên đăng nhập không tồn tại", false);
+            return new CustomerLoginResponse(null, null, null, null, null, null,
+                    "Tên đăng nhập không tồn tại", false);
         }
 
         CustomerEntity customer = customerOpt.get();
 
-        // Kiểm tra tài khoản có bị khóa không
         if (customer.getIsActive() == null || customer.getIsActive() != 1) {
-            return new CustomerLoginResponse(null, null, null, null, null, null, "Tài khoản đã bị khóa", false);
+            return new CustomerLoginResponse(null, null, null, null, null, null,
+                    "Tài khoản đã bị khóa", false);
         }
 
-        // Kiểm tra mật khẩu
         if (!passwordEncoderUtil.matches(request.getPassword(), customer.getPassword())) {
-            return new CustomerLoginResponse(null, null, null, null, null, null, "Mật khẩu không chính xác", false);
+            return new CustomerLoginResponse(null, null, null, null, null, null,
+                    "Mật khẩu không chính xác", false);
         }
 
-        // Cập nhật thời gian đăng nhập cuối
         customer.setLastLogin(new Date());
         customerRepository.save(customer);
 
-        // Tạo token (tạm thời dùng Base64, có thể thay bằng JWT sau)
         String token = generateToken(customer);
 
         return new CustomerLoginResponse(
@@ -104,7 +109,6 @@ public class CustomerAuthServiceImpl implements CustomerAuthService {
     }
 
     private String generateToken(CustomerEntity customer) {
-        // Tạo token đơn giản (username + timestamp) base64
         String rawToken = customer.getUsername() + ":" + System.currentTimeMillis();
         return java.util.Base64.getEncoder().encodeToString(rawToken.getBytes());
     }

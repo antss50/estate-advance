@@ -1,6 +1,7 @@
 package com.javaweb.model.request;
 
 import com.javaweb.enums.CustomerPriorityType;
+import com.javaweb.enums.PropertyType;
 
 /**
  * Request gửi lên để tìm building phù hợp với nhu cầu của khách.
@@ -14,7 +15,7 @@ public class CustomerMatchingRequest {
     private Double demandPrice;       // Giá mong muốn (triệu/m² hoặc tỷ)
     private String demandWard;        // Ward code hoặc name
     private String demandProvince;    // Province code hoặc name
-    private String demandPropertyType;// Loại nhà: TANG_TRET, NGUYEN_CAN, …
+    private PropertyType demandPropertyType;  // ĐÃ SỬA: từ String thành Enum
 
     private CustomerPriorityType priorityType; // Loại ưu tiên → chọn bộ trọng số
 
@@ -38,8 +39,8 @@ public class CustomerMatchingRequest {
     public String getDemandProvince() { return demandProvince; }
     public void setDemandProvince(String demandProvince) { this.demandProvince = demandProvince; }
 
-    public String getDemandPropertyType() { return demandPropertyType; }
-    public void setDemandPropertyType(String demandPropertyType) { this.demandPropertyType = demandPropertyType; }
+    public PropertyType getDemandPropertyType() { return demandPropertyType; }
+    public void setDemandPropertyType(PropertyType demandPropertyType) { this.demandPropertyType = demandPropertyType; }
 
     public CustomerPriorityType getPriorityType() { return priorityType; }
     public void setPriorityType(CustomerPriorityType priorityType) { this.priorityType = priorityType; }

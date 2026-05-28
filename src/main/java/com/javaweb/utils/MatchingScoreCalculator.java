@@ -1,5 +1,7 @@
 package com.javaweb.utils;
 
+import com.javaweb.utils.MatchingWeight;
+
 /**
  * Engine tính điểm matching theo công thức:
  *
@@ -92,18 +94,29 @@ public class MatchingScoreCalculator {
     /**
      * Tính ST cho Type (propertyType).
      *
-     * Building.propertyType là CSV: "TANG_TRET,NGUYEN_CAN"
-     * Demand.propertyType là một giá trị: "TANG_TRET"
+     * So sánh dùng PropertyType enum — hỗ trợ cả 3 dạng input:
+     *   1. Enum name  : "OFFICE", "APARTMENT"
+     *   2. Enum value : "Văn phòng", "Căn hộ"
+     *   3. CSV        : "OFFICE,RETAIL" (building hỗ trợ nhiều loại)
      *
-     * Nếu building hỗ trợ type của demand → 1.0, ngược lại → 0.0
+     * Nếu demand không yêu cầu → 1.0
+     * Nếu building hỗ trợ type của demand → 1.0
+     * Ngược lại → 0.0
      */
     public static double scoreType(String buildingPropertyType, String demandPropertyType) {
-        if (isBlank(demandPropertyType)) return SCORE_SAME_TYPE; // không yêu cầu → khớp
+        if (isBlank(demandPropertyType)) return SCORE_SAME_TYPE;
         if (isBlank(buildingPropertyType)) return SCORE_DIFF_TYPE;
 
+        // Chuẩn hóa demandPropertyType về enum name
+        com.javaweb.enums.PropertyType demandEnum =
+                com.javaweb.enums.PropertyType.fromValue(demandPropertyType.trim());
+
+        // Building có thể lưu dạng CSV: "OFFICE,RETAIL"
         String[] types = buildingPropertyType.split(",");
         for (String t : types) {
-            if (t.trim().equalsIgnoreCase(demandPropertyType.trim())) {
+            com.javaweb.enums.PropertyType buildingEnum =
+                    com.javaweb.enums.PropertyType.fromValue(t.trim());
+            if (buildingEnum == demandEnum) {
                 return SCORE_SAME_TYPE;
             }
         }

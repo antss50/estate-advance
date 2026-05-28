@@ -12,7 +12,6 @@ public class StaffMatchingResult {
     private String workingArea;
 
     // ── Chi tiết điểm từng thành phần ────────────────────────────────────────
-    private double scoreCustomer;
     private double scoreArea;       // S_Area: khu vực staff vs ward khách    // Điểm nhu cầu khách (đầu vào)
     private double scorePerformance; // S_Performance
     private double scoreWorkload;    // S_Workload
@@ -40,9 +39,6 @@ public class StaffMatchingResult {
 
     public String getWorkingArea() { return workingArea; }
     public void setWorkingArea(String workingArea) { this.workingArea = workingArea; }
-
-    public double getScoreCustomer() { return scoreCustomer; }
-    public void setScoreCustomer(double scoreCustomer) { this.scoreCustomer = scoreCustomer; }
 
     public double getScoreArea() { return scoreArea; }
     public void setScoreArea(double scoreArea) { this.scoreArea = scoreArea; }

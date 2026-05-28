@@ -7,7 +7,7 @@ import com.javaweb.model.response.StaffMatchingResult;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.StaffMatchingService;
 import com.javaweb.service.WardLocationScorer;
-import com.javaweb.util.StaffMatchingScoreCalculator;
+import com.javaweb.utils.StaffMatchingScoreCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +28,6 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
 
     @Override
     public StaffMatchingResponse findMatchingStaff(StaffMatchingRequest request) {
-
         List<UserEntity> activeStaffs = userRepository.findByStatus(1);
 
         List<StaffMatchingResult> results = activeStaffs.stream()
@@ -39,21 +38,15 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
 
         StaffMatchingResponse response = new StaffMatchingResponse();
         response.setCustomerId(request.getCustomerId());
-        response.setScoreCustomer(request.getScoreCustomer());
         response.setTotalFound(results.size());
         response.setResults(results);
         return response;
     }
 
     private StaffMatchingResult calculateResult(UserEntity staff, StaffMatchingRequest request) {
-
         int daysWorked = calcDaysWorked(staff);
         boolean isNewbie = daysWorked < request.getProbationDays();
 
-        // ── S_Area: workingArea của staff vs ward yêu cầu của khách ──────────
-        // Staff chuyên phường/xã nào thì ưu tiên match khách ở khu vực đó.
-        // workingArea là wardCode (hoặc nhiều wardCode cách nhau dấu phẩy).
-        // Lấy score cao nhất trong tất cả ward của staff (CSV).
         double sArea = scoreBestWorkingArea(staff.getWorkingArea(), request.getDemandWardCode());
 
         double sPerformance = StaffMatchingScoreCalculator.scorePerformance(
@@ -61,23 +54,15 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
                 staff.getTotalDeals(),
                 request.getPTarget());
 
-        int currentLoad = staff.getAssignmentBuildings() != null
-                ? staff.getAssignmentBuildings().size() : 0;
-
-        double sWorkload = StaffMatchingScoreCalculator.scoreWorkload(
-                currentLoad, request.getLMax());
+        int currentLoad = (staff.getAssignmentBuildings() != null) ? staff.getAssignmentBuildings().size() : 0;
+        double sWorkload = StaffMatchingScoreCalculator.scoreWorkload(currentLoad, request.getLMax());
 
         double bonus = isNewbie
                 ? StaffMatchingScoreCalculator.newbieBonus(daysWorked, request.getProbationDays())
                 : 0.0;
 
-        // Score_CS tích hợp S_Area vào W_Customer (điều chỉnh theo địa bàn)
-        // Score_CS = (scoreCustomer × sArea × 0.4) + (sPerf × 0.25) + (sWork × 0.35) + bonus
-        double totalCS = StaffMatchingScoreCalculator.totalScoreCS(
-                request.getScoreCustomer() * sArea,   // điều chỉnh theo địa bàn
-                sPerformance,
-                sWorkload,
-                bonus);
+        // Đúng công thức: Score_CS = (sArea × 0.35) + (sPerf × 0.4) + (sWork × 0.25) + bonus
+        double totalCS = StaffMatchingScoreCalculator.totalScoreCS(sArea, sPerformance, sWorkload, bonus);
 
         StaffMatchingResult result = new StaffMatchingResult();
         result.setStaffId(staff.getId());
@@ -85,7 +70,6 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
         result.setEmail(staff.getEmail());
         result.setPhone(staff.getPhone());
         result.setWorkingArea(staff.getWorkingArea());
-        result.setScoreCustomer(StaffMatchingScoreCalculator.round(request.getScoreCustomer()));
         result.setScoreArea(StaffMatchingScoreCalculator.round(sArea));
         result.setScorePerformance(StaffMatchingScoreCalculator.round(sPerformance));
         result.setScoreWorkload(StaffMatchingScoreCalculator.round(sWorkload));
@@ -98,9 +82,8 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
     }
 
     /**
-     * workingArea có thể là nhiều wardCode cách nhau dấu phẩy: "30001,30002,30003"
+     * workingArea có thể là nhiều wardCode cách nhau dấu phẩy: "001,002,003"
      * Lấy score cao nhất trong tất cả ward của staff so với ward khách.
-     * → Staff phủ nhiều phường có lợi thế hơn staff chỉ có 1 phường.
      */
     private double scoreBestWorkingArea(String workingArea, String demandWardCode) {
         if (workingArea == null || workingArea.trim().isEmpty()) return 0.2;
@@ -110,7 +93,7 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
         for (String staffWard : workingArea.split(",")) {
             double score = wardLocationScorer.score(staffWard.trim(), demandWardCode);
             if (score > best) best = score;
-            if (best == 1.0) break; // không thể cao hơn
+            if (best == 1.0) break;
         }
         return best;
     }

@@ -1,6 +1,5 @@
 package com.javaweb.entity;
 
-import com.javaweb.enums.CustomerPriorityType;
 import javax.persistence.*;
 
 @Entity
@@ -24,13 +23,15 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "email")
     private String email;
 
-    @Embedded
-    private Demand demand;
+    // 🔁 SỬA: @ManyToOne thay vì @Embedded
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "demand_id")
+    private DemandEntity demand;
 
     @Column(name = "status")
     private String status;
 
-    // Getters and Setters
+    // Getters & Setters (giữ nguyên hoặc cập nhật theo field mới)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -46,8 +47,8 @@ public class CustomerRequestEntity extends BaseEntity {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public Demand getDemand() { return demand; }
-    public void setDemand(Demand demand) { this.demand = demand; }
+    public DemandEntity getDemand() { return demand; }
+    public void setDemand(DemandEntity demand) { this.demand = demand; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

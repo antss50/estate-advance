@@ -4,7 +4,6 @@ public class StaffMatchingRequest {
 
     // ── Bắt buộc ─────────────────────────────────────────────────────────────
     private Long   customerId;
-    private double scoreCustomer;
 
     // ── Cấu hình (tuỳ chọn, có default) ─────────────────────────────────────
     private double pTarget       = 200_000_000.0;
@@ -19,9 +18,6 @@ public class StaffMatchingRequest {
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
-
-    public double getScoreCustomer() { return scoreCustomer; }
-    public void setScoreCustomer(double scoreCustomer) { this.scoreCustomer = scoreCustomer; }
 
     public double getPTarget() { return pTarget; }
     public void setPTarget(double pTarget) { this.pTarget = pTarget; }

@@ -3,7 +3,9 @@ package com.javaweb.entity;
 import com.javaweb.enums.CustomerStatus;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "customer")
@@ -31,12 +33,9 @@ public class CustomerEntity extends BaseEntity {
     @Column(name = "companyname")
     private String companyName;
 
-    // ── THAY THẾ: String demand → @Embedded Demand ────────────────────────────
-    // Các cột của Demand sẽ nằm thẳng trong bảng customer:
-    //   demand_area, demand_price, demand_ward, demand_province,
-    //   demand_property_type, demand_priority_type, ...
-    @Embedded
-    private Demand demand;
+    // ── THAY THẾ: Một customer có nhiều demand ────────────────────────────────
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<DemandEntity> demands = new ArrayList<>();
     // ─────────────────────────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
@@ -50,7 +49,7 @@ public class CustomerEntity extends BaseEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastLogin;
 
-    // ── Getters & Setters ────────────────────────────────────────────────────
+    // ── Getters & Setters (giữ nguyên, thay demand -> demands) ──────────────
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -73,8 +72,8 @@ public class CustomerEntity extends BaseEntity {
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }
 
-    public Demand getDemand() { return demand; }
-    public void setDemand(Demand demand) { this.demand = demand; }
+    public List<DemandEntity> getDemands() { return demands; }
+    public void setDemands(List<DemandEntity> demands) { this.demands = demands; }
 
     public CustomerStatus getStatus() { return status; }
     public void setStatus(CustomerStatus status) { this.status = status; }
@@ -84,4 +83,20 @@ public class CustomerEntity extends BaseEntity {
 
     public Date getLastLogin() { return lastLogin; }
     public void setLastLogin(Date lastLogin) { this.lastLogin = lastLogin; }
+
+    // ── Tiện ích: thêm demand, lấy demand mặc định, ... ──────────────────────
+    public void addDemand(DemandEntity demand) {
+        demands.add(demand);
+        demand.setCustomer(this);
+    }
+
+    public void removeDemand(DemandEntity demand) {
+        demands.remove(demand);
+        demand.setCustomer(null);
+    }
+
+    // Nếu muốn giữ khái niệm "nhu cầu hiện tại" (ví dụ lấy cái đầu tiên)
+    public DemandEntity getCurrentDemand() {
+        return demands.isEmpty() ? null : demands.get(0);
+    }
 }

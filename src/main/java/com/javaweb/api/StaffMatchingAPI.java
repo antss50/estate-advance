@@ -13,18 +13,6 @@ public class StaffMatchingAPI {
 
     @Autowired
     private StaffMatchingService staffMatchingService;
-
-    /**
-     * Tìm staff phù hợp nhất cho một khách hàng.
-     *
-     * Ví dụ request:
-     * POST /api/staff-matching/find-staff
-     * {
-     *   "customerId": 42,
-     *   "scoreCustomer": 0.82,   ← lấy từ kết quả CustomerMatchingAPI
-     *   "topN": 3
-     * }
-     */
     @PostMapping("/find-staff")
     public ResponseEntity<StaffMatchingResponse> findMatchingStaff(
             @RequestBody StaffMatchingRequest request) {

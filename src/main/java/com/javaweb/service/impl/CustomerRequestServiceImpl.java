@@ -2,7 +2,8 @@ package com.javaweb.service.impl;
 
 import com.javaweb.entity.CustomerEntity;
 import com.javaweb.entity.CustomerRequestEntity;
-import com.javaweb.entity.Demand;
+import com.javaweb.entity.DemandEntity;
+import com.javaweb.enums.PropertyType;
 import com.javaweb.model.dto.DemandDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
 import com.javaweb.model.response.CustomerRequestResponseDTO;
@@ -73,18 +74,19 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         entity.setEmail(customer.getEmail());
 
         // Map DemandDTO -> Demand
-        Demand demand = new Demand();
+        DemandEntity demand = new DemandEntity();
         demand.setArea(demandDTO.getArea());
         demand.setPrice(demandDTO.getPrice());
         demand.setWard(demandDTO.getWard());
         demand.setProvince(demandDTO.getProvince());
         // ĐÃ XÓA: demand.setBuildingType(demandDTO.getBuildingType());
-        demand.setTransactionType(demandDTO.getTransactionType());
-        demand.setPropertyType(demandDTO.getPropertyType());
-        demand.setPriorityType(demandDTO.getPriorityType());
+        demand.setTransactionType(demandDTO.getTransactionType());  // Giả sử transactionType là String
+        // Chuyển đổi propertyType từ String -> Enum
+        demand.setPropertyType(PropertyType.valueOf(demandDTO.getPropertyType()));
+        demand.setPriorityType(demandDTO.getPriorityType());       // priorityType đã là Enum
         demand.setNumberOfBasement(demandDTO.getNumberOfBasement());
-        demand.setDirection(demandDTO.getDirection());
-        demand.setLegalStatus(demandDTO.getLegalStatus());
+        demand.setDirection(demandDTO.getDirection());             // Giả sử direction là String
+        demand.setLegalStatus(demandDTO.getLegalStatus());         // Giả sử legalStatus là String
         demand.setBrokerageFee(demandDTO.getBrokerageFee());
         entity.setDemand(demand);
 
@@ -124,12 +126,13 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
                 demandDTO.setWard(item.getDemand().getWard());
                 demandDTO.setProvince(item.getDemand().getProvince());
                 // ĐÃ XÓA: demandDTO.setBuildingType(item.getDemand().getBuildingType());
-                demandDTO.setTransactionType(item.getDemand().getTransactionType());
-                demandDTO.setPropertyType(item.getDemand().getPropertyType());
-                demandDTO.setPriorityType(item.getDemand().getPriorityType());
+                demandDTO.setTransactionType(item.getDemand().getTransactionType());  // String
+                // Chuyển đổi propertyType từ Enum -> String
+                demandDTO.setPropertyType(item.getDemand().getPropertyType().name());
+                demandDTO.setPriorityType(item.getDemand().getPriorityType());        // Enum
                 demandDTO.setNumberOfBasement(item.getDemand().getNumberOfBasement());
-                demandDTO.setDirection(item.getDemand().getDirection());
-                demandDTO.setLegalStatus(item.getDemand().getLegalStatus());
+                demandDTO.setDirection(item.getDemand().getDirection());              // String
+                demandDTO.setLegalStatus(item.getDemand().getLegalStatus());          // String
                 demandDTO.setBrokerageFee(item.getDemand().getBrokerageFee());
                 dto.setDemand(demandDTO);
             }
@@ -173,12 +176,13 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
                 demandDTO.setPrice(entity.getDemand().getPrice());
                 demandDTO.setWard(entity.getDemand().getWard());
                 demandDTO.setProvince(entity.getDemand().getProvince());
-                demandDTO.setTransactionType(entity.getDemand().getTransactionType());
-                demandDTO.setPropertyType(entity.getDemand().getPropertyType());
-                demandDTO.setPriorityType(entity.getDemand().getPriorityType());
+                demandDTO.setTransactionType(entity.getDemand().getTransactionType());     // String
+                // Chuyển đổi propertyType từ Enum -> String
+                demandDTO.setPropertyType(entity.getDemand().getPropertyType().name());
+                demandDTO.setPriorityType(entity.getDemand().getPriorityType());           // Enum
                 demandDTO.setNumberOfBasement(entity.getDemand().getNumberOfBasement());
-                demandDTO.setDirection(entity.getDemand().getDirection());
-                demandDTO.setLegalStatus(entity.getDemand().getLegalStatus());
+                demandDTO.setDirection(entity.getDemand().getDirection());                 // String
+                demandDTO.setLegalStatus(entity.getDemand().getLegalStatus());             // String
                 demandDTO.setBrokerageFee(entity.getDemand().getBrokerageFee());
                 dto.setDemand(demandDTO);
             }
