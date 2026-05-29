@@ -1,52 +1,31 @@
 package com.javaweb.utils;
 
 /**
- * Matching Building ↔ Staff — công thức tính điểm thuần túy.
+ * Matching Building ↔ Staff — công thức tính điểm cho staff (không gồm Score_Building).
  *
- * Tái sử dụng cấu trúc Customer ↔ Staff:
- *   Score_BS = (Score_Building × 0.4) + (S_Performance × 0.25) + (S_Workload × 0.35)
- *            + NewbieBonus
+ * Công thức đúng:
+ *   TotalScore_BS = (Score_Area × 0.35) + (Score_Performance × 0.4) + (Score_Workload × 0.25) + NewbieBonus
  *
- * S_Area (workingArea staff vs wardCode building) được tính bởi WardLocationScorer
- * và truyền vào qua tham số sArea — dùng để nhân vào trọng số W_BUILDING thay thế
- * (building khó + staff đúng khu vực → ưu tiên cao hơn).
- *
- * Công thức thực tế:
- *   Score_BS = (Score_Building × S_Area × 0.4) + (S_Performance × 0.25) + (S_Workload × 0.35)
- *
- * Ý nghĩa: Building khó (score cao) nhưng staff không đúng khu vực (S_Area thấp)
- * → điểm Building bị giảm xuống → ưu tiên staff đúng địa bàn hơn.
+ * Score_Area: do WardLocationScorer cung cấp (1.0 cùng phường, 0.6 lân cận, 0.2 khác)
  */
 public class BuildingStaffScoreCalculator {
 
-    public static final double W_BUILDING    = 0.40;
-    public static final double W_PERFORMANCE = 0.25;
-    public static final double W_WORKLOAD    = 0.35;
+    // Trọng số theo yêu cầu
+    public static final double W_AREA        = 0.35;
+    public static final double W_PERFORMANCE = 0.40;
+    public static final double W_WORKLOAD    = 0.25;
 
     /**
-     * Tổng điểm matching Building ↔ Staff.
+     * Tính tổng điểm staff phù hợp với building (không dùng Score_Building).
      *
-     * @param scoreBuilding  Độ khó của building (từ BuildingScoreCalculator)
-     * @param sArea          Điểm khu vực staff vs building (từ WardLocationScorer)
-     *                       → nhân trực tiếp vào scoreBuilding để giảm điểm khi sai địa bàn
-     * @param sPerformance   Hiệu suất chốt sale của staff
-     * @param sWorkload      Khối lượng công việc hiện tại của staff
-     * @param bonus          Newbie bonus (0 nếu không áp dụng)
+     * @param sArea        điểm địa bàn (từ WardLocationScorer)
+     * @param sPerformance điểm hiệu suất staff
+     * @param sWorkload    điểm tải công việc
+     * @param bonus        newbie bonus
      * @return Score_BS
      */
-    public static double totalScoreBS(
-            double scoreBuilding,
-            double sArea,
-            double sPerformance,
-            double sWorkload,
-            double bonus) {
-
-        // S_Area điều chỉnh trọng số building theo địa bàn
-        // VD: building score=0.8, staff sai địa bàn sArea=0.2 → 0.8×0.2=0.16 thay vì 0.8
-        double base = (scoreBuilding * sArea * W_BUILDING)
-                + (sPerformance  * W_PERFORMANCE)
-                + (sWorkload     * W_WORKLOAD);
-
+    public static double totalScoreBS(double sArea, double sPerformance, double sWorkload, double bonus) {
+        double base = (sArea * W_AREA) + (sPerformance * W_PERFORMANCE) + (sWorkload * W_WORKLOAD);
         return base + bonus;
     }
 
