@@ -23,15 +23,15 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "email")
     private String email;
 
-    // 🔁 SỬA: @ManyToOne thay vì @Embedded
-    @ManyToOne(fetch = FetchType.LAZY)
+    // 🔁 THÊM cascade = CascadeType.PERSIST để tự lưu Demand khi lưu CustomerRequest
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "demand_id")
     private DemandEntity demand;
 
     @Column(name = "status")
     private String status;
 
-    // Getters & Setters (giữ nguyên hoặc cập nhật theo field mới)
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

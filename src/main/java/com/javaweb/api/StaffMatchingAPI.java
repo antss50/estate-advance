@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/staff-matching")
+@RequestMapping("/api/staff-customer-matching")
 public class StaffMatchingAPI {
 
     @Autowired
