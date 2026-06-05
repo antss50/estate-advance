@@ -11,10 +11,18 @@ public class WardAdjacencyEntity {
     @EmbeddedId
     private WardAdjacencyId id;
 
+    @Column(name = "ward_name_a", length = 255)
+    private String wardNameA;
+
+    @Column(name = "ward_name_b", length = 255)
+    private String wardNameB;
+
     public WardAdjacencyEntity() {}
 
-    public WardAdjacencyEntity(String wardCodeA, String wardCodeB) {
+    public WardAdjacencyEntity(String wardCodeA, String wardCodeB, String wardNameA, String wardNameB) {
         this.id = new WardAdjacencyId(wardCodeA, wardCodeB);
+        this.wardNameA = wardNameA;
+        this.wardNameB = wardNameB;
     }
 
     public WardAdjacencyId getId() { return id; }
@@ -22,6 +30,12 @@ public class WardAdjacencyEntity {
 
     public String getWardCodeA() { return id.getWardCodeA(); }
     public String getWardCodeB() { return id.getWardCodeB(); }
+
+    public String getWardNameA() { return wardNameA; }
+    public void setWardNameA(String wardNameA) { this.wardNameA = wardNameA; }
+
+    public String getWardNameB() { return wardNameB; }
+    public void setWardNameB(String wardNameB) { this.wardNameB = wardNameB; }
 
     // ── Composite PK ────────────────────────────────────────────────────────
 

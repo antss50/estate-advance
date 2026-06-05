@@ -125,7 +125,7 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
 
         Double buildingPrice = resolvePrice(building);
 
-        double sLocation = wardLocationScorer.score(building.getWardCode(), demand.ward);
+        double sLocation = wardLocationScorer.score(building.getWardName(), demand.ward);
         double sPrice    = MatchingScoreCalculator.scorePrince(buildingPrice, demand.price);
         double sArea     = MatchingScoreCalculator.scoreArea(building.getFloorArea(), demand.area);
         double sType     = MatchingScoreCalculator.scoreType(building.getPropertyType(), demand.propertyType.getValue());

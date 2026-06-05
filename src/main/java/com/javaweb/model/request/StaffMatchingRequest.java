@@ -12,7 +12,7 @@ public class  StaffMatchingRequest {
     private int    topN          = 5;
 
     // Ward code của khách → dùng để tính S_Area cho staff
-    private String demandWardCode;
+    private String demandWardName;
 
     // ── Getters & Setters ────────────────────────────────────────────────────
 
@@ -31,6 +31,11 @@ public class  StaffMatchingRequest {
     public int getTopN() { return topN; }
     public void setTopN(int topN) { this.topN = topN; }
 
-    public String getDemandWardCode() { return demandWardCode; }
-    public void setDemandWardCode(String demandWardCode) { this.demandWardCode = demandWardCode; }
+    public String getDemandWardName() {
+        return demandWardName;
+    }
+
+    public void setDemandWardName(String demandWardName) {
+        this.demandWardName = demandWardName;
+    }
 }

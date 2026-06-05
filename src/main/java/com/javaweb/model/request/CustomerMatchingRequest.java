@@ -13,8 +13,8 @@ public class CustomerMatchingRequest {
     // ── Thông tin nhu cầu (override hoặc dùng trực tiếp) ────────────────────
     private Double demandArea;        // Diện tích mong muốn (m²)
     private Double demandPrice;       // Giá mong muốn (triệu/m² hoặc tỷ)
-    private String demandWard;        // Ward code hoặc name
-    private String demandProvince;    // Province code hoặc name
+    private String demandWard;        // Ward_name
+    private String demandProvince;    // Province_name
     private PropertyType demandPropertyType;  // ĐÃ SỬA: từ String thành Enum
 
     private CustomerPriorityType priorityType; // Loại ưu tiên → chọn bộ trọng số

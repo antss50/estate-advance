@@ -47,7 +47,7 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
         int daysWorked = calcDaysWorked(staff);
         boolean isNewbie = daysWorked < request.getProbationDays();
 
-        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), request.getDemandWardCode());
+        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), request.getDemandWardName());
 
         double sPerformance = StaffMatchingScoreCalculator.scorePerformance(
                 staff.getRevenue(),
@@ -85,13 +85,13 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
      * workingArea có thể là nhiều wardCode cách nhau dấu phẩy: "001,002,003"
      * Lấy score cao nhất trong tất cả ward của staff so với ward khách.
      */
-    private double scoreBestWorkingArea(String workingArea, String demandWardCode) {
+    private double scoreBestWorkingArea(String workingArea, String demandWardName) {
         if (workingArea == null || workingArea.trim().isEmpty()) return 0.2;
-        if (demandWardCode == null || demandWardCode.trim().isEmpty()) return 1.0;
+        if (demandWardName == null || demandWardName.trim().isEmpty()) return 1.0;
 
         double best = 0.2;
         for (String staffWard : workingArea.split(",")) {
-            double score = wardLocationScorer.score(staffWard.trim(), demandWardCode);
+            double score = wardLocationScorer.score(staffWard.trim(), demandWardName);
             if (score > best) best = score;
             if (best == 1.0) break;
         }

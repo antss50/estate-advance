@@ -40,7 +40,8 @@ public class MatchingScoreCalculator {
         if (buildingPrice == null) return 0.0;
 
         double tolerance = demandPrice * PRICE_TOLERANCE_PERCENT;
-        return Math.max(0.0, 1.0 - Math.abs(buildingPrice - demandPrice) / tolerance);
+        double result = Math.max(0.0, 1.0 - Math.abs(buildingPrice - demandPrice) / tolerance);
+        return result;
     }
 
     /**
@@ -54,7 +55,8 @@ public class MatchingScoreCalculator {
         if (demandArea == null || demandArea == 0) return 1.0;
         if (buildingArea == null) return 0.0;
 
-        return Math.max(0.0, 1.0 - Math.abs(buildingArea - demandArea) / AREA_TOLERANCE_M2);
+        double result = Math.max(0.0,1.0 - Math.abs(buildingArea - demandArea) / AREA_TOLERANCE_M2);
+        return result;
     }
 
     /**

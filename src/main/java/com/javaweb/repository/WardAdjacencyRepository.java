@@ -10,15 +10,17 @@ import org.springframework.stereotype.Repository;
 public interface WardAdjacencyRepository
         extends JpaRepository<WardAdjacencyEntity, WardAdjacencyEntity.WardAdjacencyId> {
 
-    /**
-     * Kiểm tra 2 xã/phường có lân cận nhau không.
-     * Vì lưu 2 chiều (A,B) và (B,A) nên chỉ cần 1 query.
-     *
-     * @return true nếu tồn tại bản ghi → 2 xã chạm nhau
-     */
+    // ── Query theo mã phường ──────────────────────────────────────────────────
     @Query("SELECT COUNT(w) > 0 FROM WardAdjacencyEntity w " +
             "WHERE w.id.wardCodeA = :a AND w.id.wardCodeB = :b")
     boolean existsByWardCodeAAndWardCodeB(
             @Param("a") String wardCodeA,
             @Param("b") String wardCodeB);
+
+    // ── Query theo tên phường (client gửi tên lên) ────────────────────────────
+    @Query("SELECT COUNT(w) > 0 FROM WardAdjacencyEntity w " +
+            "WHERE LOWER(w.wardNameA) = LOWER(:a) AND LOWER(w.wardNameB) = LOWER(:b)")
+    boolean existsByWardNameAAndWardNameB(
+            @Param("a") String wardNameA,
+            @Param("b") String wardNameB);
 }

@@ -5,14 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Tính điểm vị trí (S_Location) dựa trên bảng ward_adjacency trong DB.
+ * Tính điểm vị trí (S_Location) dựa trên tên phường/xã.
  *
  * Quy tắc:
- *   Cùng ward (wardCode khớp)             → 1.0
- *   Lân cận  (có bản ghi trong adjacency) → 0.6
- *   Khác xa  (không có bản ghi)           → 0.2
- *
- * Thay thế logic cũ "cùng province = lân cận" bằng dữ liệu geometry thực.
+ *   Cùng phường/xã      → 1.0
+ *   Lân cận (giáp ranh) → 0.6
+ *   Khác xa             → 0.2
  */
 @Service
 public class WardLocationScorer {
@@ -25,28 +23,29 @@ public class WardLocationScorer {
     private WardAdjacencyRepository wardAdjacencyRepository;
 
     /**
-     * @param buildingWardCode  wardCode của building
-     * @param demandWardCode    wardCode yêu cầu của khách
-     * @return S_Location trong {0.2, 0.6, 1.0}
+     * @param buildingWardName  wardName của building trong DB
+     * @param demandWardName    tên phường khách gửi lên (VD: "Phường Bến Nghé")
      */
-    public double score(String buildingWardCode, String demandWardCode) {
+    public double score(String buildingWardName, String demandWardName) {
+        if (isBlank(demandWardName)) return SCORE_SAME;
+        if (isBlank(buildingWardName)) return SCORE_FAR;
 
-        // Không có yêu cầu vị trí → khớp hoàn toàn
-        if (isBlank(demandWardCode)) return SCORE_SAME;
+        // Cùng phường
+        if (normalize(buildingWardName).equals(normalize(demandWardName))) {
+            return SCORE_SAME;
+        }
 
-        // Không có thông tin building → xa
-        if (isBlank(buildingWardCode)) return SCORE_FAR;
-
-        // Cùng phường/xã
-        if (buildingWardCode.equalsIgnoreCase(demandWardCode)) return SCORE_SAME;
-
-        // Lân cận: kiểm tra bảng ward_adjacency (đã lưu 2 chiều)
-        if (wardAdjacencyRepository.existsByWardCodeAAndWardCodeB(
-                buildingWardCode, demandWardCode)) {
+        // Lân cận: kiểm tra bảng ward_adjacency theo tên
+        if (wardAdjacencyRepository.existsByWardNameAAndWardNameB(
+                buildingWardName, demandWardName)) {
             return SCORE_ADJACENT;
         }
 
         return SCORE_FAR;
+    }
+
+    private String normalize(String s) {
+        return s.trim().toLowerCase();
     }
 
     private boolean isBlank(String s) {
