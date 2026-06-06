@@ -1,5 +1,6 @@
 package com.javaweb.entity;
 
+import com.javaweb.enums.CustomerStatus;
 import javax.persistence.*;
 
 @Entity
@@ -23,13 +24,13 @@ public class CustomerRequestEntity extends BaseEntity {
     @Column(name = "email")
     private String email;
 
-    // 🔁 THÊM cascade = CascadeType.PERSIST để tự lưu Demand khi lưu CustomerRequest
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "demand_id")
     private DemandEntity demand;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private CustomerStatus status = CustomerStatus.NEW;   // ← chuyển sang enum
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -50,6 +51,6 @@ public class CustomerRequestEntity extends BaseEntity {
     public DemandEntity getDemand() { return demand; }
     public void setDemand(DemandEntity demand) { this.demand = demand; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public CustomerStatus getStatus() { return status; }
+    public void setStatus(CustomerStatus status) { this.status = status; }
 }

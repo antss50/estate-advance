@@ -4,6 +4,7 @@ import com.javaweb.config.commission.CommissionCalculator;
 import com.javaweb.config.commission.CommissionResult;
 import com.javaweb.entity.BuildingEntity;
 import com.javaweb.entity.CustomerEntity;
+import com.javaweb.entity.CustomerRequestEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.BuildingStatus;
 import com.javaweb.enums.CustomerStatus;
@@ -13,6 +14,7 @@ import com.javaweb.model.request.CustomerStatusUpdateRequest;
 import com.javaweb.model.response.CustomerStatusUpdateResponse;
 import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.CustomerRepository;
+import com.javaweb.repository.CustomerRequestRepository;
 import com.javaweb.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,7 +38,7 @@ import java.math.BigDecimal;
 public class CustomerStatusService {
 
     @Autowired
-    private CustomerRepository customerRepository;
+    private CustomerRequestRepository customerRequestRepository;  // Dùng repository của customer_request
 
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +46,6 @@ public class CustomerStatusService {
     @Autowired
     private BuildingRepository buildingRepository;
 
-    // ── Danh sách trạng thái hợp lệ theo thứ tự ──────────────────────────────
     private static final CustomerStatus[] STATUS_FLOW = {
             CustomerStatus.NEW,
             CustomerStatus.ASSIGNED,
@@ -53,42 +54,38 @@ public class CustomerStatusService {
             CustomerStatus.PAID
     };
 
-    // ── Cập nhật trạng thái ───────────────────────────────────────────────────
-
     @Transactional
     public CustomerStatusUpdateResponse updateStatus(CustomerStatusUpdateRequest request) {
 
-        // 1. Load customer
-        CustomerEntity customer = customerRepository
-                .findById(request.getCustomerId())
+        // 1. Tìm bản ghi customer_request theo customerId + demandId
+        CustomerRequestEntity customerRequest = customerRequestRepository
+                .findByCustomerIdAndDemandId(request.getCustomerId(), request.getDemandId())
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy khách hàng id: " + request.getCustomerId()));
+                        String.format("Không tìm thấy yêu cầu của khách hàng %d với nhu cầu %d",
+                                request.getCustomerId(), request.getDemandId())));
 
-        CustomerStatus currentStatus = customer.getStatus();
-        CustomerStatus newStatus     = request.getNewStatus();
+        CustomerStatus currentStatus = customerRequest.getStatus();
+        CustomerStatus newStatus = request.getNewStatus();
 
-        // 2. Validate chuyển trạng thái hợp lệ
+        // 2. Kiểm tra tính hợp lệ của bước chuyển
         validateTransition(currentStatus, newStatus);
 
-        // 3. Xử lý đặc biệt SIGNED → PAID
+        // 3. Xử lý riêng cho SIGNED → PAID
         CommissionResult commissionResult = null;
-        BuildingStatus   newBuildingStatus = null;
+        BuildingStatus newBuildingStatus = null;
 
         if (currentStatus == CustomerStatus.SIGNED && newStatus == CustomerStatus.PAID) {
-            // 3a. Tính hoa hồng + cập nhật doanh thu Staff
             commissionResult = handleCommission(request);
-
-            // 3b. Tự động đổi trạng thái Building
             newBuildingStatus = handleBuildingStatus(request);
         }
 
-        // 4. Cập nhật trạng thái Customer
-        customer.setStatus(newStatus);
-        customerRepository.save(customer);
+        // 4. Cập nhật trạng thái trên customer_request
+        customerRequest.setStatus(newStatus);
+        customerRequestRepository.save(customerRequest);
 
-        // 5. Đóng gói response
+        // 5. Xây dựng response
         CustomerStatusUpdateResponse response = new CustomerStatusUpdateResponse();
-        response.setCustomerId(customer.getId());
+        response.setCustomerId(request.getCustomerId());
         response.setOldStatus(currentStatus.name());
         response.setNewStatus(newStatus.name());
         response.setSuccess(true);
@@ -107,28 +104,21 @@ public class CustomerStatusService {
         return response;
     }
 
-    // ── Xử lý hoa hồng ───────────────────────────────────────────────────────
-
+    // ───────────────────── Xử lý hoa hồng (giữ nguyên logic cũ) ───────────────
     private CommissionResult handleCommission(CustomerStatusUpdateRequest request) {
-        UserEntity staff = userRepository
-                .findById(request.getStaffId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy staff id: " + request.getStaffId()));
+        UserEntity staff = userRepository.findById(request.getStaffId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy staff id: " + request.getStaffId()));
 
         CommissionResult result;
         if (request.getTransactionType() == TransactionType.SALE) {
             result = CommissionCalculator.forSale(request.getContractValue());
         } else {
-            result = CommissionCalculator.forRent(
-                    request.getMonthlyRent(),
-                    request.getContractMonths());
+            result = CommissionCalculator.forRent(request.getMonthlyRent(), request.getContractMonths());
         }
 
-        // Cộng doanh thu cá nhân
         BigDecimal currentRevenue = staff.getRevenue() != null ? staff.getRevenue() : BigDecimal.ZERO;
         staff.setRevenue(currentRevenue.add(result.getStaffCommission()));
 
-        // Tăng số deal
         int currentDeals = staff.getTotalDeals() != null ? staff.getTotalDeals() : 0;
         staff.setTotalDeals(currentDeals + 1);
 
@@ -136,65 +126,46 @@ public class CustomerStatusService {
         return result;
     }
 
-    // ── Tự động đổi trạng thái Building ──────────────────────────────────────
-
-    /**
-     * RENT → Building chuyển sang RENTED
-     * SALE → Building chuyển sang SOLD
-     *
-     * Nếu buildingId null → bỏ qua (không bắt buộc)
-     * Nếu building đã RENTED/SOLD → ném lỗi (tránh giao dịch trùng)
-     */
+    // ───────────────────── Xử lý trạng thái Building (giữ nguyên logic cũ) ────
     private BuildingStatus handleBuildingStatus(CustomerStatusUpdateRequest request) {
         if (request.getBuildingId() == null) return null;
 
-        BuildingEntity building = buildingRepository
-                .findById(request.getBuildingId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy building id: " + request.getBuildingId()));
+        BuildingEntity building = buildingRepository.findById(request.getBuildingId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy building id: " + request.getBuildingId()));
 
-        // Kiểm tra building còn available không
         if (building.getBuildingStatus() != BuildingStatus.AVAILABLE) {
             throw new IllegalStateException(String.format(
-                    "Building id %d hiện đang ở trạng thái %s, không thể giao dịch.",
-                    building.getId(), building.getBuildingStatus()
-            ));
+                    "Building id %d đang ở trạng thái %s, không thể giao dịch.",
+                    building.getId(), building.getBuildingStatus()));
         }
 
-        // Đổi trạng thái theo loại giao dịch
         BuildingStatus newStatus = (request.getTransactionType() == TransactionType.SALE)
                 ? BuildingStatus.SOLD
                 : BuildingStatus.RENTED;
 
         building.setBuildingStatus(newStatus);
 
-        // Nếu là RENT → lưu ngày bắt đầu & kết thúc hợp đồng
         if (newStatus == BuildingStatus.RENTED && request.getContractMonths() != null) {
-            LocalDate startDate = LocalDate.now();
-            LocalDate endDate   = startDate.plusMonths(request.getContractMonths());
-            building.setRentStartDate(startDate);
-            building.setRentEndDate(endDate);
+            LocalDate start = LocalDate.now();
+            building.setRentStartDate(start);
+            building.setRentEndDate(start.plusMonths(request.getContractMonths()));
         }
 
         buildingRepository.save(building);
-
         return newStatus;
     }
 
-    // ── Validate chuyển trạng thái ────────────────────────────────────────────
-
+    // ───────────────────── Kiểm tra luồng trạng thái ─────────────────────────
     private void validateTransition(CustomerStatus from, CustomerStatus to) {
-        int fromIndex = indexOf(from);
-        int toIndex   = indexOf(to);
-
-        if (fromIndex < 0 || toIndex < 0) {
+        int fromIdx = indexOf(from);
+        int toIdx = indexOf(to);
+        if (fromIdx < 0 || toIdx < 0) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ");
         }
-        if (toIndex != fromIndex + 1) {
+        if (toIdx != fromIdx + 1) {
             throw new IllegalStateException(String.format(
                     "Không thể chuyển từ %s sang %s. Trạng thái tiếp theo phải là: %s",
-                    from, to, STATUS_FLOW[fromIndex + 1]
-            ));
+                    from, to, STATUS_FLOW[fromIdx + 1]));
         }
     }
 

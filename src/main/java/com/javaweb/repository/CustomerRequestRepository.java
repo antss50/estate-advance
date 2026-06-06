@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CustomerRequestRepository extends JpaRepository<CustomerRequestEntity, Long> {
@@ -21,4 +22,5 @@ public interface CustomerRequestRepository extends JpaRepository<CustomerRequest
 
     // Lấy customer request theo customerId
     List<CustomerRequestEntity> findByCustomerId(Long customerId);
+    Optional<CustomerRequestEntity> findByCustomerIdAndDemandId(Long customerId, Long demandId);
 }

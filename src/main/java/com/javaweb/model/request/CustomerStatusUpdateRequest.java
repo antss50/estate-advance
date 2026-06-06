@@ -6,24 +6,19 @@ import com.javaweb.enums.TransactionType;
 import java.math.BigDecimal;
 
 /**
- * Request cập nhật trạng thái khách hàng.
- *
- * Khi chuyển SIGNED → PAID, bắt buộc phải cung cấp:
- *   - staffId
- *   - buildingId       → hệ thống tự động đổi trạng thái building AVAILABLE → RENTED/SOLD
- *   - transactionType  (SALE hoặc RENT)
- *   - Nếu SALE: contractValue
- *   - Nếu RENT: monthlyRent + contractMonths
+ * Request cập nhật trạng thái của một yêu cầu khách hàng (customer_request).
+ * Bắt buộc phải có customerId + demandId để xác định đúng bản ghi.
  */
 public class CustomerStatusUpdateRequest {
 
     // ── Bắt buộc ─────────────────────────────────────────────────────────────
     private Long           customerId;
+    private Long           demandId;          // Thêm demandId
     private CustomerStatus newStatus;
 
     // ── Bắt buộc khi SIGNED → PAID ───────────────────────────────────────────
     private Long            staffId;
-    private Long            buildingId;    // Building liên quan → tự động đổi AVAILABLE → RENTED/SOLD
+    private Long            buildingId;
     private TransactionType transactionType;
 
     // Nếu SALE
@@ -34,9 +29,11 @@ public class CustomerStatusUpdateRequest {
     private Integer    contractMonths;
 
     // ── Getters & Setters ────────────────────────────────────────────────────
-
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getDemandId() { return demandId; }
+    public void setDemandId(Long demandId) { this.demandId = demandId; }
 
     public CustomerStatus getNewStatus() { return newStatus; }
     public void setNewStatus(CustomerStatus newStatus) { this.newStatus = newStatus; }
