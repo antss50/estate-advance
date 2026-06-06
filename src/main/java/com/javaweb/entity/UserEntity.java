@@ -62,6 +62,33 @@ public class UserEntity extends BaseEntity {
     @OneToMany(mappedBy = "staff", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<AssignmentBuildingEntity> assignmentBuildings = new ArrayList<>();
 
+    // ── THÊM VÀO UserEntity.java sau field "performance" ─────────────────────────
+
+    @Column(name = "total_sale_deals")
+    private Integer totalSaleDeals = 0;
+
+    @Column(name = "total_rent_deals")
+    private Integer totalRentDeals = 0;
+
+    @Column(name = "revenue_sale", precision = 15, scale = 2)
+    private BigDecimal revenueSale = BigDecimal.ZERO;
+
+    @Column(name = "revenue_rent", precision = 15, scale = 2)
+    private BigDecimal revenueRent = BigDecimal.ZERO;
+
+// ── THÊM GETTERS & SETTERS vào cuối class ────────────────────────────────────
+
+    public Integer getTotalSaleDeals() { return totalSaleDeals; }
+    public void setTotalSaleDeals(Integer totalSaleDeals) { this.totalSaleDeals = totalSaleDeals; }
+
+    public Integer getTotalRentDeals() { return totalRentDeals; }
+    public void setTotalRentDeals(Integer totalRentDeals) { this.totalRentDeals = totalRentDeals; }
+
+    public BigDecimal getRevenueSale() { return revenueSale; }
+    public void setRevenueSale(BigDecimal revenueSale) { this.revenueSale = revenueSale; }
+
+    public BigDecimal getRevenueRent() { return revenueRent; }
+    public void setRevenueRent(BigDecimal revenueRent) { this.revenueRent = revenueRent; }
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

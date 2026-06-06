@@ -11,7 +11,7 @@ public class  StaffMatchingRequest {
     private int    probationDays = 60;
     private int    topN          = 5;
 
-    // Ward code của khách → dùng để tính S_Area cho staff
+    // WardName của khách → dùng để tính S_Area cho staff
     private String demandWardName;
 
     // ── Getters & Setters ────────────────────────────────────────────────────
