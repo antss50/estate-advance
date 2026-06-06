@@ -4,14 +4,9 @@ import com.javaweb.repository.WardAdjacencyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * Tính điểm vị trí (S_Location) dựa trên tên phường/xã.
- *
- * Quy tắc:
- *   Cùng phường/xã      → 1.0
- *   Lân cận (giáp ranh) → 0.6
- *   Khác xa             → 0.2
- */
+import java.util.Arrays;
+import java.util.List;
+
 @Service
 public class WardLocationScorer {
 
@@ -19,33 +14,51 @@ public class WardLocationScorer {
     private static final double SCORE_ADJACENT = 0.6;
     private static final double SCORE_FAR      = 0.2;
 
+    // Các tiền tố cần loại bỏ (viết thường để so sánh)
+    private static final List<String> PREFIXES = Arrays.asList(
+            "phường", "xã", "thị trấn", "quận", "huyện", "thành phố", "thị xã", "tp."
+    );
+
     @Autowired
     private WardAdjacencyRepository wardAdjacencyRepository;
 
-    /**
-     * @param buildingWardName  wardName của building trong DB
-     * @param demandWardName    tên phường khách gửi lên (VD: "Phường Bến Nghé")
-     */
     public double score(String buildingWardName, String demandWardName) {
         if (isBlank(demandWardName)) return SCORE_SAME;
         if (isBlank(buildingWardName)) return SCORE_FAR;
 
-        // Cùng phường
-        if (normalize(buildingWardName).equals(normalize(demandWardName))) {
+        // Chuẩn hóa: loại bỏ tiền tố, trim, lowerCase
+        String buildingNorm = normalizeWardName(buildingWardName);
+        String demandNorm = normalizeWardName(demandWardName);
+
+        // Cùng phường (sau chuẩn hóa)
+        if (buildingNorm.equals(demandNorm)) {
             return SCORE_SAME;
         }
 
-        // Lân cận: kiểm tra bảng ward_adjacency theo tên
-        if (wardAdjacencyRepository.existsByWardNameAAndWardNameB(
-                buildingWardName, demandWardName)) {
+        // Lân cận: kiểm tra trong bảng ward_adjacency với tên đã chuẩn hóa
+        // (Giả sử dữ liệu trong bảng cũng đã được lưu dạng không tiền tố)
+        if (wardAdjacencyRepository.existsByWardNameAAndWardNameB(buildingNorm, demandNorm)) {
             return SCORE_ADJACENT;
         }
 
         return SCORE_FAR;
     }
 
-    private String normalize(String s) {
-        return s.trim().toLowerCase();
+    /**
+     * Loại bỏ tiền tố (Phường, Xã, ...) khỏi tên phường/xã.
+     * Ví dụ: "Phường Bến Nghé" → "bến nghé"
+     *        "Bến Nghé"        → "bến nghé"
+     */
+    private String normalizeWardName(String wardName) {
+        if (wardName == null) return "";
+        String normalized = wardName.trim().toLowerCase();
+        for (String prefix : PREFIXES) {
+            if (normalized.startsWith(prefix + " ")) {
+                normalized = normalized.substring(prefix.length() + 1);
+                break; // chỉ loại bỏ một tiền tố đầu tiên
+            }
+        }
+        return normalized.trim();
     }
 
     private boolean isBlank(String s) {
