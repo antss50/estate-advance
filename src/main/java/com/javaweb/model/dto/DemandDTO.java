@@ -3,11 +3,11 @@ package com.javaweb.model.dto;
 import com.javaweb.enums.CustomerPriorityType;
 
 public class DemandDTO {
+    private Long id;   // ← THÊM DÒNG NÀY
     private Double area;
     private Double price;
     private String ward;
     private String province;
-    // private String buildingType;  // ĐÃ XÓA
     private String transactionType;
     private String propertyType;
     private CustomerPriorityType priorityType;
@@ -17,6 +17,9 @@ public class DemandDTO {
     private Double brokerageFee;
 
     // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
     public Double getArea() { return area; }
     public void setArea(Double area) { this.area = area; }
 
@@ -28,8 +31,6 @@ public class DemandDTO {
 
     public String getProvince() { return province; }
     public void setProvince(String province) { this.province = province; }
-
-    // Xóa getter/setter buildingType
 
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }

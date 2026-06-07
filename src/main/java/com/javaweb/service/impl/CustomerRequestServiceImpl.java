@@ -157,13 +157,13 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
     private DemandDTO toDemandDTO(DemandEntity demand) {
         if (demand == null) return null;
         DemandDTO dto = new DemandDTO();
+        dto.setId(demand.getId()); // THÊM DÒNG NÀY
         dto.setArea(demand.getArea());
         dto.setPrice(demand.getPrice());
         dto.setWard(demand.getWard());
         dto.setProvince(demand.getProvince());
         dto.setTransactionType(demand.getTransactionType());
-        dto.setPropertyType(demand.getPropertyType() != null
-                ? demand.getPropertyType().name() : null);
+        dto.setPropertyType(demand.getPropertyType() != null ? demand.getPropertyType().name() : null);
         dto.setPriorityType(demand.getPriorityType());
         dto.setNumberOfBasement(demand.getNumberOfBasement());
         dto.setDirection(demand.getDirection());
