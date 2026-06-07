@@ -5,20 +5,20 @@ import com.javaweb.enums.TransactionType;
 
 import java.math.BigDecimal;
 
-/**
- * Request cập nhật trạng thái của một yêu cầu khách hàng (customer_request).
- * Bắt buộc phải có customerId + demandId để xác định đúng bản ghi.
- */
 public class CustomerStatusUpdateRequest {
 
-    // ── Bắt buộc ─────────────────────────────────────────────────────────────
-    private Long           customerId;
-    private Long           demandId;          // Thêm demandId
+    // ── Cách 1 (ưu tiên): ID trực tiếp của bảng customer_request ──
+    private Long customerRequestId;   // <-- THÊM DÒNG NÀY
+
+    // ── Cách 2 (dự phòng): cặp customerId + demandId ──
+    private Long customerId;
+    private Long demandId;
+
     private CustomerStatus newStatus;
 
-    // ── Bắt buộc khi SIGNED → PAID ───────────────────────────────────────────
-    private Long            staffId;
-    private Long            buildingId;
+    // ── Bắt buộc khi chuyển SIGNED → PAID hoặc ASSIGNED ──
+    private Long staffId;
+    private Long buildingId;
     private TransactionType transactionType;
 
     // Nếu SALE
@@ -26,9 +26,12 @@ public class CustomerStatusUpdateRequest {
 
     // Nếu RENT
     private BigDecimal monthlyRent;
-    private Integer    contractMonths;
+    private Integer contractMonths;
 
-    // ── Getters & Setters ────────────────────────────────────────────────────
+    // Getters & Setters (bao gồm cả customerRequestId)
+    public Long getCustomerRequestId() { return customerRequestId; }
+    public void setCustomerRequestId(Long customerRequestId) { this.customerRequestId = customerRequestId; }
+
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
 

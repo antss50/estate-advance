@@ -3,17 +3,14 @@ package com.javaweb.service.impl;
 import com.javaweb.config.commission.CommissionCalculator;
 import com.javaweb.config.commission.CommissionResult;
 import com.javaweb.entity.BuildingEntity;
-import com.javaweb.entity.CustomerEntity;
 import com.javaweb.entity.CustomerRequestEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.BuildingStatus;
 import com.javaweb.enums.CustomerStatus;
 import com.javaweb.enums.TransactionType;
-import java.time.LocalDate;
 import com.javaweb.model.request.CustomerStatusUpdateRequest;
 import com.javaweb.model.response.CustomerStatusUpdateResponse;
 import com.javaweb.repository.BuildingRepository;
-import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.CustomerRequestRepository;
 import com.javaweb.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,24 +18,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
-/**
- * Xử lý quy trình chuyển trạng thái:
- *   NEW → ASSIGNED → CONSULTING → SIGNED → PAID
- *
- * Khi SIGNED → PAID (trong 1 @Transactional):
- *   1. Tính hoa hồng (CommissionCalculator)
- *   2. Cộng staffCommission vào UserEntity.revenue
- *   3. Tăng UserEntity.totalDeals thêm 1
- *   4. Tự động đổi BuildingStatus:
- *        RENT → AVAILABLE → RENTED
- *        SALE → AVAILABLE → SOLD
- */
 @Service
 public class CustomerStatusService {
 
     @Autowired
-    private CustomerRequestRepository customerRequestRepository;  // Dùng repository của customer_request
+    private CustomerRequestRepository customerRequestRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -57,12 +43,12 @@ public class CustomerStatusService {
     @Transactional
     public CustomerStatusUpdateResponse updateStatus(CustomerStatusUpdateRequest request) {
 
-        // 1. Tìm bản ghi customer_request theo customerId + demandId
-        CustomerRequestEntity customerRequest = customerRequestRepository
-                .findByCustomerIdAndDemandId(request.getCustomerId(), request.getDemandId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("Không tìm thấy yêu cầu của khách hàng %d với nhu cầu %d",
-                                request.getCustomerId(), request.getDemandId())));
+        // 1. Tìm bản ghi customer_request (ưu tiên customerRequestId)
+        CustomerRequestEntity customerRequest = findCustomerRequest(request);
+
+        // Lấy customerId và demandId từ entity (dùng cho response)
+        Long customerId = customerRequest.getCustomer() != null ? customerRequest.getCustomer().getId() : null;
+        Long demandId = customerRequest.getDemand() != null ? customerRequest.getDemand().getId() : null;
 
         CustomerStatus currentStatus = customerRequest.getStatus();
         CustomerStatus newStatus = request.getNewStatus();
@@ -85,7 +71,7 @@ public class CustomerStatusService {
 
         // 5. Xây dựng response
         CustomerStatusUpdateResponse response = new CustomerStatusUpdateResponse();
-        response.setCustomerId(request.getCustomerId());
+        response.setCustomerId(customerId);
         response.setOldStatus(currentStatus.name());
         response.setNewStatus(newStatus.name());
         response.setSuccess(true);
@@ -104,7 +90,7 @@ public class CustomerStatusService {
         return response;
     }
 
-    // ───────────────────── Xử lý hoa hồng (giữ nguyên logic cũ) ───────────────
+    // ───────────────────── Xử lý hoa hồng (giữ nguyên) ───────────────────────
     private CommissionResult handleCommission(CustomerStatusUpdateRequest request) {
         UserEntity staff = userRepository.findById(request.getStaffId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy staff id: " + request.getStaffId()));
@@ -126,7 +112,7 @@ public class CustomerStatusService {
         return result;
     }
 
-    // ───────────────────── Xử lý trạng thái Building (giữ nguyên logic cũ) ────
+    // ───────────────────── Xử lý trạng thái Building (giữ nguyên) ────────────
     private BuildingStatus handleBuildingStatus(CustomerStatusUpdateRequest request) {
         if (request.getBuildingId() == null) return null;
 
@@ -155,7 +141,7 @@ public class CustomerStatusService {
         return newStatus;
     }
 
-    // ───────────────────── Kiểm tra luồng trạng thái ─────────────────────────
+    // ───────────────────── Kiểm tra luồng trạng thái (giữ nguyên) ────────────
     private void validateTransition(CustomerStatus from, CustomerStatus to) {
         int fromIdx = indexOf(from);
         int toIdx = indexOf(to);
@@ -174,5 +160,23 @@ public class CustomerStatusService {
             if (STATUS_FLOW[i] == status) return i;
         }
         return -1;
+    }
+
+    // ───────────────────── Tìm CustomerRequestEntity (hỗ trợ cả 2 cách) ───────
+    private CustomerRequestEntity findCustomerRequest(CustomerStatusUpdateRequest request) {
+        // Ưu tiên dùng customerRequestId
+        if (request.getCustomerRequestId() != null) {
+            return customerRequestRepository.findById(request.getCustomerRequestId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Không tìm thấy customer request với id = " + request.getCustomerRequestId()));
+        }
+        // Dùng cặp customerId + demandId (optional, để tương thích cũ)
+        if (request.getCustomerId() != null && request.getDemandId() != null) {
+            return customerRequestRepository.findByCustomerIdAndDemandId(request.getCustomerId(), request.getDemandId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            String.format("Không tìm thấy yêu cầu của khách hàng %d với nhu cầu %d",
+                                    request.getCustomerId(), request.getDemandId())));
+        }
+        throw new IllegalArgumentException("Phải cung cấp customerRequestId hoặc cặp (customerId, demandId)");
     }
 }
