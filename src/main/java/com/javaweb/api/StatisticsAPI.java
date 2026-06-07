@@ -1,5 +1,6 @@
 package com.javaweb.api;
 
+import com.javaweb.model.response.StaffRevenueDTO;
 import com.javaweb.model.response.StatisticsResponse;
 import com.javaweb.service.StatisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,12 @@ public class StatisticsAPI {
             @RequestParam(defaultValue = "5") int topN) {
 
         StatisticsResponse response = statisticsService.getDashboardStatistics(topN);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/staff/{staffId}")
+    public ResponseEntity<StaffRevenueDTO> getStaffRevenue(@PathVariable Long staffId) {
+        StaffRevenueDTO response = statisticsService.getStaffRevenue(staffId);
         return ResponseEntity.ok(response);
     }
 }

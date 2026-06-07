@@ -1,5 +1,6 @@
 package com.javaweb.service;
 
+import com.javaweb.model.response.StaffRevenueDTO;
 import com.javaweb.model.response.StatisticsResponse;
 
 public interface StatisticsService {
@@ -14,4 +15,5 @@ public interface StatisticsService {
      * @param topN số lượng nhân viên xuất sắc cần lấy (mặc định 5)
      */
     StatisticsResponse getDashboardStatistics(int topN);
+    StaffRevenueDTO getStaffRevenue(Long staffId);
 }

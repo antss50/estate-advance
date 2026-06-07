@@ -2,6 +2,7 @@ package com.javaweb.service.impl;
 
 import com.javaweb.entity.UserEntity;
 import com.javaweb.enums.CustomerStatus;
+import com.javaweb.model.response.StaffRevenueDTO;
 import com.javaweb.model.response.StatisticsResponse;
 import com.javaweb.model.response.TopStaffResult;
 import com.javaweb.repository.CustomerRepository;
@@ -27,6 +28,40 @@ public class StatisticsServiceImpl implements StatisticsService {
     private CustomerRepository customerRepository;
 
     private static final double P_TARGET = StaffMatchingScoreCalculator.P_TARGET_DEFAULT;
+
+    @Override
+    public StaffRevenueDTO getStaffRevenue(Long staffId) {
+        UserEntity staff = userRepository.findById(staffId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + staffId));
+
+        // Tính tổng doanh thu
+        BigDecimal revenueSale = staff.getRevenueSale() != null ? staff.getRevenueSale() : BigDecimal.ZERO;
+        BigDecimal revenueRent = staff.getRevenueRent() != null ? staff.getRevenueRent() : BigDecimal.ZERO;
+        BigDecimal totalRevenue = revenueSale.add(revenueRent);
+
+        // Tổng số giao dịch
+        Integer totalSaleDeals = staff.getTotalSaleDeals() != null ? staff.getTotalSaleDeals() : 0;
+        Integer totalRentDeals = staff.getTotalRentDeals() != null ? staff.getTotalRentDeals() : 0;
+        int totalDeals = totalSaleDeals + totalRentDeals;
+
+        // Tính performance dùng lại công thức
+        double performance = StaffMatchingScoreCalculator.scorePerformance(totalRevenue, totalDeals, P_TARGET);
+
+        StaffRevenueDTO dto = new StaffRevenueDTO();
+        dto.setStaffId(staff.getId());
+        dto.setStaffName(staff.getFullName());
+        dto.setEmail(staff.getEmail());
+        dto.setPhone(staff.getPhone());
+        dto.setTotalRevenue(totalRevenue);
+        dto.setRevenueSale(revenueSale);
+        dto.setRevenueRent(revenueRent);
+        dto.setTotalDeals(totalDeals);
+        dto.setTotalSaleDeals(totalSaleDeals);
+        dto.setTotalRentDeals(totalRentDeals);
+        dto.setPerformance(round(performance));
+
+        return dto;
+    }
 
     @Override
     public StatisticsResponse getDashboardStatistics(int topN) {
@@ -76,6 +111,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         return stats;
     }
+
 
     private List<TopStaffResult> buildTopStaffs(List<UserEntity> staffs, int topN) {
         List<TopStaffResult> results = new ArrayList<>();
