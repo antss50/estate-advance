@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface CustomerRequestRepository extends JpaRepository<CustomerRequestEntity, Long> {
 
-    // Lấy customer request theo staffId (thông qua bảng assignment_customer)
+    // ── Query cũ ─────────────────────────────────────────────────────────────
     @Query("SELECT cr FROM CustomerRequestEntity cr " +
             "WHERE cr.customer.id IN (" +
             "   SELECT ac.customer.id FROM AssignmentCustomerEntity ac " +
@@ -20,7 +20,14 @@ public interface CustomerRequestRepository extends JpaRepository<CustomerRequest
             ")")
     List<CustomerRequestEntity> findByStaffId(@Param("staffId") Long staffId);
 
-    // Lấy customer request theo customerId
     List<CustomerRequestEntity> findByCustomerId(Long customerId);
-    Optional<CustomerRequestEntity> findByCustomerIdAndDemandId(Long customerId, Long demandId);
+
+    // ── THÊM MỚI: tìm theo customerId + demandId ─────────────────────────────
+    // Dùng trong CustomerStatusService.updateStatus()
+    @Query("SELECT cr FROM CustomerRequestEntity cr " +
+            "WHERE cr.customer.id = :customerId " +
+            "AND cr.demand.id = :demandId")
+    Optional<CustomerRequestEntity> findByCustomerIdAndDemandId(
+            @Param("customerId") Long customerId,
+            @Param("demandId")   Long demandId);
 }

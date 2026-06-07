@@ -3,15 +3,18 @@ package com.javaweb.service.impl;
 import com.javaweb.entity.CustomerEntity;
 import com.javaweb.entity.CustomerRequestEntity;
 import com.javaweb.entity.DemandEntity;
+import com.javaweb.enums.CustomerStatus;
 import com.javaweb.enums.PropertyType;
 import com.javaweb.model.dto.DemandDTO;
 import com.javaweb.model.request.CustomerRequestDTO;
 import com.javaweb.model.response.CustomerRequestResponseDTO;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.CustomerRequestRepository;
+import com.javaweb.repository.DemandRepository;
 import com.javaweb.service.CustomerRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +28,16 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private DemandRepository demandRepository; // FIX: lưu demand riêng để tránh cascade lỗi
+
     @Override
+    @Transactional
     public Long save(CustomerRequestDTO dto, Long customerId) {
 
         CustomerEntity customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng với ID: " + customerId));
+                .orElseThrow(() -> new RuntimeException(
+                        "Không tìm thấy khách hàng với ID: " + customerId));
 
         if (dto.getDemand() == null) {
             throw new RuntimeException("Demand không được để trống");
@@ -37,38 +45,26 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
 
         DemandDTO demandDTO = dto.getDemand();
 
-        // Kiểm tra các trường bắt buộc
-        if (demandDTO.getArea() == null || demandDTO.getArea() <= 0) {
+        // Validate các trường bắt buộc
+        if (demandDTO.getArea() == null || demandDTO.getArea() <= 0)
             throw new RuntimeException("Diện tích (area) là bắt buộc");
-        }
-        if (demandDTO.getPrice() == null || demandDTO.getPrice() <= 0) {
+        if (demandDTO.getPrice() == null || demandDTO.getPrice() <= 0)
             throw new RuntimeException("Giá (price) là bắt buộc");
-        }
-        if (demandDTO.getWard() == null || demandDTO.getWard().trim().isEmpty()) {
+        if (isBlank(demandDTO.getWard()))
             throw new RuntimeException("Phường/Xã (ward) là bắt buộc");
-        }
-        if (demandDTO.getProvince() == null || demandDTO.getProvince().trim().isEmpty()) {
+        if (isBlank(demandDTO.getProvince()))
             throw new RuntimeException("Tỉnh/Thành phố (province) là bắt buộc");
-        }
-        if (demandDTO.getTransactionType() == null || demandDTO.getTransactionType().trim().isEmpty()) {
+        if (isBlank(demandDTO.getTransactionType()))
             throw new RuntimeException("Loại giao dịch (transactionType) là bắt buộc");
-        }
-        if (demandDTO.getPropertyType() == null || demandDTO.getPropertyType().trim().isEmpty()) {
+        if (isBlank(demandDTO.getPropertyType()))
             throw new RuntimeException("Loại bất động sản (propertyType) là bắt buộc");
-        }
-        if (demandDTO.getPriorityType() == null) {
+        if (demandDTO.getPriorityType() == null)
             throw new RuntimeException("Loại ưu tiên (priorityType) là bắt buộc");
-        }
 
-        // Tạo CustomerRequestEntity
-        CustomerRequestEntity entity = new CustomerRequestEntity();
-        entity.setCustomer(customer);
-        entity.setFullName(customer.getFullName());
-        entity.setPhone(customer.getPhone());
-        entity.setEmail(customer.getEmail());
-
-        // Map DemandDTO -> DemandEntity
+        // FIX: Tạo DemandEntity và set customer_id TRƯỚC khi save
+        // Lỗi 500 xảy ra vì cascade PERSIST lưu demand nhưng customer_id bị null
         DemandEntity demand = new DemandEntity();
+        demand.setCustomer(customer);          // ← set FK trước khi save
         demand.setArea(demandDTO.getArea());
         demand.setPrice(demandDTO.getPrice());
         demand.setWard(demandDTO.getWard());
@@ -81,14 +77,21 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         demand.setLegalStatus(demandDTO.getLegalStatus());
         demand.setBrokerageFee(demandDTO.getBrokerageFee());
 
-        // 🔁 QUAN TRỌNG: set khóa ngoại customer cho demand (vì demand có @ManyToOne bắt buộc)
-        demand.setCustomer(customer);
+        // FIX: Lưu demand riêng trước để có ID
+        DemandEntity savedDemand = demandRepository.save(demand);
 
-        // Gán demand cho request (cascade sẽ tự lưu demand trước)
-        entity.setDemand(demand);
-        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : "NEW");
+        // Tạo CustomerRequestEntity sau khi demand đã có ID
+        CustomerRequestEntity entity = new CustomerRequestEntity();
+        entity.setCustomer(customer);
+        entity.setFullName(customer.getFullName());
+        entity.setPhone(customer.getPhone());
+        entity.setEmail(customer.getEmail());
+        entity.setDemand(savedDemand);
+        // FIX: parse String → CustomerStatus enum
+        entity.setStatus(dto.getStatus() != null
+                ? CustomerStatus.valueOf(dto.getStatus())
+                : CustomerStatus.NEW);
 
-        // Lưu – Hibernate sẽ tự động lưu demand trước do cascade = CascadeType.PERSIST
         customerRequestRepository.save(entity);
 
         return customer.getId();
@@ -100,39 +103,23 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         List<CustomerRequestDTO> result = new ArrayList<>();
 
         for (CustomerRequestEntity item : entities) {
-            CustomerRequestDTO dto = new CustomerRequestDTO();
-            dto.setId(item.getId());
+            CustomerRequestDTO responseDto = new CustomerRequestDTO();
+            responseDto.setId(item.getId());
 
             if (item.getCustomer() != null) {
-                dto.setCustomerId(item.getCustomer().getId());
-                dto.setFullName(item.getCustomer().getFullName());
-                dto.setPhone(item.getCustomer().getPhone());
-                dto.setEmail(item.getCustomer().getEmail());
+                responseDto.setCustomerId(item.getCustomer().getId());
+                responseDto.setFullName(item.getCustomer().getFullName());
+                responseDto.setPhone(item.getCustomer().getPhone());
+                responseDto.setEmail(item.getCustomer().getEmail());
             } else {
-                dto.setFullName(item.getFullName());
-                dto.setPhone(item.getPhone());
-                dto.setEmail(item.getEmail());
+                responseDto.setFullName(item.getFullName());
+                responseDto.setPhone(item.getPhone());
+                responseDto.setEmail(item.getEmail());
             }
 
-            dto.setStatus(item.getStatus());
-
-            if (item.getDemand() != null) {
-                DemandDTO demandDTO = new DemandDTO();
-                demandDTO.setArea(item.getDemand().getArea());
-                demandDTO.setPrice(item.getDemand().getPrice());
-                demandDTO.setWard(item.getDemand().getWard());
-                demandDTO.setProvince(item.getDemand().getProvince());
-                demandDTO.setTransactionType(item.getDemand().getTransactionType());
-                demandDTO.setPropertyType(item.getDemand().getPropertyType().name());
-                demandDTO.setPriorityType(item.getDemand().getPriorityType());
-                demandDTO.setNumberOfBasement(item.getDemand().getNumberOfBasement());
-                demandDTO.setDirection(item.getDemand().getDirection());
-                demandDTO.setLegalStatus(item.getDemand().getLegalStatus());
-                demandDTO.setBrokerageFee(item.getDemand().getBrokerageFee());
-                dto.setDemand(demandDTO);
-            }
-
-            result.add(dto);
+            responseDto.setStatus(item.getStatus() != null ? item.getStatus().name() : null);
+            responseDto.setDemand(toDemandDTO(item.getDemand()));
+            result.add(responseDto);
         }
         return result;
     }
@@ -143,43 +130,49 @@ public class CustomerRequestServiceImpl implements CustomerRequestService {
         List<CustomerRequestResponseDTO> result = new ArrayList<>();
 
         for (CustomerRequestEntity entity : entities) {
-            CustomerRequestResponseDTO dto = new CustomerRequestResponseDTO();
-            dto.setId(entity.getId());
+            CustomerRequestResponseDTO responseDto = new CustomerRequestResponseDTO();
+            responseDto.setId(entity.getId());
 
             if (entity.getCustomer() != null) {
-                dto.setCustomerId(entity.getCustomer().getId());
-                dto.setFullName(entity.getCustomer().getFullName());
-                dto.setPhone(entity.getCustomer().getPhone());
-                dto.setEmail(entity.getCustomer().getEmail());
+                responseDto.setCustomerId(entity.getCustomer().getId());
+                responseDto.setFullName(entity.getCustomer().getFullName());
+                responseDto.setPhone(entity.getCustomer().getPhone());
+                responseDto.setEmail(entity.getCustomer().getEmail());
             }
 
-            dto.setStatus(entity.getStatus());
+            responseDto.setStatus(entity.getStatus() != null ? entity.getStatus().name() : null);
+            if (entity.getCreatedDate() != null)
+                responseDto.setCreatedDate(entity.getCreatedDate().toString());
+            if (entity.getModifiedDate() != null)
+                responseDto.setModifiedDate(entity.getModifiedDate().toString());
 
-            if (entity.getCreatedDate() != null) {
-                dto.setCreatedDate(entity.getCreatedDate().toString());
-            }
-            if (entity.getModifiedDate() != null) {
-                dto.setModifiedDate(entity.getModifiedDate().toString());
-            }
-
-            if (entity.getDemand() != null) {
-                DemandDTO demandDTO = new DemandDTO();
-                demandDTO.setArea(entity.getDemand().getArea());
-                demandDTO.setPrice(entity.getDemand().getPrice());
-                demandDTO.setWard(entity.getDemand().getWard());
-                demandDTO.setProvince(entity.getDemand().getProvince());
-                demandDTO.setTransactionType(entity.getDemand().getTransactionType());
-                demandDTO.setPropertyType(entity.getDemand().getPropertyType().name());
-                demandDTO.setPriorityType(entity.getDemand().getPriorityType());
-                demandDTO.setNumberOfBasement(entity.getDemand().getNumberOfBasement());
-                demandDTO.setDirection(entity.getDemand().getDirection());
-                demandDTO.setLegalStatus(entity.getDemand().getLegalStatus());
-                demandDTO.setBrokerageFee(entity.getDemand().getBrokerageFee());
-                dto.setDemand(demandDTO);
-            }
-
-            result.add(dto);
+            responseDto.setDemand(toDemandDTO(entity.getDemand()));
+            result.add(responseDto);
         }
         return result;
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private DemandDTO toDemandDTO(DemandEntity demand) {
+        if (demand == null) return null;
+        DemandDTO dto = new DemandDTO();
+        dto.setArea(demand.getArea());
+        dto.setPrice(demand.getPrice());
+        dto.setWard(demand.getWard());
+        dto.setProvince(demand.getProvince());
+        dto.setTransactionType(demand.getTransactionType());
+        dto.setPropertyType(demand.getPropertyType() != null
+                ? demand.getPropertyType().name() : null);
+        dto.setPriorityType(demand.getPriorityType());
+        dto.setNumberOfBasement(demand.getNumberOfBasement());
+        dto.setDirection(demand.getDirection());
+        dto.setLegalStatus(demand.getLegalStatus());
+        dto.setBrokerageFee(demand.getBrokerageFee());
+        return dto;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 }
