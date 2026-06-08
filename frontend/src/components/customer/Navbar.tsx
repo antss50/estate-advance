@@ -5,9 +5,9 @@ const Navbar = () => {
         <li className="nav-item active">
           <a href="/">Trang Chủ</a>
         </li>
-        <li className="nav-item">
+        {/* <li className="nav-item">
           <a href="/about">Giới thiệu</a>
-        </li>
+        </li> */}
         <li className="nav-item">
           <a href="/kinh-nghiem-thue-nha">Kinh nghiệm</a>
         </li>

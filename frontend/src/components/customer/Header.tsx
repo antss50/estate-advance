@@ -23,7 +23,7 @@ const AppHeader: React.FC<HeaderProps> = ({
 
   const navigationItems = [
     { key: "/", label: "Trang Chủ" },
-    { key: "/about", label: "Giới thiệu" },
+    // { key: "/about", label: "Giới thiệu" },
     { key: "/kinh-nghiem-thue-nha", label: "Kinh Nghiệm Thuê Nhà" },
     { key: "/contact", label: "Liên hệ" },
   ];

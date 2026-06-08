@@ -24,7 +24,7 @@ const StaffLayout: React.FC = () => {
     {
       key: "/staff/dashboard",
       icon: <HomeOutlined />,
-      label: <Link to="/staff/dashboard">Bảng điều khiển</Link>,
+      label: <Link to="/staff/dashboard">Thống kê</Link>,
     },
     {
       key: "/staff/buildings",

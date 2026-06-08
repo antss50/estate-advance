@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Row,
   Col,
@@ -85,7 +85,9 @@ const SpecsCard: React.FC<{ building: BuildingDTO }> = ({ building }) => {
 };
 const BuildingDetail: React.FC = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const isPublicBuildingDetail = location.pathname.startsWith("/buildings/");
 
   const [building, setBuilding] = useState<BuildingDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -165,7 +167,14 @@ const BuildingDetail: React.FC = () => {
   const images = getImages();
 
   return (
-    <div style={{ background: PAGE_BG, padding: 8 }}>
+    <div
+      style={{
+        background: PAGE_BG,
+        margin: "0 auto",
+        maxWidth: 1200,
+        padding: isPublicBuildingDetail ? 24 : 8,
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -181,12 +190,14 @@ const BuildingDetail: React.FC = () => {
           style={{ padding: 0 }}
         />
 
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <Title level={4} style={{ margin: 0 }}>
-            BUILDINGS MANAGEMENT
-          </Title>
-          <Text style={{ color: TEXT_MUTED }}>Welcome to Estate Advance</Text>
-        </div>
+        {!isPublicBuildingDetail && (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <Title level={4} style={{ margin: 0 }}>
+              BUILDINGS MANAGEMENT
+            </Title>
+            <Text style={{ color: TEXT_MUTED }}>Welcome to Estate Advance</Text>
+          </div>
+        )}
       </div>
 
       <Row gutter={32}>
@@ -282,7 +293,7 @@ const BuildingDetail: React.FC = () => {
                   <Button
                     size="small"
                     danger
-                    style={{ position: "absolute", top: -6, right: -6 }}
+                    style={{ display: isPublicBuildingDetail ? "none" : undefined, position: "absolute", top: -6, right: -6 }}
                     onClick={async () => {
                       Modal.confirm({
                         title: "Xóa ảnh",

@@ -26,6 +26,7 @@ import type {
 import assignmentApi from "../../api/assignmentApi";
 import client from "../../api/axiosClient";
 import  { getMatchingStaffsForCustomerRequest }  from "../../api/staffApi";
+import { updateCustomerStatus } from "../../api/userApi";
 import Title from "antd/es/typography/Title";
 
 const { Text } = Typography;
@@ -46,6 +47,32 @@ const propertyTypeConfig: Record<string, string> = {
   RETAIL: "Mặt bằng kinh doanh",
   WAREHOUSE: "Kho bãi",
   OFFICE: "Văn phòng",
+};
+
+const looksLikeProvince = (value?: string) => {
+  const normalized = value?.toLowerCase().trim() || "";
+  return (
+    normalized.includes("tỉnh") ||
+    normalized.includes("thành phố") ||
+    normalized.includes("tp.") ||
+    normalized.includes("hà nội") ||
+    normalized.includes("hồ chí minh") ||
+    normalized.includes("đà nẵng")
+  );
+};
+
+const getDemandLocation = (demand?: UserDemandDTO["demand"]) => {
+  const ward = demand?.ward || "";
+  const province = demand?.province || "";
+
+  if (looksLikeProvince(ward) && province) {
+    return {
+      ward: province,
+      province: ward,
+    };
+  }
+
+  return { ward, province };
 };
 
 export const CustomerDemand: React.FC = () => {
@@ -73,9 +100,12 @@ export const CustomerDemand: React.FC = () => {
     setLoading(true);
     try {
       const res = await client.get("/api/customer-request");
-      const data = res?.data ?? res;
-      setCustomers(data);
-      setTotalCustomers(data.length);
+      const data = Array.isArray(res?.data ?? res) ? (res?.data ?? res) : [];
+      const newDemands = (data as UserDemandDTO[]).filter(
+        (item) => item.status?.toUpperCase().trim() === "NEW",
+      );
+      setCustomers(newDemands);
+      setTotalCustomers(newDemands.length);
     } catch (error) {
       message.error("Lỗi khi tải danh sách nhu cầu khách hàng");
       console.error(error);
@@ -188,6 +218,13 @@ export const CustomerDemand: React.FC = () => {
       };
 
       await assignmentApi.assignStaffToCustomer(payload);
+      await updateCustomerStatus({
+        customerRequestId: Number(currentRequest.id),
+        customerId: Number(currentRequest.customerId),
+        demandId: Number(currentRequest.demand?.id),
+        newStatus: "ASSIGNED",
+        staffId: Number(selectedStaffIds[0]),
+      });
       message.success("Phân công thành công!");
 
       setSelectedCustomerId(null);
@@ -210,9 +247,11 @@ export const CustomerDemand: React.FC = () => {
     setSelectedCustomerId(customerRequest.id);
 
     try {
+      const currentDemand = customers.find(c => String(c.id) === String(customerRequest.id))?.demand ?? customerRequest.demand;
+      const location = getDemandLocation(currentDemand);
       const response = await getMatchingStaffsForCustomerRequest({
         customerId: customerRequest.id,
-        demandWard: customers.find(c => String(c.id) === String(customerRequest.id))?.demand?.ward || ""
+        demandWard: location.ward,
       });
 
       const staffData = response.results ?? [];
@@ -229,7 +268,7 @@ export const CustomerDemand: React.FC = () => {
           totalScore: s.totalScoreCS,
         }));
         setStaffs(mappedStaffs);
-        message.success(`Tìm thấy ${staffData.length} nhân viên tại ${customerRequest.demand?.ward}`);
+        message.success(`Tìm thấy ${staffData.length} nhân viên tại ${location.ward}`);
       } else {
         setStaffs([]);
         message.info("Không có nhân viên phù hợp tại phường này");
@@ -392,7 +431,9 @@ export const CustomerDemand: React.FC = () => {
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                               <Text type="secondary">Vị trí</Text>
                               {currentPriority === "CONVENIENT" && <Tag color="green">Ưu tiên</Tag>}
-                              <Text strong>{customer?.demand?.ward || "-"}, {customer?.demand?.province || "-"}</Text>
+                              <Text strong>
+                                {getDemandLocation(customer?.demand).ward || "-"}, {getDemandLocation(customer?.demand).province || "-"}
+                              </Text>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                               <Text type="secondary">Loại nhà đất</Text>

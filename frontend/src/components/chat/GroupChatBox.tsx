@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, Button, Card, Input, List, Space, Tag } from "antd";
+import { useNavigate } from "react-router-dom";
 import {
   BankOutlined,
   CompassOutlined,
@@ -56,6 +57,8 @@ const getBuildingImage = (building: BuildingCardPayload) => building.thumbnailUr
 
 const getBuildingPrice = (building: BuildingCardPayload) => building.priceRent ?? building.rentPrice ?? building.priceSale;
 
+const getBuildingId = (building: BuildingCardPayload) => building.buildingId ?? building.id;
+
 const InfoPill: React.FC<{ icon: React.ReactNode; label: string; value?: string | number | null }> = ({
   icon,
   label,
@@ -84,7 +87,10 @@ const InfoPill: React.FC<{ icon: React.ReactNode; label: string; value?: string 
   </div>
 );
 
-const BuildingSuggestionCard: React.FC<{ building: BuildingCardPayload }> = ({ building }) => {
+const BuildingSuggestionCard: React.FC<{ building: BuildingCardPayload; onOpenDetail?: () => void }> = ({
+  building,
+  onOpenDetail,
+}) => {
   const imageUrl = getBuildingImage(building);
   const address = compactAddress(building);
   const price = getBuildingPrice(building);
@@ -93,6 +99,15 @@ const BuildingSuggestionCard: React.FC<{ building: BuildingCardPayload }> = ({ b
 
   return (
     <div
+      onClick={onOpenDetail}
+      onKeyDown={(event) => {
+        if ((event.key === "Enter" || event.key === " ") && onOpenDetail) {
+          event.preventDefault();
+          onOpenDetail();
+        }
+      }}
+      role={onOpenDetail ? "button" : undefined}
+      tabIndex={onOpenDetail ? 0 : undefined}
       style={{
         width: 360,
         maxWidth: "min(360px, calc(100vw - 120px))",
@@ -101,6 +116,7 @@ const BuildingSuggestionCard: React.FC<{ building: BuildingCardPayload }> = ({ b
         borderRadius: 8,
         overflow: "hidden",
         boxShadow: "0 10px 26px rgba(15, 23, 42, 0.08)",
+        cursor: onOpenDetail ? "pointer" : "default",
         marginTop: 4,
       }}
     >
@@ -190,7 +206,14 @@ const BuildingSuggestionCard: React.FC<{ building: BuildingCardPayload }> = ({ b
             {building.payment && <Tag style={{ margin: 0 }}>{building.payment}</Tag>}
           </Space>
           {building.linkOfBuilding && (
-            <Button type="link" size="small" href={building.linkOfBuilding} target="_blank" style={{ paddingRight: 0 }}>
+            <Button
+              type="link"
+              size="small"
+              href={building.linkOfBuilding}
+              target="_blank"
+              onClick={(event) => event.stopPropagation()}
+              style={{ paddingRight: 0 }}
+            >
               Chi tiet
             </Button>
           )}
@@ -217,6 +240,7 @@ export const GroupChatBox: React.FC<GroupChatBoxProps> = ({
   const [inputValue, setInputValue] = useState("");
   const [showMembers, setShowMembers] = useState(true);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const userContext = useMemo(() => {
     const isStaffPath = window.location.pathname.includes("staff");
@@ -269,6 +293,22 @@ export const GroupChatBox: React.FC<GroupChatBoxProps> = ({
 
     sendText(content);
     setInputValue("");
+  };
+
+  const openBuildingDetail = (building: BuildingCardPayload) => {
+    const buildingId = getBuildingId(building);
+    if (!buildingId) return;
+
+    const path = window.location.pathname;
+    if (path.includes("/admin")) {
+      navigate(`/admin/buildings/${buildingId}`);
+      return;
+    }
+    if (path.includes("/staff")) {
+      navigate(`/staff/buildings/${buildingId}`);
+      return;
+    }
+    navigate(`/buildings/${buildingId}`);
   };
 
   return (
@@ -386,7 +426,10 @@ export const GroupChatBox: React.FC<GroupChatBoxProps> = ({
                           )}
 
                           {item.type === "BUILDING_CARD" && item.building ? (
-                            <BuildingSuggestionCard building={item.building} />
+                            <BuildingSuggestionCard
+                              building={item.building}
+                              onOpenDetail={() => openBuildingDetail(item.building!)}
+                            />
                           ) : (
                             <div
                               style={{
