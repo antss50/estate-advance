@@ -40,3 +40,165 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Header and navbar styles to match the screenshot */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.header-left { flex: 0 0 auto; }
+.brand {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.header-center { flex: 1 1 auto; display:flex; justify-content:center; }
+.header-right { flex: 0 0 auto; display:flex; align-items:center; gap:12px; color: #666; }
+.header-right .user-email { font-size: 14px; color:#444; }
+.avatar { width:36px; height:36px; border-radius:50%; border:1px solid rgba(0,0,0,0.1); background:transparent; }
+
+.navbar .navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 28px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+.navbar .nav-item { position: relative; }
+.navbar .nav-item a {
+  text-decoration: none;
+  color: #666;
+  padding: 8px 0;
+  font-weight: 500;
+}
+.navbar .nav-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width:1px; height:18px; background: rgba(0,0,0,0.08);
+}
+.navbar .nav-item.active a { color: #4aa3ff; }
+
+/* Make carousel container stand out and rounded like screenshot */
+.ant-carousel .slick-slide > div { display:flex; justify-content:center; }
+.ant-carousel .slick-list { border-radius: 12px; overflow: visible; }
+main { padding-top: 1.5rem; }
+
+/* PREMIUM design system */
+:root{
+  --pa-primary: #1677ff;
+  --pa-dark: #1e293b;
+  --pa-muted: #64748b;
+  --pa-surface: #f8fafc;
+}
+
+/* Sections spacing (breathing space) */
+.premium-section { margin-top: 80px; margin-bottom: 80px; }
+
+/* Premium card style */
+.premium-card {
+  border-radius: 16px !important;
+  padding: 24px !important;
+  background: var(--pa-surface);
+  border: 0;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+  transition: all 0.3s ease;
+}
+.premium-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(2,6,23,0.08);
+}
+
+/* Rounded inputs / buttons */
+.ant-btn,
+.ant-input,
+.ant-select-selector,
+.ant-card {
+  border-radius: 12px !important;
+}
+
+/* Header glass effect */
+.site-header {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+/* Hero content typography */
+.hero-title { font-weight: 800 !important; color: var(--pa-dark) !important; letter-spacing: -0.5px; }
+.hero-desc { color: var(--pa-muted); line-height: 1.6; }
+
+/* Icon circle for features */
+.feature-icon {
+  width: 64px; height: 64px; display:flex; align-items:center; justify-content:center;
+  border-radius: 50%; background: #e6f4ff; color: var(--pa-primary); font-size: 28px;
+  margin: 0 auto;
+}
+
+/* Glass overlay for locked form */
+.glass-overlay {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.06);
+}
+
+/* Primary button micro-interaction */
+.primary-btn {
+  border-radius: 24px !important;
+  background: var(--pa-primary);
+  border: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.primary-btn:hover { background: linear-gradient(90deg,var(--pa-primary),#3990ff); transform: translateY(-2px); }
+
+/* Card inner typography */
+.premium-card .ant-card-head-title, .premium-card .ant-card-body { color: var(--pa-dark); }
+
+/* Admin layout styles */
+.admin-sider .ant-menu-item-selected {
+  background: rgba(22,119,255,0.06) !important;
+  color: var(--pa-primary) !important;
+  font-weight: 700 !important;
+  border-radius: 8px;
+}
+.admin-sider .ant-menu-item {
+  border-radius: 8px;
+}
+
+.admin-sider .ant-avatar {
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* main content card surface */
+.admin-content-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  padding: 24px;
+}
+
+/* User card specific */
+.user-card {
+  background: #f0f5ff;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 18px;
+}
+.user-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(2,6,23,0.06);
+}
+
+.admin-search {
+  border-radius: 30px;
+}
+

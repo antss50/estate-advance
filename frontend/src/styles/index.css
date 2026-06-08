@@ -1,0 +1,259 @@
+/* Global Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--pa-font-family);
+  color: var(--pa-text);
+  background: #fff;
+  line-height: 1.6;
+}
+
+/* Main Layout */
+.ant-layout {
+  background: #fff;
+}
+
+main {
+  background: #fff;
+  min-height: 100vh;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--pa-dark);
+}
+
+p {
+  margin: 0 0 12px 0;
+}
+
+a {
+  color: var(--pa-primary);
+  text-decoration: none;
+  transition: color var(--pa-transition-base);
+}
+
+a:hover {
+  color: var(--pa-primary-dark);
+}
+
+/* Buttons */
+.ant-btn {
+  border-radius: var(--pa-radius-lg);
+  font-weight: 600;
+  transition: all var(--pa-transition-base);
+}
+
+.ant-btn-primary {
+  background: linear-gradient(135deg, var(--pa-primary) 0%, var(--pa-primary-dark) 100%);
+  border: none;
+}
+
+.ant-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Input Fields */
+.ant-input,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker {
+  border-radius: var(--pa-radius-md) !important;
+  border-color: #d9d9d9 !important;
+}
+
+.ant-input:focus,
+.ant-input-number:focus,
+.ant-input:hover,
+.ant-input-number:hover {
+  border-color: var(--pa-primary) !important;
+  box-shadow: 0 0 8px rgba(22, 119, 255, 0.1) !important;
+}
+
+/* Cards */
+.ant-card {
+  border-radius: var(--pa-radius-lg);
+  box-shadow: var(--pa-shadow-md);
+  transition: all var(--pa-transition-base);
+}
+
+.ant-card:hover {
+  box-shadow: var(--pa-shadow-lg);
+}
+
+/* Forms */
+.ant-form-item-label > label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Tabs */
+.ant-tabs-tab {
+  border-radius: var(--pa-radius-md) !important;
+}
+
+.ant-tabs-tab-active {
+  background:rgb(245 247 250) !important;
+}
+
+/* Slider */
+.ant-slider-track {
+  background: linear-gradient(90deg, var(--pa-primary) 0%, var(--pa-secondary) 100%) !important;
+}
+
+.ant-slider-handle {
+  border-color: var(--pa-primary) !important;
+}
+
+.ant-slider-handle:focus {
+  box-shadow: 0 0 8px rgba(22, 119, 255, 0.3) !important;
+}
+
+/* Notification */
+.ant-notification-notice {
+  border-radius: var(--pa-radius-lg);
+  box-shadow: var(--pa-shadow-lg);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.py-8 {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.px-6 {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+
+  h5 {
+    font-size: 16px;
+  }
+
+  h6 {
+    font-size: 14px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .ant-btn,
+  nav,
+  header,
+  footer {
+    display: none;
+  }
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: slide 2s infinite;
+}
