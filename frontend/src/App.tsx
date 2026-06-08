@@ -15,6 +15,12 @@ import AssignmentManagement from "./pages/admin/AssignmentManagement";
 import { AuthPage } from "./pages/customer/AuthPage";
 import Login from "./pages/staff/Login";
 import StaffDashboardIndex from "./pages/staff/StaffDashboardIndex";
+import { GroupChatBox } from "./components/chat/GroupChatBox";
+import RentalExperiencePage from "./pages/customer/RentalExperiencePage";
+import ContactPage from "./pages/customer/ContactPage";
+import ChatDashboard from "./components/chat/ChatDashboard";
+import CustomerChatPage from "./pages/customer/CustomerChatPage";
+import AdminChatPage from "./pages/admin/AdminChatPage";
 
 const App: React.FC = () => {
   return (
@@ -22,7 +28,11 @@ const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<UserHomepage />} />
+          <Route path="/kinh-nghiem-thue-nha" element={<RentalExperiencePage />} />
+          <Route path="/features" element={<Navigate to="/kinh-nghiem-thue-nha" replace />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/customer/chat" element={<CustomerChatPage />} />
           <Route path="/home" element={<Navigate to="/" replace />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="users" replace />} />
@@ -32,6 +42,7 @@ const App: React.FC = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="customer/demands" element={<CustomerDemand />} />
             <Route path="assignments" element={<AssignmentManagement />} />
+            <Route path="chat" element={<AdminChatPage />} />
             {/* Future admin routes can be added here */}
           </Route>
           
@@ -44,6 +55,8 @@ const App: React.FC = () => {
             <Route path="buildings" element={<AssignedBuilding />} />
             <Route path="buildings/:id" element={<BuildingDetail />} />
             <Route path="assignments" element={<Assignment />} />
+            <Route path="chat/group" element={<GroupChatBox />} />
+            <Route path="chat" element={<ChatDashboard />}/>
             <Route index element={<Navigate to="dashboard" replace />} />
           </Route>
         </Routes>

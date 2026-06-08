@@ -9,57 +9,32 @@
  */
 
 import React from "react";
-import { Card, Row, Col, Divider, Button } from "antd";
-import {
-  FileTextOutlined,
-
-  SyncOutlined,
-} from "@ant-design/icons";
+import { Card, Row, Col, Divider } from "antd";
 import AssignmentGrid from "../../components/admin/AssignmentGrid";
 import "./AssignmentManagement.css";
+import Title from "antd/es/typography/Title";
 // import CustomerDemand from "./CustomerDemand";
 
-const AssignmentManagement: React.FC = () => {
+  const AssignmentManagement: React.FC = () => {
   const [refreshKey, setRefreshKey] = React.useState(0);
-
-  const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
 
   return (
     <div className="assignment-management-page">
       {/* Header Section */}
       <Row gutter={[16, 16]} className="header-section">
         <Col xs={24}>
-          <Card
-            title={
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "10px" }}
-              >
-                <FileTextOutlined
-                  style={{ fontSize: "24px", color: "#1890ff" }}
-                />
-                <span>Quản lý Phân công Nhân viên</span>
-              </div>
-            }
-            extra={
-              <Button
-                icon={<SyncOutlined />}
-                onClick={handleRefresh}
-                type="primary"
-              >
-                Làm mới
-              </Button>
-            }
-          >
-            <p>
-              Quản lý phân công nhân viên cho các nhu cầu khách hàng và toà nhà.
-            </p>
-          </Card>
+          <Title level={4} style={{ margin: 0 }}>
+            Quản lý Phân công
+          </Title>
+          <span style={{ color: "rgba(0, 0, 0, 0.45)" }}>
+            Chào mừng đến với Estate Advance
+          </span>
+        </Col>
+        <Col>
+          
         </Col>
       </Row>
 
-      <Divider />
 
       {/* Statistics Section (Optional) */}
       {/* <Row gutter={[16, 16]} className="stats-section">

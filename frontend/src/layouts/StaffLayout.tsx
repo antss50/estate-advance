@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Menu, Avatar, Typography, Space, Button, Result } from "antd";
+import { Layout, Menu, Avatar, Typography, Space, Button, Result, Badge, Tooltip } from "antd";
 import {
   HomeOutlined,
   BankOutlined,
@@ -8,8 +8,10 @@ import {
   MenuOutlined,
   LockOutlined,
   LogoutOutlined,
+  CommentOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
+import type { LoginResponse } from "../types/user.type";
 
 const { Sider, Header, Content } = Layout;
 const { Text, Title } = Typography;
@@ -17,13 +19,35 @@ const { Text, Title } = Typography;
 const StaffLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Trạng thái kiểm tra đăng nhập định danh của nhân viên
+
+  const menuItems = [
+    {
+      key: "/staff/dashboard",
+      icon: <HomeOutlined />,
+      label: <Link to="/staff/dashboard">Bảng điều khiển</Link>,
+    },
+    {
+      key: "/staff/buildings",
+      icon: <BankOutlined />,
+      label: <Link to="/staff/buildings">Quản Lý Tòa Nhà</Link>,
+    },
+    {
+      key: "/staff/assignments",
+      icon: <FileTextOutlined />,
+      label: <Link to="/staff/assignments">Yêu Cầu & Phân Công</Link>,
+    },
+  ];
+
+  // Logic xác định selectedKey đồng bộ với AdminLayout
+  const selectedKey =
+    menuItems.find((m) => location.pathname.startsWith(m.key))?.key ||
+    "/staff/dashboard";
+
+  // Trạng thái kiểm tra đăng nhập định danh của nhân viên (Giữ nguyên logic)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [staffInfo, setStaffInfo] = useState<any>(null);
+  const [staffInfo, setStaffInfo] = useState<LoginResponse | null>(null);
 
   useEffect(() => {
-    // Đọc thông tin xác thực từ localStorage
     const token = localStorage.getItem("staff_token");
     const info = localStorage.getItem("staff_info");
 
@@ -34,7 +58,6 @@ const StaffLayout: React.FC = () => {
       setIsLoggedIn(false);
       setStaffInfo(null);
       
-      // Nếu cố tình truy cập vào các trang con sâu (như /buildings) khi chưa đăng nhập, tự động đẩy về dashboard
       if (location.pathname !== "/staff/dashboard" && location.pathname !== "/staff/login") {
         navigate("/staff/dashboard");
       }
@@ -49,41 +72,19 @@ const StaffLayout: React.FC = () => {
     navigate("/staff/login");
   };
 
-  // Định nghĩa danh mục Sidebar động phụ thuộc vào trạng thái đăng nhập
-  const menuItems = [
-    {
-      key: "/staff/dashboard",
-      icon: <HomeOutlined />,
-      label: <Link to="/staff/dashboard">Dashboard</Link>,
-    },
-    {
-      key: "/staff/buildings",
-      icon: <BankOutlined />,
-      label: "Buildings",
-      disabled: !isLoggedIn, // Khóa tính năng click chuyển tab nếu chưa đăng nhập
-    },
-    {
-      key: "/staff/assignments",
-      icon: <FileTextOutlined />,
-      label: "Assignments",
-      disabled: !isLoggedIn, // Khóa tính năng click chuyển tab nếu chưa đăng nhập
-    },
-  ];
-
-  const selectedKey =
-    menuItems.find((m) => location.pathname.startsWith(m.key))?.key ||
-    "/staff/dashboard";
-
   return (
     <Layout style={{ minHeight: "100vh" }}>
+      {/* Sider được chuẩn hóa UI theo AdminLayout */}
       <Sider
         width={300}
+        breakpoint="lg"
+        collapsedWidth="0"
         style={{
           background: "#fff",
           borderRight: "1px solid rgba(0,0,0,0.04)",
           padding: 24,
         }}
-        className="admin-sider"
+        className="staff-sider"
       >
         <div
           style={{
@@ -93,12 +94,13 @@ const StaffLayout: React.FC = () => {
             marginBottom: 24,
           }}
         >
-          <Title level={5} style={{ margin: 0, color: "#0f172a" }}>
-            STAFF PORTAL
+          <Title level={5} style={{ margin: 0, color: "#0f172a", fontSize: 16, fontWeight: 600 }}>
+            NHÂN VIÊN
           </Title>
           <MenuOutlined />
         </div>
 
+        {/* Khối thông tin Nhân viên đồng bộ với AdminLayout */}
         <div
           style={{
             display: "flex",
@@ -107,18 +109,12 @@ const StaffLayout: React.FC = () => {
             padding: "12px 0 20px 0",
           }}
         >
-          <Avatar 
-            size={48} 
-            icon={<UserOutlined />} 
-            style={{ backgroundColor: isLoggedIn ? "#1890ff" : "#bfbfbf" }}
-          />
+          <Avatar size={48} style={{ backgroundColor: "#1890ff" }} icon={<UserOutlined />} />
           <div>
             <div style={{ fontWeight: 700 }}>
-              {isLoggedIn && staffInfo ? staffInfo.fullName : "Chưa đăng nhập"}
+              {staffInfo ? staffInfo.fullName : "Guest Staff"}
             </div>
-            <Text type="secondary">
-              {isLoggedIn && staffInfo ? `Staff | ${staffInfo.workingArea || "Toàn quốc"}` : "Giao diện hạn chế"}
-            </Text>
+            <Text type="secondary">Staff | {staffInfo ? staffInfo.workingArea : "---"}</Text>
           </div>
         </div>
 
@@ -127,17 +123,17 @@ const StaffLayout: React.FC = () => {
           selectedKeys={[selectedKey]}
           items={menuItems}
           style={{ border: "none", fontWeight: 600 }}
-          onClick={(info) => {
-            navigate(info.key);
-          }}
         />
       </Sider>
 
       <Layout>
+        {/* Header được chuẩn hóa chiều cao, padding và đổ bóng nhẹ */}
         <Header
           style={{
             background: "#fff",
             padding: "16px 24px",
+            height: "auto",
+            lineHeight: "normal",
             borderBottom: "1px solid rgba(0,0,0,0.04)",
           }}
         >
@@ -150,37 +146,55 @@ const StaffLayout: React.FC = () => {
               justifyContent: "space-between",
             }}
           >
-            <div style={{ fontSize: "14px", fontWeight: 500, color: "#8c8c8c" }}>
-              Hệ thống quản lý nội bộ Estate Advance
-            </div>
-           
             <Space>
-              {isLoggedIn ? (
-                <Button 
-                  type="text" 
-                  danger 
-                  icon={<LogoutOutlined />} 
-                  onClick={handleLogout}
-                  style={{ fontWeight: 500 }}
-                >
-                  Đăng xuất
-                </Button>
-              ) : (
-                <Button 
-                  type="primary" 
-                  icon={<LockOutlined />} 
-                  onClick={() => navigate("/staff/login")}
-                >
-                  Đăng nhập 
-                </Button>
-              )}
+              <Text type="secondary" style={{ fontSize: 14 }}>
+                Hệ thống quản trị nội bộ
+              </Text>
             </Space>
+
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Space size={24}>
+                {/* Giữ nguyên Icon Chat và các điều kiện render logic */}
+                {isLoggedIn && (
+                  <Tooltip title="Phòng chat hỗ trợ khách hàng">
+                    <Badge count={0} size="small" offset={[2, -2]}>
+                      <Button
+                        type="text"
+                        icon={<CommentOutlined style={{ fontSize: 20, color: "#595959" }} />}
+                        onClick={() => navigate("/staff/chat")}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+                      />
+                    </Badge>
+                  </Tooltip>
+                )}
+
+                {isLoggedIn ? (
+                  <Button
+                    type="text"
+                    danger
+                    icon={<LogoutOutlined />}
+                    onClick={handleLogout}
+                    style={{ fontWeight: 500 }}
+                  >
+                    Đăng xuất
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    icon={<LockOutlined />}
+                    onClick={() => navigate("/staff/login")}
+                  >
+                    Đăng nhập
+                  </Button>
+                )}
+              </Space>
+            </div>
           </div>
         </Header>
 
+        {/* Content Area giữ nguyên logic kiểm tra phân quyền bảo vệ tuyến đường */}
         <Content style={{ background: "#f5f7fa", padding: 24 }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            {/* KIỂM TRA BẢO VỆ NỘI DUNG TUYẾN ĐƯỜNG CON */}
             {isLoggedIn || location.pathname === "/staff/dashboard" ? (
               <Outlet />
             ) : (
@@ -190,7 +204,7 @@ const StaffLayout: React.FC = () => {
                 subTitle="Vui lòng đăng nhập tài khoản Staff để mở khóa các phân hệ quản lý Tòa nhà & phân công Khách hàng tương ứng."
                 extra={
                   <Button type="primary" size="large" onClick={() => navigate("/staff/login")}>
-                    Đi đến trang Đăng nhập
+                    Đăng nhập
                   </Button>
                 }
               />

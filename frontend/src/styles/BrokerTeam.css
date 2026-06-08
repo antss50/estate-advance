@@ -3,13 +3,14 @@
    ============================================================ */
 
 .broker-team-section {
-  padding: 80px 24px;
-  background: linear-gradient(180deg, #f5f7fa 0%, #e8f0fe 100%);
+  padding: 46px 24px 86px;
+  background: #ffffff;
   position: relative;
+  overflow: hidden;
 }
 
 .broker-team-container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 
@@ -60,12 +61,12 @@
 
 .broker-carousel-wrapper {
   position: relative;
-  perspective: 1000px;
-  min-height: 500px;
+  perspective: 1400px;
+  min-height: 460px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 50px;
+  margin-bottom: 18px;
 }
 
 .carousel-track {
@@ -83,10 +84,28 @@
 
 .carousel-item {
   position: absolute;
-  width: 320px;
-  height: 420px;
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 380px;
+  height: 430px;
+  transition: transform 0.55s ease, opacity 0.55s ease, filter 0.55s ease;
   will-change: transform, opacity;
+  filter: grayscale(0.1);
+  transform-origin: center center;
+}
+
+.carousel-item[style*="opacity: 1"] {
+  filter: none;
+}
+
+.carousel-item[style*="opacity: 0.7"] {
+  width: 330px;
+  height: 340px;
+  filter: grayscale(0.2);
+}
+
+.carousel-item[style*="opacity: 0.4"] {
+  width: 270px;
+  height: 270px;
+  filter: grayscale(0.35);
 }
 
 /* ============================================================
@@ -95,23 +114,24 @@
 
 .broker-card {
   width: 100%;
-  height: 100%;
+  height: 115%;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 9px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* Image Section - 70% of card height */
 .card-image {
   width: 100%;
-  height: 65%;
+  height: 64%;
   background-size: cover;
   background-position: center;
-  border-radius: 16px 16px 0 0;
+  border-radius: 9px 9px 0 0;
   flex-shrink: 0;
 }
 
@@ -122,60 +142,66 @@
   display: flex;
   align-items: stretch;
   background: #fff;
-  overflow: hidden;
+  overflow: visible;
+  margin-top: -2px;
 }
 
 .card-info-wrapper::before {
   content: "";
   position: absolute;
-  top: -40px;
-  left: 0;
-  right: 0;
-  height: 80px;
+  top: -58px;
+  left: 50%;
+  width: 116%;
+  height: 108px;
   background: #fff;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  z-index: -1;
+  transform: translateX(-50%);
+  z-index: 0;
 }
 
 .card-info {
   width: 100%;
-  padding: 0 16px 16px 16px;
+  padding: 0 42px 24px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 1;
 }
 
 .broker-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--pa-dark);
-  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #111111;
+  margin: -2px 0 5px 0;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
   text-align: center;
+  line-height: 1.2;
 }
 
 .broker-role {
-  font-size: 12px;
-  color: #1677ff;
-  font-weight: 600;
-  margin: 0 0 8px 0;
+  font-size: 11px;
+  color: #8f8f8f;
+  font-weight: 400;
+  margin: 0 0 15px 0;
   text-align: center;
 }
 
 .broker-contact {
   font-size: 11px;
-  color: #666;
-  margin: 3px 0;
-  text-align: center;
+  color: #555555;
+  margin: 0 0 8px;
+  text-align: left;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 5px;
+  line-height: 1.1;
 }
 
 .contact-icon {
-  font-size: 12px;
+  display: none;
 }
 
 /* ============================================================
@@ -184,36 +210,41 @@
 
 .card-actions {
   display: flex;
-  gap: 6px;
-  margin-top: 8px;
+  justify-content: space-between;
+  gap: 48px;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .btn-contact,
 .btn-intro {
   flex: 1;
-  padding: 6px 8px;
-  border: 1.5px solid #1677ff;
+  min-width: 112px;
+  padding: 9px 12px;
+  border: 1px solid #9b9b9b;
   background: transparent;
-  color: #1677ff;
+  color: #111111;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 400;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-contact:hover {
-  background: #1677ff;
+  background: #111111;
+  border-color: #111111;
   color: #fff;
 }
 
 .btn-intro {
-  border-color: #ff4d4f;
-  color: #ff4d4f;
+  border-color: #9b9b9b;
+  color: #111111;
 }
 
 .btn-intro:hover {
-  background: #ff4d4f;
+  background: #111111;
+  border-color: #111111;
   color: #fff;
 }
 
@@ -224,25 +255,30 @@
 .carousel-navigation {
   display: flex;
   justify-content: center;
-  gap: 16px;
-  margin-bottom: 30px;
+  gap: 18px;
+  margin-bottom: 0;
 }
 
 .nav-arrow {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(135deg, #1677ff 0%, #0050b3 100%) !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  background: #f0f1f3 !important;
   border: none !important;
-  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+  color: #20242a !important;
+  box-shadow: none;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 48px;
 }
 
 .nav-arrow:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(22, 119, 255, 0.4);
+  transform: translateY(-2px);
+  background: #e2e4e8 !important;
+  color: #111111 !important;
+  box-shadow: none;
 }
 
 /* ============================================================
@@ -250,7 +286,7 @@
    ============================================================ */
 
 .carousel-indicators {
-  display: flex;
+  display: none;
   justify-content: center;
   gap: 10px;
 }
@@ -282,7 +318,7 @@
 
 @media (max-width: 992px) {
   .broker-team-section {
-    padding: 60px 16px;
+    padding: 42px 16px 72px;
   }
 
   .broker-team-title {
@@ -290,26 +326,36 @@
   }
 
   .broker-carousel-wrapper {
-    min-height: 420px;
+    min-height: 320px;
   }
 
   .carousel-track {
-    height: 380px;
+    height: 315px;
   }
 
   .carousel-item {
-    width: 280px;
-    height: 360px;
+    width: 258px;
+    height: 315px;
+  }
+
+  .carousel-item[style*="opacity: 0.7"] {
+    width: 220px;
+    height: 245px;
+  }
+
+  .carousel-item[style*="opacity: 0.4"] {
+    width: 180px;
+    height: 198px;
   }
 
   .card-image {
-    height: 65%;
+    height: 61%;
   }
 }
 
 @media (max-width: 768px) {
   .broker-team-section {
-    padding: 50px 16px;
+    padding: 38px 16px 64px;
   }
 
   .broker-team-title {
@@ -326,45 +372,59 @@
   }
 
   .broker-carousel-wrapper {
-    min-height: 380px;
-    margin-bottom: 40px;
+    min-height: 300px;
+    margin-bottom: 18px;
   }
 
   .carousel-track {
-    height: 340px;
+    height: 295px;
   }
 
   .carousel-item {
-    width: 260px;
-    height: 320px;
+    width: 240px;
+    height: 292px;
+  }
+
+  .carousel-item[style*="opacity: 0.7"] {
+    width: 200px;
+    height: 225px;
+  }
+
+  .carousel-item[style*="opacity: 0.4"] {
+    display: none;
+  }
+
+  .card-info {
+    padding: 0 22px 16px;
   }
 
   .broker-name {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .broker-role {
-    font-size: 11px;
+    font-size: 8px;
   }
 
   .broker-contact {
-    font-size: 10px;
+    font-size: 8px;
   }
 
   .card-actions {
-    gap: 4px;
-    margin-top: 6px;
+    gap: 28px;
+    margin-top: auto;
   }
 
   .btn-contact,
   .btn-intro {
-    padding: 5px 6px;
-    font-size: 10px;
+    min-width: 74px;
+    padding: 6px 8px;
+    font-size: 8px;
   }
 
   .nav-arrow {
-    width: 40px;
-    height: 40px;
+    width: 32px !important;
+    height: 32px !important;
   }
 
   .carousel-indicators {
@@ -378,7 +438,7 @@
 
 @media (max-width: 576px) {
   .broker-team-section {
-    padding: 40px 12px;
+    padding: 34px 12px 56px;
   }
 
   .broker-team-title {
@@ -390,18 +450,18 @@
   }
 
   .broker-carousel-wrapper {
-    min-height: 320px;
-    margin-bottom: 30px;
+    min-height: 286px;
+    margin-bottom: 18px;
   }
 
   .carousel-track {
-    height: 280px;
+    height: 278px;
   }
 
   /* On mobile, hide side cards, show only center */
   .carousel-item {
-    width: 240px;
-    height: 280px;
+    width: 228px;
+    height: 276px;
   }
 
   .carousel-item[style*="opacity: 0.7"],
@@ -410,40 +470,42 @@
   }
 
   .broker-name {
-    font-size: 13px;
+    font-size: 12px;
     margin: 0 0 2px 0;
   }
 
   .broker-role {
-    font-size: 10px;
-    margin: 0 0 6px 0;
+    font-size: 8px;
+    margin: 0 0 10px 0;
   }
 
   .broker-contact {
-    font-size: 9px;
-    margin: 2px 0;
+    font-size: 8px;
+    margin: 0 0 6px;
   }
 
   .card-actions {
-    gap: 3px;
-    margin-top: 4px;
+    gap: 20px;
+    margin-top: auto;
   }
 
   .btn-contact,
   .btn-intro {
-    padding: 4px 4px;
-    font-size: 9px;
+    min-width: 68px;
+    padding: 5px 6px;
+    font-size: 8px;
   }
 
   .nav-arrow {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    font-size: 14px;
   }
 
   .carousel-navigation {
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
 
   .carousel-indicators {

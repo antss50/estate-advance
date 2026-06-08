@@ -15,6 +15,8 @@ export async function getCustomerAssignments(customerId: number): Promise<Assign
 }
 
 export interface AssignmentRequest {
+  customerId: number;
+  demandId: number;
   staffIds: number[];
 }
 
@@ -30,14 +32,8 @@ export interface AssignmentResponse {
 /**
  * Assign staff to customer
  */
-export async function assignStaffToCustomer(
-  customerId: number,
-  staffIds: number[]
-): Promise<ResponseDTO<AssignmentResponse>> {
-  const res = await client.post<ResponseDTO<AssignmentResponse>>(
-    CUSTOMER_PATH.replace('{customerId}', encodeURIComponent(customerId.toString())),
-    { staffIds }
-  );
+export async function assignStaffToCustomer(payload: AssignmentRequest): Promise<AssignmentResponse> {
+  const res = await client.post<AssignmentResponse>('/api/customer/assignment', payload);
   return res.data;
 }
 

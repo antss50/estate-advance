@@ -1,3 +1,5 @@
+import type { DashboardResponse, StaffStatisticsResponse } from "../types";
+import client from "./axiosClient";
 import axiosClient from "./axiosClient";
 
 export interface Province {
@@ -34,4 +36,23 @@ export const getWardsByProvince = async (
     `/api/administrative/provinces/${provinceCode}/wards`
   );
   return response.data;
+};
+
+export async function getStatistics(): Promise<DashboardResponse> {
+  const response = await client.get("/api/statistics/dashboard");
+  return response.data;
+}
+
+export async function getStaffStatistics(
+  staffId: number | string,
+): Promise<StaffStatisticsResponse> {
+  const response = await client.get(`/api/statistics/staff/${staffId}`);
+  return response.data;
+}
+
+export default {
+  getProvinces,
+  getWardsByProvince,
+  getStatistics,
+  getStaffStatistics,
 };

@@ -33,6 +33,7 @@ interface UserFormValues {
   fullName: string;
   email?: string;
   phone?: string;
+  customerPhone?: string;
   roleCode: "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER" | string;
   password?: string;
   status?: number;
@@ -64,7 +65,7 @@ const UserManagement: React.FC = () => {
       let finalRes: (UserDTO | Staff)[] = [];
 
       if (activeTab === "staff") {
-        const res: any = await staffApi.getStaffs();
+        const res: Staff[] = await staffApi.getStaffs();
         finalRes = Array.isArray(res) ? res : res?.data || [];
       } else {
         const res = await userApi.getAllUsers();
@@ -231,7 +232,7 @@ const UserManagement: React.FC = () => {
           <Title level={4} style={{ margin: 0 }}>
             Quản lý Người dùng
           </Title>
-          <Text type="secondary">Welcome to Estate Advance</Text>
+          <Text type="secondary">Chào mừng đến với Estate Advance</Text>
         </Col>
 
         <Col>
@@ -268,8 +269,8 @@ const UserManagement: React.FC = () => {
           padding: "0 16px",
         }}
       >
-        <TabPane tab="Customer" key="customer" />
-        <TabPane tab="Staff" key="staff" />
+        <TabPane tab="Khách Hàng" key="customer" />
+        <TabPane tab="Nhân Viên" key="staff" />
       </Tabs>
 
       <div style={{ marginTop: 16 }}>

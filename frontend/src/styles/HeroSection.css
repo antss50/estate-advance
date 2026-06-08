@@ -2,7 +2,7 @@
 
 .hero-section {
   padding: 80px 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+  background: linear-gradient(135deg, #feffff 0%, #ffffff 100%);
   position: relative;
   overflow: hidden;
 }
@@ -20,7 +20,7 @@
   font-size: 48px;
   font-weight: 800;
   line-height: 1.2;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, ui-sans-serif, sans-serif;
   color: var(--pa-dark);
   letter-spacing: -1px;
   margin-bottom: 24px;
@@ -132,7 +132,7 @@
 .stats-section {
   margin-top: 80px;
   padding: 40px;
-  background: #fff;
+  background: #fbfdff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -143,7 +143,7 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 24px;
-  font-weight: 600;
+  font-weight: 800;
   text-align: center;
 }
 
@@ -423,6 +423,7 @@
   .stats-main-title {
     font-size: 11px;
     margin-bottom: 16px;
+    font-weight: 800;
   }
 
   .partners-container {

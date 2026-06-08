@@ -115,28 +115,22 @@ export interface SuggestedBuildingDTO {
   buildingId: number;
   buildingName: string;
   address: string;
-  transactionType: string;
-  price: number;
-  area: number;
-  wardName: string;
-  provinceName: string;
-  buildingType: string;
-  priceMatchScore: number;
-  areaMatchScore: number;
-  locationMatchScore: number;
-  typeMatchScore: number;
+  priceRent?: number;
+  priceSale?: number;
+  floorArea: number;
+  scorePrice: number;
+  scoreArea: number;
+  scoreLocation: number;
+  scoreType: number;
   totalScore: number;
 }
 
 export interface MatchingResponseDTO {
   customerId: string;
-  desiredPrice: number;
-  desiredArea: number;
-  desiredWard: string;
-  desiredProvince: string;
+  customerName: string;
   priorityType: string;
-  totalMatches: number;
-  suggestedBuildings: SuggestedBuildingDTO[];
+  totalFound: number;
+  results: SuggestedBuildingDTO[];
 }
 
 export type BuildingStaffEntry = { 

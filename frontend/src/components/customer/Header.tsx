@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Layout, Menu, Avatar, Button, Space, Drawer, Row, Col } from "antd";
 import { MenuOutlined, CloseOutlined } from "@ant-design/icons";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../../styles/Header.css";
 
 const { Header } = Layout;
@@ -17,13 +18,24 @@ const AppHeader: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navigationItems = [
-    { key: "1", label: "Home" },
-    { key: "2", label: "About" },
-    { key: "3", label: "Features" },
-    { key: "4", label: "Contact" },
+    { key: "/", label: "Trang Chủ" },
+    { key: "/about", label: "Giới thiệu" },
+    { key: "/kinh-nghiem-thue-nha", label: "Kinh Nghiệm Thuê Nhà" },
+    { key: "/contact", label: "Liên hệ" },
   ];
+
+  const selectedKeys = navigationItems.some((item) => item.key === location.pathname)
+    ? [location.pathname]
+    : [];
+
+  const handleMenuClick = ({ key }: { key: string }) => {
+    navigate(key);
+    setMobileDrawerOpen(false);
+  };
 
   return (
     <>
@@ -41,6 +53,8 @@ const AppHeader: React.FC<HeaderProps> = ({
             <Menu
               mode="horizontal"
               items={navigationItems}
+              selectedKeys={selectedKeys}
+              onClick={handleMenuClick}
               style={{
                 border: "none",
                 background: "transparent",
@@ -92,7 +106,8 @@ const AppHeader: React.FC<HeaderProps> = ({
         <Menu
           mode="vertical"
           items={navigationItems}
-          onClick={() => setMobileDrawerOpen(false)}
+          selectedKeys={selectedKeys}
+          onClick={handleMenuClick}
         />
       </Drawer>
     </>

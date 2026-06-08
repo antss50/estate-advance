@@ -11,7 +11,7 @@ interface MatchedBuildingItemProps {
     address: string;
     priceRent?: number;
     priceSale?: number;
-    area: number;
+    floorArea: number;
     totalScore: number;
     image?: string;
     // Điểm số chi tiết từ server
@@ -77,25 +77,19 @@ const MatchedBuildingItem: React.FC<MatchedBuildingItemProps> = ({ building }) =
           <Row style={{ marginTop: '6px' }}>
             <Col span={16}>
               <Space size={4}>
-                {building.transactionType === 'BOTH' ? (
-                    <>
+                
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá bán: <strong style={{color: '#d62121'}}>{formatPrice(building.priceSale || 0)}</strong></Text>
-                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá cho thuê: <strong style={{color: '#d62121'}}>{formatPrice(building.priceRent || 0)}/tháng</strong></Text>
+                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá bán: <strong style={{color: '#d62121'}}>{building.priceSale ? formatPrice(building.priceSale) : "Không bán"}</strong></Text>
+                      <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá cho thuê: <strong style={{color: '#d62121'}}>{building.priceRent ? formatPrice(building.priceRent) + "/tháng" : "Không cho thuê"}</strong></Text>
                     </div>
                         
-                    </>
-                ) : building.transactionType === 'SALE' ? (
-                    <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá bán: <strong style={{color: '#d62121'}}>{formatPrice(building.priceSale || 0)}</strong></Text>   
-                ) : (
-                  <Text  style={{ color: '#000000', fontSize: '13px' }}>Giá cho thuê: <strong style={{color: '#d62121'}}>{formatPrice(building.priceRent || 0)}/tháng</strong></Text>
-                )}
+                   
               </Space>
             </Col>
             <Col span={8} style={{textAlign: "right"}}>
               <Space size={4}>
                 <AreaChartOutlined style={{ color: '#1677ff' }} />
-                <Text strong style={{ fontSize: '13px' }}>{building.area} m²</Text>
+                <Text strong style={{ fontSize: '13px' }}>{building.floorArea} m²</Text>
               </Space>
             </Col>
           </Row>

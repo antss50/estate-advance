@@ -1,6 +1,6 @@
 import client, { setAuthToken } from './axiosClient';
-import type { LoginResponse, RegisterStaffPayload, RegisterUserResponse, UserDTO } from '../types/user.type';
-import type { MatchingStaff, Staff } from '../types';
+import type { LoginResponse, MatchedStaffForBuildingRequestDTO, MatchedStaffForBuildingResponse, MatchedStaffForCustomerRequestDTO, MatchedStaffForCustomerRequestResponse, RegisterStaffPayload, RegisterUserResponse, UserDTO } from '../types/user.type';
+import type { Staff } from '../types';
 import type { BuildingSearchResponse } from '../types/building.type';
 
 const PATH = '/api/user/staffs';
@@ -10,8 +10,8 @@ export function configureToken(token: string | null) {
 }
 
 export async function getStaffs(): Promise<Staff[]> {
-  const res = await client.get<Staff[]>(PATH);
-  const data = res.data;
+  const res = await client.get<Staff[] | { data?: Staff[] }>(PATH);
+  const data = Array.isArray(res.data) ? res.data : res.data?.data;
 
   if (Array.isArray(data)) {
     return data.map((item: Staff) => ({
@@ -20,7 +20,9 @@ export async function getStaffs(): Promise<Staff[]> {
       userName: item.userName, 
       email: item.email,
       phone: item.phone,
+      sex: item.sex,
       workingArea: item.workingArea,
+      avatar: item.avatar,
       role: item.role || 'STAFF',
       revenue: item.revenue,
       performance: item.performance,
@@ -36,8 +38,13 @@ export async function getStaffById(staffId: number): Promise<UserDTO> {
   return res.data;
 }
 
-export async function getMatchingStaffs(ward: string): Promise<MatchingStaff[]> {
-  const res = await client.get<MatchingStaff[]>(`api/staff-customer-matching?ward=${ward}&limit=5`);
+export async function getMatchingStaffsForBuilding(payload: MatchedStaffForBuildingRequestDTO): Promise<MatchedStaffForBuildingResponse[]> {
+  const res = await client.post<MatchedStaffForBuildingResponse[]>(`/api/building-staff-matching/find-staff`, payload);
+  return res.data;
+}
+
+export async function getMatchingStaffsForCustomerRequest(payload: MatchedStaffForCustomerRequestDTO): Promise<MatchedStaffForCustomerRequestResponse> {
+  const res = await client.post<MatchedStaffForCustomerRequestResponse>(`/api/staff-customer-matching/find-staff`, payload);
   return res.data;
 }
 
@@ -56,4 +63,4 @@ export async function getBuildingByStaff(staffId: number): Promise<BuildingSearc
   return res.data;
 }
 
-export default { configureToken, getStaffs, getStaffById, getMatchingStaffs, registerStaff, loginStaff, getBuildingByStaff };
+export default { configureToken, getStaffs, getStaffById, registerStaff, loginStaff, getBuildingByStaff, getMatchingStaffsForBuilding, getMatchingStaffsForCustomerRequest };

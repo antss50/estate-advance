@@ -52,8 +52,8 @@ const propertyTypeOptions = [
 const priorityTypes = [
   { icon: HomeOutlined, label: "Mặc định", value: "DEFAULT" },
   { icon: DollarOutlined, label: "Tiết kiệm", value: "SAVINGS" },
-  { icon: CarOutlined, label: "Tiện lợi", value: "PROFIT" },
-  { icon: InsertRowLeftOutlined, label: "Không gian thoải mái", value: "SPACE" },
+  { icon: CarOutlined, label: "Tiện lợi", value: "CONVENIENT" },
+  { icon: InsertRowLeftOutlined, label: "Không gian thoải mái", value: "SPACIOUS" },
 ];
 
 interface DemandFormSectionProps {
@@ -170,12 +170,12 @@ const DemandFormSection: React.FC<DemandFormSectionProps> = ({ onSubmit, isLogge
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item label="Số Điện Thoại" name="phone">
+              <Form.Item label="Số Điện Thoại" name="phone" className="form-item-glass">
                 <Input className="form-input-glass" disabled={isLoggedIn} placeholder="Số điện thoại" />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item label="Email" name="email">
+              <Form.Item label="Email" name="email" className="form-item-glass">
                 <Input className="form-input-glass" disabled={isLoggedIn} placeholder="email@example.com" />
               </Form.Item>
             </Col>

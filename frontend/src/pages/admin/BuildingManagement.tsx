@@ -36,9 +36,10 @@ import type {
   AssignmentStaffDTO,
 } from "../../types/building.type";
 import formatImageSrc from "../../utils/format/images";
-import type { MatchedStaffDTO } from "../../types/user.type";
+import type { MatchedStaffForBuildingDTO } from "../../types/user.type";
 import type { ResponseDTO } from "../../types/response.type";
 import { uploadImageToCloudinary } from "../../api/axiosClient";
+import staffApi from "../../api/staffApi";
 
 const { Title } = Typography;
 
@@ -68,8 +69,8 @@ const BuildingManagement: React.FC = () => {
   const [formEdit] = Form.useForm();
   const [uploadList, setUploadList] = useState<UploadFile[]>([]);
 
-  const [staffOptions, setStaffOptions] = useState<(MatchedStaffDTO & { checked?: string })[]>([]);
-  const [selectedStaffs, setSelectedStaffs] = useState<number[]>([]);
+  const [staffOptions, setStaffOptions] = useState<MatchedStaffForBuildingDTO[]>([]);
+  // const [selectedStaffs, setSelectedStaffs] = useState<number[]>([]);
 
   const [form] = Form.useForm();
   const propertyType = Form.useWatch("propertyType", form);
@@ -110,23 +111,22 @@ const BuildingManagement: React.FC = () => {
     return () => clearTimeout(t);
   }, [keyword]);
 
-useEffect(() => {
-    if (assignVisible && staffOptions.length > 0) {
-      // Nhìn vào log image_8d7ae7.png, trường dùng để nhận diện là "checked" với giá trị "CHOSEN"
-      const assignedIds = staffOptions
-        .filter((staff) => staff.checked === "CHOSEN")
-        .map((staff) => staff.staffId);
+  // useEffect(() => {
+  //   if (assignVisible && staffOptions.length > 0) {
+  //     const assignedIds = staffOptions
+  //       .filter((staff) => staff.checked === true)
+  //       .map((staff) => staff.staffId);
 
-      console.log("Danh sách ID nhân viên đã gán sẵn:", assignedIds);
+  //     console.log("Danh sách ID nhân viên đã gán sẵn:", assignedIds);
 
-      // Điền trực tiếp mảng ID vào Checkbox.Group thông qua instance form
-      form.setFieldsValue({
-        staffIds: assignedIds,
-      });
-    } else if (!assignVisible) {
-      form.resetFields(); // Reset làm sạch dữ liệu biểu mẫu khi đóng Modal
-    }
-  }, [assignVisible, staffOptions, form]);
+  //     // Điền trực tiếp mảng ID vào Checkbox.Group thông qua instance form
+  //     form.setFieldsValue({
+  //       staffIds: assignedIds,
+  //     });
+  //   } else if (!assignVisible) {
+  //     form.resetFields(); // Reset làm sạch dữ liệu biểu mẫu khi đóng Modal
+  //   }
+  // }, [assignVisible, staffOptions, form]);
 
   const onSearchChange = (value: string) => {
     setKeyword(value);
@@ -138,27 +138,38 @@ useEffect(() => {
 
     setCurrentBuilding(building);
     setAssignVisible(true);
-    setAssigning(true); 
-
-
+    setAssigning(true);
 
     try {
       const [matchingRes, assignedStaffRes] = await Promise.all([
-        buildingApi.matchingStaffs(Number(building.id)), // Trả về dạng MatchedStaffDTO[]
-        buildingApi.getBuildingStaffs(String(building.id)), // Trả về dạng AssignmentStaffDTO[] 
+        staffApi.getMatchingStaffsForBuilding({
+          buildingId: Number(building.id),
+          topN: 5,
+        }), 
+        buildingApi.getBuildingStaffs(String(building.id)), 
       ]);
 
-      // bóc tách dữ liệu an toàn từ ResponseDTO hoặc Array thuần túy
-      const matchingData = Array.isArray(matchingRes)
-        ? matchingRes
-        : (matchingRes as ResponseDTO<MatchedStaffDTO[]>)?.data;
+      const matchingData = matchingRes.results ?? [];
+
+      console.log("📡 matchingRes from API:", matchingRes);
+      console.log("📡 assignedStaffRes from API:", assignedStaffRes);
 
       const assignedData = Array.isArray(assignedStaffRes)
         ? assignedStaffRes
         : (assignedStaffRes as ResponseDTO<AssignmentStaffDTO[]>)?.data;
 
-      const matchingList: MatchedStaffDTO[] = Array.isArray(matchingData) ? matchingData : [];
-      const assignedList: AssignmentStaffDTO[] = Array.isArray(assignedData) ? assignedData : [];
+      console.log("✅ matchingData extracted:", matchingData);
+      console.log("✅ assignedData extracted:", assignedData);
+
+      const matchingList: MatchedStaffForBuildingDTO[] = Array.isArray(matchingData)
+        ? (matchingData as MatchedStaffForBuildingDTO[])
+        : [];
+      const assignedList: AssignmentStaffDTO[] = Array.isArray(assignedData)
+        ? assignedData
+        : [];
+
+      console.log("📊 matchingList length:", matchingList.length);
+      console.log("📊 matchingList content:", matchingList);
 
       // 2. Tạo một Bản đồ Map lưu trữ trạng thái checked thực tế theo từng staffId từ assignedList
       // Key: staffId (number), Value: string (giá trị "checked" hoặc "")
@@ -169,38 +180,38 @@ useEffect(() => {
         }
       });
 
-      // 3. Tiến hành đồng bộ trộn dữ liệu: Duyệt qua danh sách MatchedStaffDTO
-      // Tạo ra thuộc tính bổ sung hợp lệ cho cấu trúc hiển thị giao diện Ant Design
-      const finalStaffOptions = matchingList.map((staff) => {
-        const checkStatus = assignedMap.get(staff.staffId);
+      // 3. Tiến hành đồng bộ trộn dữ liệu: Thêm properties cho render component
+      const finalStaffOptions: MatchedStaffForBuildingDTO[] = matchingList.map((staff) => {
+        console.log("🔄 Mapping staff:", staff.staffId, staff.staffName);
         
-        // Trả về một object định dạng chuẩn chỉnh, triệt tiêu các thuộc tính thừa từ API gây lỗi ép kiểu
-        return {
-          staffId: staff.staffId,
-          staffName: staff.staffName,
-          phone: staff.phone,
-          workingArea: staff.workingArea,
-          areaScore: staff.areaScore,
-          performanceScore: staff.performanceScore,
-          workloadScore: staff.workloadScore,
-          newbieBonus: staff.newbieBonus,
-          totalScore: staff.totalScore,
-          currentWorkload: staff.currentWorkload,
-          totalDeals: staff.totalDeals,
-          revenue: staff.revenue,
-          daysWorked: staff.daysWorked,
-          avgRevenuePerDeal: staff.avgRevenuePerDeal,
-          // Chuẩn hóa trạng thái checked về kiểu string đồng bộ với State
-          checked: checkStatus === "checked" || checkStatus === "CHOSEN" ? "CHOSEN" : "NOT_CHOSEN",
+        // Thêm properties cho render component cần
+        const transformed: MatchedStaffForBuildingDTO = {
+          ...staff,
+          totalDeals: staff.totalDeals || 0,
+          currentWorkload: staff.currentLoad || 0,
         };
+        
+        console.log("✔ Transformed object:", transformed);
+        return transformed;
       });
 
-      // 4. Sắp xếp danh sách nhân viên theo điểm totalScore giảm dần
-      finalStaffOptions.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+      console.log("📋 finalStaffOptions after mapping:", finalStaffOptions);
+      console.log("📋 finalStaffOptions length:", finalStaffOptions.length);
 
-      // Đỏ mảng dữ liệu đã chuẩn hóa cấu trúc vào state mà không lo lỗi Type
+      // 4. Sắp xếp danh sách nhân viên theo điểm totalScoreBS giảm dần
+      finalStaffOptions.sort(
+        (a, b) => (b.totalScoreBS || 0) - (a.totalScoreBS || 0),
+      );
+
+      console.log("📋 finalStaffOptions after sorting:", finalStaffOptions);
+
+      // Đổ mảng dữ liệu đã chuẩn hóa cấu trúc vào state mà không lo lỗi Type
       setStaffOptions(finalStaffOptions);
-      console.log("Danh sách nhân viên sau khi đồng bộ cấu trúc:", finalStaffOptions);
+      console.log("✅ State updated with finalStaffOptions");
+      console.log(
+        "Danh sách nhân viên sau khi đồng bộ cấu trúc:",
+        finalStaffOptions,
+      );
     } catch (err) {
       console.error("Error matching staffs", err);
       message.error("Không thể tải danh sách nhân viên phù hợp");
@@ -232,7 +243,9 @@ useEffect(() => {
       setEditLoading(true);
       try {
         // 1. Fetch dữ liệu từ API
-        const data = (await buildingApi.getBuilding(String(building.id),)) as BuildingDTO;
+        const data = (await buildingApi.getBuilding(
+          String(building.id),
+        )) as BuildingDTO;
         if (data) {
           setEditingBuilding(data);
 
@@ -252,7 +265,7 @@ useEffect(() => {
             uid: `existing-${idx}-${Date.now()}`, // Tạo UID duy nhất để tránh lỗi render
             name: `image-${idx}.jpg`,
             status: "done",
-            url: formatImageSrc(u), 
+            url: formatImageSrc(u),
           }));
 
           setUploadList(files);
@@ -274,71 +287,71 @@ useEffect(() => {
   };
 
   const handleSave = async (values: BuildingDTO) => {
-  setEditLoading(true);
-  try {
-    const payload: BuildingDTO = {
-      ...editingBuilding,
-      ...values,
-      ward: values.ward,
-      propertyType: Array.isArray(values.propertyType)
-        ? values.propertyType.join(",")
-        : values.propertyType,
-    };
+    setEditLoading(true);
+    try {
+      const payload: BuildingDTO = {
+        ...editingBuilding,
+        ...values,
+        ward: values.ward,
+        propertyType: Array.isArray(values.propertyType)
+          ? values.propertyType.join(",")
+          : values.propertyType,
+      };
 
-    // 2. Xử lý ảnh bằng Cloudinary thay vì đổi sang Base64
-    if (uploadList.length > 0) {
-      const imagePromises = uploadList.map(async (file) => {
-        // TRƯỜNG HỢP 1: Nếu là file mới được chọn từ máy tính (originFileObj)
-        if (file.originFileObj instanceof File) {
-          // Upload trực tiếp lên Cloudinary và lấy URL về
-          return await uploadImageToCloudinary(file.originFileObj);
-        }
-
-        // TRƯỜNG HỢP 2: Nếu là ảnh cũ đã có sẵn URL (không thay đổi)
-        if (file.url) {
-          if (file.url.startsWith("data:image")) {
-            return file.url; 
+      // 2. Xử lý ảnh bằng Cloudinary thay vì đổi sang Base64
+      if (uploadList.length > 0) {
+        const imagePromises = uploadList.map(async (file) => {
+          // TRƯỜNG HỢP 1: Nếu là file mới được chọn từ máy tính (originFileObj)
+          if (file.originFileObj instanceof File) {
+            // Upload trực tiếp lên Cloudinary và lấy URL về
+            return await uploadImageToCloudinary(file.originFileObj);
           }
-          return file.url; 
-        }
-        return "";
-      });
 
-      // Đợi tất cả các ảnh upload xong
-      const images = await Promise.all(imagePromises);
-      const validImages = images.filter((img) => img);
+          // TRƯỜNG HỢP 2: Nếu là ảnh cũ đã có sẵn URL (không thay đổi)
+          if (file.url) {
+            if (file.url.startsWith("data:image")) {
+              return file.url;
+            }
+            return file.url;
+          }
+          return "";
+        });
 
-      // Gộp các đường dẫn URL (rất ngắn gọn, sạch sẽ) để gửi lên DB
-      payload.image = validImages.join(",");
-      payload.avatar = validImages[0] || "";
-    } else {
-      payload.image = "";
-      payload.avatar = "";
+        // Đợi tất cả các ảnh upload xong
+        const images = await Promise.all(imagePromises);
+        const validImages = images.filter((img) => img);
+
+        // Gộp các đường dẫn URL (rất ngắn gọn, sạch sẽ) để gửi lên DB
+        payload.image = validImages.join(",");
+        payload.avatar = validImages[0] || "";
+      } else {
+        payload.image = "";
+        payload.avatar = "";
+      }
+
+      // 3. Gửi request đến API
+      let res;
+      if (payload.id) {
+        res = await buildingApi.updateBuilding(String(payload.id), payload);
+      } else {
+        res = await buildingApi.createBuilding(payload);
+      }
+
+      if (res) {
+        message.success("Lưu tòa nhà thành công");
+        closeEdit();
+        fetchBuildings(page, keyword);
+      }
+    } catch (err) {
+      console.error("Save building error", err);
+      const errorMsg =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Lưu tòa nhà thất bại";
+      message.error(errorMsg);
+    } finally {
+      setEditLoading(false);
     }
-
-    // 3. Gửi request đến API 
-    let res;
-    if (payload.id) {
-      res = await buildingApi.updateBuilding(String(payload.id), payload);
-    } else {
-      res = await buildingApi.createBuilding(payload);
-    }
-
-    if (res) {
-      message.success("Lưu tòa nhà thành công");
-      closeEdit();
-      fetchBuildings(page, keyword); 
-    }
-  } catch (err) {
-    console.error("Save building error", err);
-    const errorMsg =
-      (err as { response?: { data?: { message?: string } } }).response?.data
-        ?.message || "Lưu tòa nhà thất bại";
-    message.error(errorMsg);
-  } finally {
-    setEditLoading(false);
-  }
-};
+  };
 
   // Upload handlers
   const beforeUpload = (file: File) => {
@@ -376,12 +389,12 @@ useEffect(() => {
 
   const handleAssign = async () => {
     if (!currentBuilding) return;
-  //   if (selectedStaffs.length === 0) {
-  //   message.warning("Vui lòng chọn ít nhất một nhân viên để gán");
-  //   return;
-  // }
+    //   if (selectedStaffs.length === 0) {
+    //   message.warning("Vui lòng chọn ít nhất một nhân viên để gán");
+    //   return;
+    // }
     const formValues = form.getFieldsValue();
-      const staffIdsFromForm: number[] = formValues.staffIds || [];
+    const staffIdsFromForm: number[] = formValues.staffIds || [];
 
     // 2. Kiểm tra tính hợp lệ của dữ liệu biểu mẫu
     if (staffIdsFromForm.length === 0) {
@@ -393,7 +406,7 @@ useEffect(() => {
     try {
       const payload: AssignmentBuildingDTO = {
         buildingId: Number(currentBuilding.id),
-        staffIds: staffIdsFromForm
+        staffIds: staffIdsFromForm,
       };
       const res = await buildingApi.assignBuildingStaffs(payload);
       if (res && (res.success === true || res.success === undefined)) {
@@ -507,8 +520,11 @@ useEffect(() => {
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <Title level={4} style={{ margin: 0 }}>
-            Quản lý tòa nhà
+            Quản lý Toà Nhà
           </Title>
+          <span style={{ color: "rgba(0, 0, 0, 0.45)" }}>
+            Chào mừng đến với Estate Advance
+          </span>
         </Col>
 
         <Col>
@@ -518,10 +534,10 @@ useEffect(() => {
               prefix={<SearchOutlined />}
               value={keyword}
               onChange={(e) => onSearchChange(e.target.value)}
-              style={{ width: 420 }}
+              style={{ width: 420, borderRadius: "30px" }}
             />
-            <Button type="primary" onClick={() => fetchBuildings(1, keyword)}>
-              Tìm
+            <Button type="primary" shape="circle">
+              <SearchOutlined />
             </Button>
             <Button
               danger
@@ -571,7 +587,7 @@ useEffect(() => {
       >
         <Spin spinning={assigning}>
           <Form form={form} layout="vertical">
-            <Form.Item 
+            <Form.Item
               label="Danh sách nhân viên (Sắp xếp theo độ phù hợp)"
               name="staffIds"
             >
@@ -621,10 +637,10 @@ useEffect(() => {
                           <div style={{ textAlign: "right" }}>
                             <Tag
                               color={
-                                staff.totalScore! > 0.8 ? "green" : "orange"
+                                staff.totalScoreBS! > 0.8 ? "green" : "orange"
                               }
                             >
-                              {Math.round(staff.totalScore! * 100)}% Match
+                              {Math.round(staff.totalScoreBS! * 100)}% Match
                             </Tag>
                           </div>
                         </div>
@@ -678,7 +694,7 @@ useEffect(() => {
               </Form.Item>
             </Col>
             <Col span={12}>
-                <Form.Item name="propertyType" label="Loại nhà đất">
+              <Form.Item name="propertyType" label="Loại nhà đất">
                 <Select
                   options={[
                     { label: "Nhà đất thuê", value: "RENT" },
@@ -784,13 +800,13 @@ useEffect(() => {
               {propertyType === "SALE" && (
                 <Form.Item name="legal" label="Pháp lý">
                   <Select
-                  mode="multiple"
-                  options={[
-                    { label: "Sổ hồng", value: "SO_HONG" },
-                    { label: "Sổ đỏ", value: "SO_DO" },
-                    { label: "Không sổ", value: "KHONG_SO" },
-                  ]}
-                />
+                    mode="multiple"
+                    options={[
+                      { label: "Sổ hồng", value: "SO_HONG" },
+                      { label: "Sổ đỏ", value: "SO_DO" },
+                      { label: "Không sổ", value: "KHONG_SO" },
+                    ]}
+                  />
                 </Form.Item>
               )}
             </Col>

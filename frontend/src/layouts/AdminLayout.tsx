@@ -5,6 +5,7 @@ import {
   TeamOutlined,
   BankOutlined,
   FileTextOutlined,
+  MessageOutlined,
   UserOutlined,
   MenuOutlined,
 } from "@ant-design/icons";
@@ -20,27 +21,32 @@ const AdminLayout: React.FC = () => {
     {
       key: "/admin/dashboard",
       icon: <HomeOutlined />,
-      label: <Link to="/admin/dashboard">Dashboard</Link>,
+      label: <Link to="/admin/dashboard">Thống Kê</Link>,
     },
     {
       key: "/admin/users",
       icon: <TeamOutlined />,
-      label: <Link to="/admin/users">Users</Link>,
+      label: <Link to="/admin/users">Quản Lý Người Dùng</Link>,
     },
     {
       key: "/admin/buildings",
       icon: <BankOutlined />,
-      label: <Link to="/admin/buildings">Buildings</Link>,
+      label: <Link to="/admin/buildings">Quản Lý Tòa Nhà</Link>,
     },
     {
       key: "/admin/assignments",
       icon: <FileTextOutlined />,
-      label: <Link to="/admin/assignments">Assignments</Link>,
+      label: <Link to="/admin/assignments">Quản Lý Phân Công</Link>,
     },
     {
       key: "/admin/customer/demands",
       icon: <FileTextOutlined />,
-      label: <Link to="/admin/customer/demands">Customer Demands</Link>,
+      label: <Link to="/admin/customer/demands">Nhu Cầu Khách Hàng</Link>,
+    },
+    {
+      key: "/admin/chat",
+      icon: <MessageOutlined />,
+      label: <Link to="/admin/chat">Chat</Link>,
     }
   ];
 
@@ -69,7 +75,7 @@ const AdminLayout: React.FC = () => {
           }}
         >
           <Title level={5} style={{ margin: 0, color: "#0f172a" }}>
-            ADMINISTRATION
+            QUẢN TRỊ VIÊN
           </Title>
           <MenuOutlined />
         </div>
@@ -114,12 +120,7 @@ const AdminLayout: React.FC = () => {
               justifyContent: "space-between",
             }}
           >
-            <div>
-              <Title level={4} style={{ margin: 0 }}>
-                DASHBOARD
-              </Title>
-              <Text type="secondary">Welcome to Estate Advance</Text>
-            </div>
+            
             <Space>{/* right-side header actions can go here */}</Space>
           </div>
         </Header>

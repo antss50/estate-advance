@@ -1,5 +1,5 @@
 import client, { setAuthToken } from './axiosClient';
-import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload, UserDemandDTO, MatchingPayload, RegisterUserPayload, RegisterUserResponse, LoginResponse } from '../types/user.type';
+import type { UserDTO, PasswordDTO, CreateUserPayload, UpdateUserPayload, UserDemandDTO, MatchingPayload, RegisterUserPayload, RegisterUserResponse, LoginResponse, UpdateCustomerStatusPayload, UpdateCustomerStatusResponse } from '../types/user.type';
 import type { ResponseDTO, PaginatedResult } from '../types/response.type';
 import type { Staff } from '../types';
 import type { MatchingResponseDTO } from '../types/building.type';
@@ -64,6 +64,11 @@ export async function matchCustomerRequest(payload: MatchingPayload): Promise<Re
   const res = await client.post<ResponseDTO<MatchingResponseDTO>>(`/api/customer-matching/find-buildings`, payload);
   return res.data;
 }
+
+export async function updateCustomerStatus(payload: UpdateCustomerStatusPayload): Promise<UpdateCustomerStatusResponse> {
+  const res = await client.put<UpdateCustomerStatusResponse>(`/api/customer-status/update`, payload);
+  return res.data;
+}
 export default {
   configureToken,
   listUsers,
@@ -76,5 +81,6 @@ export default {
   changePassword,
   registerUser,
   loginUser,
-  matchCustomerRequest
+  matchCustomerRequest,
+  updateCustomerStatus
 };

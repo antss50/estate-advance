@@ -9,20 +9,20 @@ const HeroSection: React.FC = () => {
     {
       id: 1,
       image:
-        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=500&h=600",
-      title: "Tòa Nhà A",
+        "https://cenhcm.vn/wp-content/uploads/2023/04/Vinhomes-Grand-Park.jpg",
+      title: "Vinhomes Grand Park",
     },
     {
       id: 2,
       image:
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=500&h=600",
-      title: "Tòa Nhà B",
+        "https://phumyhunghome.vn/wp-content/uploads/2021/07/thuc-te-midtown-ve-dem-1-960x720.jpg",
+      title: "Khu Đô Thị Phú Mỹ Hưng",
     },
     {
       id: 3,
       image:
-        "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?auto=format&fit=crop&q=80&w=500&h=600",
-      title: "Tòa Nhà C",
+        "https://smartland.vn/wp-content/uploads/2021/12/tong-quan-du-an-van-phuc-city.jpg",
+      title: "Vạn Phúc City",
     },
   ];
 

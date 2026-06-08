@@ -1,101 +1,103 @@
 /* Features Section Styles */
 
 .features-section {
-  padding: 80px 24px;
-  background: linear-gradient(180deg, #f5f7fa 0%, #e8f0fe 100%);
+  padding: 92px 24px 88px;
+  background: #fcfeff;
   position: relative;
 }
 
 .features-container {
-  max-width: 1400px;
+  max-width: 1760px;
   margin: 0 auto;
 }
 
 .features-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 58px;
 }
 
 .features-title {
   position: relative;
-  display: inline-block;
-  font-size: 36px;
-  font-weight: 800;
-  margin: 0;
+  display: block;
+  margin: 0 0 12px 0 !important;
+  line-height: 1 !important;
 }
 
 .features-accent {
-  color: #1677ff;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 32px;
+  color: #000000;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 28px;
+  font-weight: 800;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .features-title::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 4px;
-  background: linear-gradient(90deg, #1677ff 0%, #f47e26 100%);
-  border-radius: 2px;
+  display: none;
+}
+
+.features-header .ant-typography {
+  max-width: 780px;
+  margin: 10px auto !important;
+  color: #5f6f83;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .features-grid {
-  margin-top: 40px;
+  margin-top: 0;
 }
 
 .feature-card {
   position: relative;
-  border-radius: 16px;
-  padding: 32px 24px;
-  text-align: center;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-height: 286px;
+  border-radius: 8px !important;
+  text-align: left;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 2px 8px rgba(6, 36, 77, 0.08);
   overflow: hidden;
+  background: #ffffff !important;
+  border: 1px solid #dbe3eb !important;
 }
 
 .feature-card::before {
-  content: "";
-  position: absolute;
-  top: -100%;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.1);
-  transition: all 0.4s ease;
+  display: none;
+}
+
+.feature-card .ant-card-body {
+  height: 100%;
+  padding: 34px 34px 36px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: #c9d4df !important;
+  box-shadow: 0 10px 24px rgba(6, 36, 77, 0.12);
 }
 
 .feature-card:hover::before {
-  top: 0;
+  display: none;
 }
 
 /* Different color variants */
 .feature-light-blue {
-  background: linear-gradient(135deg, #e8f0fe 0%, #9bc3ff 100%);
-  border: 1px solid rgba(22, 119, 255, 0.2);
+  background: #ffffff !important;
 }
 
 .feature-green {
-  background: linear-gradient(135deg, #d9f0e6 0%, #00ff73 100%);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  background: #ffffff !important;
 }
 
 .feature-white {
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff !important;
 }
 
 .feature-purple {
-  background: linear-gradient(135deg, #e8d9f0 0%, #e0abff 100%);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: #ffffff !important;
 }
 
 /* Staggered effect */
@@ -116,37 +118,37 @@
 }
 
 .feature-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 24px;
+  margin-bottom: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  border-radius: 16px;
-  background: rgba(22, 119, 255, 0.1);
-  color: #1677ff;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  background: #cee9ff;
+  color: #06244d;
   transition: all 0.3s ease;
 }
 
 .feature-card:hover .feature-icon {
-  transform: scale(1.1) rotate(5deg);
-  background: rgba(22, 119, 255, 0.2);
+  transform: translateY(-2px);
+  background: #cee9ff;
 }
 
 .feature-card-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--pa-dark);
-  margin: 16px 0 12px 0;
-  line-height: 1.4;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #06244d !important;
+  margin: 0 0 10px 0 !important;
+  line-height: 1.3 !important;
 }
 
 .feature-card-desc {
-  font-size: 14px;
-  color: var(--pa-muted);
-  line-height: 1.6;
-  margin: 0;
+  font-size: 15px;
+  color: #5f6f83;
+  line-height: 1.35;
+  margin: 0 !important;
 }
 
 /* Animations */
@@ -164,66 +166,82 @@
 /* Responsive */
 @media (max-width: 768px) {
   .features-section {
-    padding: 60px 16px;
-  }
-
-  .features-title {
-    font-size: 28px;
+    padding: 64px 16px;
   }
 
   .features-accent {
-    font-size: 24px;
+    font-size: 30px;
+  }
+
+  .features-header .ant-typography {
+    font-size: 18px;
   }
 
   .features-header {
-    margin-bottom: 40px;
+    margin-bottom: 36px;
   }
 
   .feature-card {
-    padding: 24px 16px;
+    min-height: 240px;
+  }
+
+  .feature-card .ant-card-body {
+    padding: 28px 28px 30px !important;
   }
 
   .feature-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
+    width: 58px;
+    height: 58px;
+    font-size: 22px;
+    margin-bottom: 22px;
   }
 
   .feature-card-title {
-    font-size: 16px;
-    margin: 12px 0 8px 0;
+    font-size: 21px !important;
   }
 
   .feature-card-desc {
-    font-size: 13px;
+    font-size: 18px;
   }
 }
 
 @media (max-width: 576px) {
   .features-section {
-    padding: 40px 12px;
-  }
-
-  .features-title {
-    font-size: 24px;
+    padding: 48px 12px;
   }
 
   .features-accent {
-    font-size: 20px;
+    font-size: 26px;
+  }
+
+  .features-header .ant-typography {
+    font-size: 16px;
   }
 
   .features-grid {
-    margin-top: 20px;
+    margin-top: 0;
   }
 
   .feature-card {
-    padding: 20px 12px;
+    min-height: auto;
+  }
+
+  .feature-card .ant-card-body {
+    padding: 24px !important;
   }
 
   .feature-icon {
     width: 56px;
     height: 56px;
-    font-size: 28px;
-    margin-bottom: 12px;
+    font-size: 21px;
+    margin-bottom: 20px;
+  }
+
+  .feature-card-title {
+    font-size: 20px !important;
+  }
+
+  .feature-card-desc {
+    font-size: 16px;
   }
 }

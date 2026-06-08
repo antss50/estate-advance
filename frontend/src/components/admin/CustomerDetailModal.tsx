@@ -50,7 +50,16 @@ export function CustomerDetailModal({
     try {
       setLoading(true);
       setError(null);
-      await assignStaffToCustomer(customer.id, selectedStaffs);
+      console.log("Payload for assignment:", {
+        customerId: customer.customerId,
+        demandId: customer.demand?.id,
+        staffIds: selectedStaffs,
+      });
+      await assignStaffToCustomer({
+        customerId: customer.customerId,
+        demandId: customer.demand?.id,
+        staffIds: selectedStaffs
+      });
       onAssignmentChange?.();
       onClose();
     } catch (err) {
@@ -113,7 +122,7 @@ export function CustomerDetailModal({
             </div>
             <div className="detail-row">
               <span className="label">Vị trí:</span>
-              <span className="value">{customer.demand?.location}</span>
+              <span className="value">{customer.demand?.ward}, {customer.demand?.province}</span>
             </div>
             <div className="detail-row">
               <span className="label">Loại:</span>

@@ -13,30 +13,49 @@ export interface Staff {
   role: string;
   phone: string;
   email: string;
+  sex?: string;
   workingArea?: string;
   avatar?: string;
-  performance?: number; // Thêm trường hiệu suất nếu có
+  performance?: number;
   status?: string;
-  revenue?: number; // Doanh thu nếu có
-  totalDeals?: number; // Tổng số giao dịch nếu có
-  checked?: boolean; // Trường này dùng để đánh dấu đã chọn trong UI
+  revenue?: number;
+  totalDeals?: number;
+  checked?: boolean;
 }
 
-export interface MatchingStaff {
+export interface TopStaff {
   staffId: number;
   staffName: string;
+  email: string;
+  phone: string;
+  rank: number;
+  revenue: number;
+  revenueSale: number;
+  revenueRent: number;
+  totalDeals: number;
+  totalSaleDeals: number;
+  totalRentDeals: number;
+  performance: number;
+}
+
+export interface MatchedStaff {
+  staffId: number;
+  staffName: string;
+  email: string;
   phone: string;
   workingArea?: string;
-  areaScore: number;
-  performanceScore: number;
-  workloadScore: number;
+  scoreBuilding: number;
+  scoreBuildingPrice: number;
+  scoreBuildingLegal: number;
+  scoreBuildingLiquidity: number;
+  scoreArea: number;
+  scorePerformance: number;
+  scoreWorkload: number;
   newbieBonus: number;
-  totalScore: number;
-  currentWorkload: number;
-  totalDeals: number;
-  revenue: number;
+  totalScoreBS: number;
+  currentLoad: number;
   daysWorked: number;
-  avgRevenuePerDeal: number;
+  newbie: boolean;
 }
 
 export interface DemandFormValues {
@@ -55,6 +74,34 @@ export interface DemandFormValues {
   direction?: string;
   legalStatus?: string;
   brokerageFee?: number;
+}
+
+export interface DashboardResponse {
+  totalRevenue: number;
+  totalStaffRevenue: number;
+  totalSystemRevenue: number;
+  totalDeals: number;
+  totalSaleDeals: number;
+  totalRentDeals: number;
+  totalCustomers: number;
+  totalActiveCustomers: number;
+  totalNewCustomers: number;
+  totalPaidCustomers: number;
+  topStaffs: TopStaff[];
+}
+
+export interface StaffStatisticsResponse {
+  staffId: number;
+  staffName: string;
+  email: string;
+  phone: string;
+  totalRevenue: number;
+  revenueSale: number;
+  revenueRent: number;
+  totalDeals: number;
+  totalSaleDeals: number;
+  totalRentDeals: number;
+  performance: number;
 }
 
 export default {};

@@ -1,138 +1,152 @@
 import React from "react";
-import {
-  Row,
-  Col,
-  Card,
-  Form,
-  Input,
-  Button,
-  Space,
-  Typography,
-  Layout,
-} from "antd";
+import { Row, Col, Card, Form, Input, Button, Select, Typography } from "antd";
 import {
   PhoneOutlined,
   MailOutlined,
   EnvironmentOutlined,
+  MessageOutlined,
+  FacebookOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
+import Footer from "./Footer";
 import "../../styles/ContactSection.css";
 
-const { Title, Paragraph, Text } = Typography;
-const { Footer } = Layout;
+const { Title, Paragraph } = Typography;
 
 const ContactSection: React.FC = () => {
   const [form] = Form.useForm();
 
-  const handleContactSubmit = (values: any) => {
+  const handleContactSubmit = (values: unknown) => {
     console.log("Contact form submitted:", values);
     form.resetFields();
   };
 
   return (
     <>
-      {/* Contact Section */}
       <section className="contact-section">
-        <div className="contact-bg" />
-
         <div className="contact-container">
-          <Row gutter={[32, 32]} align="middle">
-            {/* Left Column - Connect */}
-            <Col xs={24} lg={12}>
-              <div className="contact-left">
-                <Title level={2} className="contact-title" style={{ color: "#255ecf" }}>
-                  KẾT NỐI VỚI CHÚNG TÔI
-                </Title>
-                <Paragraph className="contact-desc">
-                  Liên hệ trực tiếp với chúng tôi để được tư vấn miễn phí
-                </Paragraph>
+          <div className="contact-page-heading">
+            <Title level={1} className="contact-title">
+              Liên hệ
+            </Title>
+            <Paragraph className="contact-desc">
+              Đội ngũ tư vấn hoạt động 8:00 - 21:00 (Thứ 2 - Chủ nhật). Bạn có thể gọi hotline, nhắn Zalo, hoặc để lại thông tin - chúng tôi sẽ phản hồi nhanh nhất.
+            </Paragraph>
+          </div>
 
-                <Space
-                  size="large"
-                  style={{ marginTop: 32 }}
-                  direction="vertical"
-                >
-                  <a href="tel:+84912345678" className="contact-button phone">
+          <Row gutter={[48, 32]}>
+            <Col xs={24} lg={12}>
+              <div className="contact-info-list">
+                <a href="tel:+84912345678" className="contact-info-card">
+                  <span className="contact-info-icon">
                     <PhoneOutlined />
-                    <span>+84 912 345 678</span>
-                  </a>
-                  <a
-                    href="mailto:support@estateadvance.vn"
-                    className="contact-button email"
-                  >
+                  </span>
+                  <span>
+                    <span className="contact-info-label">HOTLINE</span>
+                    <strong>+84 912 345 678</strong>
+                  </span>
+                </a>
+
+                <a href="tel:+84912345678" className="contact-info-card featured">
+                  <span className="contact-info-icon yellow">
+                    <MessageOutlined />
+                  </span>
+                  <span>
+                    <span className="contact-info-label">ZALO</span>
+                    <strong>+84 912 345 678</strong>
+                  </span>
+                </a>
+
+                <a href="https://facebook.com/estateadvance" className="contact-info-card">
+                  <span className="contact-info-icon">
+                    <FacebookOutlined />
+                  </span>
+                  <span>
+                    <span className="contact-info-label">FANPAGE</span>
+                    <strong>facebook.com/estateadvance</strong>
+                  </span>
+                </a>
+
+                <a href="mailto:support@estateadvance.vn" className="contact-info-card">
+                  <span className="contact-info-icon">
                     <MailOutlined />
-                    <span>support@estateadvance.vn</span>
-                  </a>
-                </Space>
+                  </span>
+                  <span>
+                    <span className="contact-info-label">EMAIL</span>
+                    <strong>support@estateadvance.vn</strong>
+                  </span>
+                </a>
+
+                <div className="contact-info-card">
+                  <span className="contact-info-icon">
+                    <EnvironmentOutlined />
+                  </span>
+                  <span>
+                    <span className="contact-info-label">KHU VỰC HOẠT ĐỘNG</span>
+                    <strong>Trên khắp mọi miền Tổ Quốc</strong>
+                  </span>
+                </div>
+
+                <div className="contact-info-card">
+                  <span className="contact-info-icon">
+                    <ClockCircleOutlined />
+                  </span>
+                  <span>
+                    <span className="contact-info-label">GIỜ LÀM VIỆC</span>
+                    <strong>8:00 - 21:00 (Thứ 2 - Chủ nhật)</strong>
+                  </span>
+                </div>
               </div>
             </Col>
 
-            {/* Right Column - Form */}
             <Col xs={24} lg={12}>
-              <Card
-                className="contact-form-card"
-                title="ĐỂ LẠI THÔNG TIN LIÊN HỆ"
-                bordered={false}
-              >
-                <Form
-                  form={form}
-                  layout="vertical"
-                  onFinish={handleContactSubmit}
-                >
+              <Card className="contact-form-card" variant="borderless">
+                <div className="contact-form-heading">
+                  <Title level={3}>Để lại thông tin</Title>
+                  <Paragraph>Chúng tôi sẽ liên hệ lại trong 30 phút.</Paragraph>
+                </div>
+
+                <Form form={form} layout="vertical" onFinish={handleContactSubmit}>
                   <Form.Item
-                    label="Họ và Tên"
+                    label="Họ tên *"
                     name="fullName"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập họ tên" },
-                    ]}
+                    rules={[{ required: true, message: "Vui lòng nhập họ tên" }]}
                   >
-                    <Input placeholder="Nhập họ và tên" />
+                    <Input />
                   </Form.Item>
 
                   <Form.Item
-                    label="Số Điện Thoại"
+                    label="Số điện thoại *"
                     name="phone"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Vui lòng nhập số điện thoại",
-                      },
-                    ]}
+                    rules={[{ required: true, message: "Vui lòng nhập số điện thoại" }]}
                   >
-                    <Input placeholder="Nhập số điện thoại" />
+                    <Input placeholder="VD: 0909123456" />
                   </Form.Item>
 
                   <Form.Item
-                    label="Email"
-                    name="email"
-                    rules={[
-                      { required: true, message: "Vui lòng nhập email" },
-                      { type: "email", message: "Email không hợp lệ" },
-                    ]}
+                    label="Nhu cầu *"
+                    name="demandType"
+                    rules={[{ required: true, message: "Vui lòng chọn nhu cầu" }]}
                   >
-                    <Input placeholder="Nhập email" />
-                  </Form.Item>
-
-                  <Form.Item
-                    label="Nhu Cầu"
-                    name="demand"
-                    rules={[
-                      { required: true, message: "Vui lòng mô tả nhu cầu" },
-                    ]}
-                  >
-                    <Input.TextArea
-                      rows={3}
-                      placeholder="Mô tả nhu cầu của bạn..."
+                    <Select
+                      placeholder="-- Chọn --"
+                      options={[
+                        { value: "rent", label: "Cần thuê căn hộ" },
+                        { value: "viewing", label: "Đặt lịch xem nhà" },
+                        { value: "contract", label: "Tư vấn hợp đồng" },
+                      ]}
                     />
                   </Form.Item>
 
-                  <Button
-                    type="primary"
-                    size="large"
-                    htmlType="submit"
-                    block
-                    className="btn-submit-contact"
-                  >
-                    GỬI THÔNG TIN
+                  <Form.Item label="Lời nhắn" name="message">
+                    <Input.TextArea
+                      rows={5}
+                      placeholder="VD: Cần thuê 2PN The Origami, ngân sách 11-13tr, vào ở đầu tháng sau."
+                    />
+                  </Form.Item>
+
+                  <Button type="primary" size="large" htmlType="submit" block className="btn-submit-contact">
+                    Gửi thông tin
                   </Button>
                 </Form>
               </Card>
@@ -141,92 +155,7 @@ const ContactSection: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer className="app-footer">
-        <div className="footer-content">
-          <Row gutter={[32, 32]}>
-            {/* Logo & About */}
-            <Col xs={24} sm={12} lg={6}>
-              <div className="footer-section">
-                <Title level={5} className="footer-logo">
-                  ESTATE ADVANCE
-                </Title>
-                <Paragraph style={{ color: "#666", fontSize: 12 }}>
-                  Giải pháp toàn diện cho bất động sản thương mại
-                </Paragraph>
-              </div>
-            </Col>
-
-            {/* Quick Links */}
-            <Col xs={24} sm={12} lg={6}>
-              <div className="footer-section">
-                <Title level={5}>LIÊN KẾT</Title>
-                <ul className="footer-links">
-                  <li>
-                    <a href="#home">Trang chủ</a>
-                  </li>
-                  <li>
-                    <a href="#about">Về chúng tôi</a>
-                  </li>
-                  <li>
-                    <a href="#services">Dịch vụ</a>
-                  </li>
-                  <li>
-                    <a href="#contact">Liên hệ</a>
-                  </li>
-                </ul>
-              </div>
-            </Col>
-
-            {/* Contact Info */}
-            <Col xs={24} sm={12} lg={6}>
-              <div className="footer-section">
-                <Title level={5}>LIÊN HỆ</Title>
-                <Paragraph style={{ fontSize: 12 }}>
-                  <MailOutlined /> support@estateadvance.vn
-                </Paragraph>
-                <Paragraph style={{ fontSize: 12 }}>
-                  <PhoneOutlined /> Hotline: 1900 1234
-                </Paragraph>
-                <Paragraph style={{ fontSize: 12 }}>
-                  <EnvironmentOutlined /> Phường Linh Xuân, TP. HCM
-                </Paragraph>
-              </div>
-            </Col>
-
-            {/* Association */}
-            <Col xs={24} sm={12} lg={6}>
-              <div className="footer-section">
-                <Title level={5}>HỘI VIÊN</Title>
-                <Paragraph style={{ fontSize: 12 }}>
-                  Hội môi giới BĐS TPHCM
-                </Paragraph>
-                <Paragraph style={{ fontSize: 12 }}>
-                  Đã được xác thực & cấp chứng chỉ
-                </Paragraph>
-              </div>
-            </Col>
-          </Row>
-
-          {/* Copyright */}
-          <div className="footer-bottom">
-            <hr style={{ margin: "24px 0" }} />
-            <Row justify="space-between" align="middle">
-              <Col xs={24} sm={12}>
-                <Text style={{ fontSize: 12, color: "#999" }}>
-                  © 2026 Estate Advance. All rights reserved.
-                </Text>
-              </Col>
-              <Col xs={24} sm={12} style={{ textAlign: "right" }}>
-                <Space split="|">
-                  <a style={{ fontSize: 12 }}>Chính sách bảo mật</a>
-                  <a style={{ fontSize: 12 }}>Điều khoản sử dụng</a>
-                </Space>
-              </Col>
-            </Row>
-          </div>
-        </div>
-      </Footer>
+      <Footer />
     </>
   );
 };

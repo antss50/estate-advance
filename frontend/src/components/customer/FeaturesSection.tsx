@@ -61,6 +61,9 @@ const FeaturesSection: React.FC = () => {
           <Title level={2} className="features-title">
             <span className="features-accent">VỀ CHÚNG TÔI</span>
           </Title>
+          <Paragraph style={{ fontSize: 15, color: "#555", maxWidth: 600, margin: "0 auto" }}>
+            Quy trình minh bạch, các tính năng thông minh và dịch vụ tận tâm giúp bạn tìm được ngôi nhà mơ ước một cách dễ dàng và an toàn.
+          </Paragraph>
         </div>
 
         <Row gutter={[24, 48]} className="features-grid">
@@ -68,7 +71,7 @@ const FeaturesSection: React.FC = () => {
             <Col xs={24} sm={12} lg={6} key={feature.id}>
               <Card
                 className={`feature-card ${feature.colorClass} feature-card-${index}`}
-                bordered={false}
+                variant="borderless"
                 hoverable
               >
                 <div className="feature-icon">{feature.icon}</div>
