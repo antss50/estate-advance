@@ -17,7 +17,7 @@ public class CustomerMatchingAPI {
 
     @PostMapping("/find-buildings")
     public ResponseEntity<CustomerMatchingResponse> findMatchingBuildings(@RequestBody CustomerMatchingRequest request) {
-        CustomerMatchingResponse response = matchingService.findMatchingBuildings(request);
+            CustomerMatchingResponse response = matchingService.findMatchingBuildings(request);
         return ResponseEntity.ok(response);
     }
 }
