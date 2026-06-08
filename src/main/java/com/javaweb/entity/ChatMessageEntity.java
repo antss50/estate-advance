@@ -18,8 +18,11 @@ public class ChatMessageEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "room_id", nullable = false, length = 100)
-    private String roomId;
+    @Column(name = "room_id", nullable = false)
+    private Long roomId;
+
+    @Column(name = "chat_room_id", nullable = false)
+    private Long chatRoomId;
 
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
@@ -47,8 +50,13 @@ public class ChatMessageEntity {
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getRoomId() { return roomId; }
-    public void setRoomId(String roomId) { this.roomId = roomId; }
+    public Long getRoomId() { return roomId; }
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
+        this.chatRoomId = roomId;
+    }
+    public Long getChatRoomId() { return chatRoomId; }
+    public void setChatRoomId(Long chatRoomId) { this.chatRoomId = chatRoomId; }
     public Long getSenderId() { return senderId; }
     public void setSenderId(Long senderId) { this.senderId = senderId; }
     public ChatSenderType getSenderType() { return senderType; }

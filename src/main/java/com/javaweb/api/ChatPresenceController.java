@@ -30,16 +30,17 @@ public class ChatPresenceController {
     public void handleSubscribe(SessionSubscribeEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String destination = accessor.getDestination();
-        if (destination == null || !destination.startsWith("/topic/room.")) return;
+        if (destination == null || !destination.startsWith("/topic/rooms.")) return;
 
-        String sessionId  = accessor.getSessionId();
-        String roomId     = destination.replace("/topic/room.", "");
+        String sessionId = accessor.getSessionId();
+        String roomIdText = destination.replace("/topic/rooms.", "");
+        Long roomId = Long.valueOf(roomIdText);
         String senderName = accessor.getFirstNativeHeader("senderName");
-        if (senderName == null) senderName = "Người dùng";
+        if (senderName == null) senderName = "Nguoi dung";
 
         sessionMetaMap.put(sessionId, new PresenceMeta(roomId, senderName));
-        messagingTemplate.convertAndSend("/topic/room." + roomId,
-                ChatResponse.ofSystem(roomId, senderName + " đã vào phòng chat"));
+        messagingTemplate.convertAndSend("/topic/rooms." + roomId
+                );
     }
 
     @EventListener
@@ -47,15 +48,16 @@ public class ChatPresenceController {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         PresenceMeta meta = sessionMetaMap.remove(accessor.getSessionId());
         if (meta == null) return;
-        messagingTemplate.convertAndSend("/topic/room." + meta.roomId,
-                ChatResponse.ofSystem(meta.roomId, meta.senderName + " đã offline"));
+        messagingTemplate.convertAndSend("/topic/rooms." + meta.roomId
+               );
     }
 
     private static class PresenceMeta {
-        final String roomId;
+        final Long roomId;
         final String senderName;
-        PresenceMeta(String roomId, String senderName) {
-            this.roomId = roomId; this.senderName = senderName;
+        PresenceMeta(Long roomId, String senderName) {
+            this.roomId = roomId;
+            this.senderName = senderName;
         }
     }
 }

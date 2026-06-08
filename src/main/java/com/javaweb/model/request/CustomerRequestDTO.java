@@ -1,11 +1,13 @@
 package com.javaweb.model.request;
 
+import com.javaweb.enums.CustomerStatus;
 import com.javaweb.model.dto.DemandDTO;
 
 public class CustomerRequestDTO {
 
     private Long id;
     private Long customerId;  // THÊM DÒNG NÀY
+    private Long demandId;
     private String fullName;
     private String phone;
     private String email;
@@ -18,6 +20,9 @@ public class CustomerRequestDTO {
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getDemandId() { return demandId; }
+    public void setDemandId(Long demandId) { this.demandId = demandId; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

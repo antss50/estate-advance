@@ -15,9 +15,9 @@ public class ChatController {
     @Autowired private SimpMessagingTemplate messagingTemplate;
     @Autowired private ChatService chatService;
 
-    @MessageMapping("/chat.send")
+    @MessageMapping({"/chat.send", "/chat.rooms.send"})
     public void sendMessage(@Payload ChatRequest request) {
         ChatResponse response = chatService.handleTextMessage(request);
-        messagingTemplate.convertAndSend("/topic/room." + response.getRoomId(), response);
+        messagingTemplate.convertAndSend("/topic/rooms." + response.getRoomId(), response);
     }
 }

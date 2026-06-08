@@ -15,13 +15,13 @@ public class ChatApiController {
     @Autowired private ChatService chatService;
 
     @GetMapping("/history/{roomId}")
-    public ResponseEntity<List<ChatResponse>> getHistory(@PathVariable String roomId) {
+    public ResponseEntity<List<ChatResponse>> getHistory(@PathVariable Long roomId) {
         return ResponseEntity.ok(chatService.getHistory(roomId));
     }
 
     @GetMapping("/history/{roomId}/latest")
     public ResponseEntity<List<ChatResponse>> getLatestHistory(
-            @PathVariable String roomId,
+            @PathVariable Long roomId,
             @RequestParam(defaultValue = "20") int limit) {
         return ResponseEntity.ok(chatService.getLatestHistory(roomId, limit));
     }

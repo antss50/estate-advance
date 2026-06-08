@@ -2,6 +2,7 @@
 package com.javaweb.model.request;
 
 public class ChatRequest {
+    private Long   roomId;
     private Long   senderId;
     private String senderType;   // "STAFF" | "CUSTOMER"
     private String senderName;
@@ -9,6 +10,8 @@ public class ChatRequest {
     private Long   customerId;
     private String content;
 
+    public Long getRoomId() { return roomId; }
+    public void setRoomId(Long roomId) { this.roomId = roomId; }
     public Long getSenderId() { return senderId; }
     public void setSenderId(Long senderId) { this.senderId = senderId; }
     public String getSenderType() { return senderType; }

@@ -15,15 +15,16 @@ public class BuildingCardController {
     @Autowired private SimpMessagingTemplate messagingTemplate;
     @Autowired private ChatService chatService;
 
-    @MessageMapping("/chat.building")
+    @MessageMapping({"/chat.building", "/chat.rooms.building"})
     public void sendBuildingCard(@Payload BuildingCardRequest request) {
         try {
             ChatResponse response = chatService.handleBuildingCard(request);
-            messagingTemplate.convertAndSend("/topic/room." + response.getRoomId(), response);
+            messagingTemplate.convertAndSend("/topic/rooms." + response.getRoomId(), response);
         } catch (IllegalArgumentException e) {
+            Long staffId = request.getStaffId() != null ? request.getStaffId() : request.getSenderId();
             messagingTemplate.convertAndSendToUser(
-                    "staff_" + request.getStaffId(), "/queue/errors",
-                    "Không tìm thấy tòa nhà: " + e.getMessage());
+                    "staff_" + staffId, "/queue/errors",
+                    "Khong gui duoc building card: " + e.getMessage());
         }
     }
 }
