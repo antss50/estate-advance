@@ -4,6 +4,7 @@ import com.javaweb.entity.UserEntity;
 import com.javaweb.model.request.StaffMatchingRequest;
 import com.javaweb.model.response.StaffMatchingResponse;
 import com.javaweb.model.response.StaffMatchingResult;
+import com.javaweb.repository.AssignmentCustomerRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.StaffMatchingService;
 import com.javaweb.service.WardLocationScorer;
@@ -22,6 +23,9 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AssignmentCustomerRepository assignmentCustomerRepository;
 
     @Autowired
     private WardLocationScorer wardLocationScorer;
@@ -54,7 +58,7 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
                 staff.getTotalDeals(),
                 request.getPTarget());
 
-        int currentLoad = (staff.getAssignmentBuildings() != null) ? staff.getAssignmentBuildings().size() : 0;
+        int currentLoad = (int) assignmentCustomerRepository.countByStaff_Id(staff.getId());
         double sWorkload = StaffMatchingScoreCalculator.scoreWorkload(currentLoad, request.getLMax());
 
         double bonus = isNewbie

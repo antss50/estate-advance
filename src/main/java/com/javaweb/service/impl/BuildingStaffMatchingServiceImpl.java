@@ -5,6 +5,7 @@ import com.javaweb.entity.UserEntity;
 import com.javaweb.model.request.BuildingStaffMatchingRequest;
 import com.javaweb.model.response.BuildingStaffMatchingResponse;
 import com.javaweb.model.response.BuildingStaffMatchingResult;
+import com.javaweb.repository.AssignmentCustomerRepository;
 import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.BuildingStaffMatchingService;
@@ -29,6 +30,9 @@ public class BuildingStaffMatchingServiceImpl implements BuildingStaffMatchingSe
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AssignmentCustomerRepository assignmentCustomerRepository;
 
     @Autowired
     private WardLocationScorer wardLocationScorer;
@@ -97,8 +101,7 @@ public class BuildingStaffMatchingServiceImpl implements BuildingStaffMatchingSe
                 request.getPTarget());
 
         // ── S_Workload ────────────────────────────────────────────────────────
-        int currentLoad = staff.getAssignmentBuildings() != null
-                ? staff.getAssignmentBuildings().size() : 0;
+        int currentLoad = (int) assignmentCustomerRepository.countByStaff_Id(staff.getId());
         double sWorkload = StaffMatchingScoreCalculator.scoreWorkload(
                 currentLoad, request.getLMax());
 
