@@ -131,6 +131,41 @@ public class UserService implements IUserService {
         return dto;
     }
 
+    private UserEntity getUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    private void validateUniqueUserName(String userName, UserEntity currentUser) {
+        if (userName != null && !userName.equals(currentUser.getUserName())) {
+            Optional<UserEntity> existingUser = userRepository.findByUserName(userName);
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(currentUser.getId())) {
+                throw new IllegalArgumentException("Username already exists: " + userName);
+            }
+        }
+    }
+
+    private void validateUniqueEmail(String email, UserEntity currentUser) {
+        if (email != null && !email.equals(currentUser.getEmail())) {
+            Optional<UserEntity> existingUser = userRepository.findByEmail(email);
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(currentUser.getId())) {
+                throw new IllegalArgumentException("Email already exists: " + email);
+            }
+        }
+    }
+
+    private void updateUserRole(UserEntity user, String roleCode) {
+        if (roleCode != null && !roleCode.isEmpty()) {
+            RoleEntity role = roleRepository.findOneByCode(roleCode);
+            if (role == null) {
+                throw new IllegalArgumentException("Role not found with code: " + roleCode);
+            }
+            List<RoleEntity> roles = new ArrayList<>();
+            roles.add(role);
+            user.setRoles(roles);
+        }
+    }
+
     @Override
     public int countTotalItems() {
         return userRepository.countTotalItem();
@@ -182,15 +217,10 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserDTO update(Long id, UserDTO updateUser) {
-        UserEntity oldUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        UserEntity oldUser = getUserOrThrow(id);
 
-        if (updateUser.getUserName() != null && !updateUser.getUserName().equals(oldUser.getUserName())) {
-            // Kiểm tra username mới đã tồn tại chưa
-            boolean exists = userRepository.existsByUserName(updateUser.getUserName());
-            if (exists) {
-                throw new RuntimeException("Username already exists: " + updateUser.getUserName());
-            }
+        validateUniqueUserName(updateUser.getUserName(), oldUser);
+        if (updateUser.getUserName() != null) {
             oldUser.setUserName(updateUser.getUserName());
         }
 
@@ -198,12 +228,17 @@ public class UserService implements IUserService {
             oldUser.setFullName(updateUser.getFullName());
         }
 
-        if (updateUser.getEmail() != null && !updateUser.getEmail().equals(oldUser.getEmail())) {
-            Optional<UserEntity> existingUser = userRepository.findByEmail(updateUser.getEmail());
-            if (existingUser.isPresent() && !existingUser.get().getId().equals(id)) {
-                throw new RuntimeException("Email already exists: " + updateUser.getEmail());
-            }
+        validateUniqueEmail(updateUser.getEmail(), oldUser);
+        if (updateUser.getEmail() != null) {
             oldUser.setEmail(updateUser.getEmail());
+        }
+
+        if (updateUser.getPhone() != null) {
+            oldUser.setPhone(updateUser.getPhone());
+        }
+
+        if (updateUser.getWorkingArea() != null) {
+            oldUser.setWorkingArea(updateUser.getWorkingArea());
         }
 
         if (updateUser.getStatus() != null) {
@@ -214,17 +249,43 @@ public class UserService implements IUserService {
             oldUser.setPassword(passwordEncoder.encode(updateUser.getPassword()));
         }
 
-        if (updateUser.getRoleCode() != null && !updateUser.getRoleCode().isEmpty()) {
-            RoleEntity role = roleRepository.findOneByCode(updateUser.getRoleCode());
-            if (role != null) {
-                List<RoleEntity> roles = new ArrayList<>();
-                roles.add(role);
-                oldUser.setRoles(roles);
-            }
-        }
+        updateUserRole(oldUser, updateUser.getRoleCode());
 
         UserEntity updatedUser = userRepository.save(oldUser);
-        return userConverter.convertToDto(updatedUser);
+        UserDTO result = userConverter.convertToDto(updatedUser);
+        if (updatedUser.getRoles() != null && !updatedUser.getRoles().isEmpty()) {
+            result.setRoleCode(updatedUser.getRoles().get(0).getCode());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public StaffDTO updateStaff(Long id, StaffDTO staffDTO) {
+        UserEntity oldUser = getUserOrThrow(id);
+
+        validateUniqueUserName(staffDTO.getUserName(), oldUser);
+        validateUniqueEmail(staffDTO.getEmail(), oldUser);
+
+        if (staffDTO.getUserName() != null) {
+            oldUser.setUserName(staffDTO.getUserName());
+        }
+        if (staffDTO.getFullName() != null) {
+            oldUser.setFullName(staffDTO.getFullName());
+        }
+        if (staffDTO.getPhone() != null) {
+            oldUser.setPhone(staffDTO.getPhone());
+        }
+        if (staffDTO.getEmail() != null) {
+            oldUser.setEmail(staffDTO.getEmail());
+        }
+        if (staffDTO.getWorkingArea() != null) {
+            oldUser.setWorkingArea(staffDTO.getWorkingArea());
+        }
+
+        updateUserRole(oldUser, staffDTO.getRole());
+
+        return convertToStaffDTO(userRepository.save(oldUser));
     }
     @Override
     @Transactional

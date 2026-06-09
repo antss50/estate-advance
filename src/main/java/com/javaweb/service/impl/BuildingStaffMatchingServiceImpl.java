@@ -90,9 +90,9 @@ public class BuildingStaffMatchingServiceImpl implements BuildingStaffMatchingSe
         boolean isNewbie = daysWorked < request.getProbationDays();
 
         // ── S_Area: địa bàn của staff vs ward của building ────────────────────
-        // workingArea có thể là nhiều wardCode CSV: "30001,30002"
+        // workingArea có thể là nhiều tên phường CSV: "Phường Bến Nghé,Bến Nghé"
         // Lấy score cao nhất trong tất cả ward của staff
-        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), building.getWardCode());
+        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), building.getWardName());
 
         // ── S_Performance ─────────────────────────────────────────────────────
         double sPerformance = StaffMatchingScoreCalculator.scorePerformance(
@@ -142,16 +142,16 @@ public class BuildingStaffMatchingServiceImpl implements BuildingStaffMatchingSe
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * workingArea của staff là CSV wardCode: "30001,30002,30003"
+     * workingArea của staff là CSV tên phường: "Phường Bến Nghé,Bến Nghé".
      * Lấy score cao nhất trong tất cả ward → staff phủ nhiều phường có lợi thế.
      */
-    private double scoreBestWorkingArea(String workingArea, String buildingWardCode) {
+    private double scoreBestWorkingArea(String workingArea, String buildingWardName) {
         if (workingArea == null || workingArea.trim().isEmpty()) return 0.2;
-        if (buildingWardCode == null || buildingWardCode.trim().isEmpty()) return 1.0;
+        if (buildingWardName == null || buildingWardName.trim().isEmpty()) return 1.0;
 
         double best = 0.2;
         for (String staffWard : workingArea.split(",")) {
-            double score = wardLocationScorer.score(staffWard.trim(), buildingWardCode);
+            double score = wardLocationScorer.score(staffWard.trim(), buildingWardName);
             if (score > best) best = score;
             if (best == 1.0) break; // không thể cao hơn
         }

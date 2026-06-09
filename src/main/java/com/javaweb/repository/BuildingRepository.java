@@ -22,6 +22,13 @@ BuildingEntity findById(long id);
             "WHERE a.staffid = :staffId",
             nativeQuery = true)
     List<BuildingEntity> findBuildingsByStaffIdNative(@Param("staffId") Long staffId);
+
+    @Query("SELECT DISTINCT b FROM BuildingEntity b JOIN b.users u " +
+            "WHERE u.id = :staffId AND b.buildingStatus = :buildingStatus")
+    List<BuildingEntity> findByStaffIdAndBuildingStatus(
+            @Param("staffId") Long staffId,
+            @Param("buildingStatus") BuildingStatus buildingStatus);
+
     /**
      * Dùng cho Scheduled Job:
      * Tìm tất cả building đang RENTED có rentEndDate <= today

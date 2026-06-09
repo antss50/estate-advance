@@ -9,6 +9,7 @@ import com.javaweb.enums.PropertyType;
 import com.javaweb.model.request.CustomerMatchingRequest;
 import com.javaweb.model.response.BuildingMatchingResult;
 import com.javaweb.model.response.CustomerMatchingResponse;
+import com.javaweb.repository.AssignmentCustomerRepository;
 import com.javaweb.repository.BuildingRepository;
 import com.javaweb.repository.CustomerRepository;
 import com.javaweb.service.CustomerBuildingMatchingService;
@@ -32,6 +33,9 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
     private CustomerRepository customerRepository;
 
     @Autowired
+    private AssignmentCustomerRepository assignmentCustomerRepository;
+
+    @Autowired
     private WardLocationScorer wardLocationScorer;
 
     @Override
@@ -50,8 +54,7 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
 
         MatchingWeight weight = MatchingWeight.of(demand.priorityType);
 
-        List<BuildingEntity> buildings =
-                buildingRepository.findByBuildingStatus(BuildingStatus.AVAILABLE);
+        List<BuildingEntity> buildings = findCandidateBuildings(request, dbDemand);
 
         List<BuildingMatchingResult> results = buildings.stream()
                 .map(b -> calculateResult(b, demand, weight))
@@ -116,6 +119,46 @@ public class CustomerBuildingMatchingServiceImpl implements CustomerBuildingMatc
         }
 
         return demand;
+    }
+
+    private List<BuildingEntity> findCandidateBuildings(CustomerMatchingRequest request, DemandEntity dbDemand) {
+        Long staffId = resolveStaffScope(request, dbDemand);
+        if (staffId != null) {
+            return buildingRepository.findByStaffIdAndBuildingStatus(
+                    staffId, BuildingStatus.AVAILABLE);
+        }
+        return buildingRepository.findByBuildingStatus(BuildingStatus.AVAILABLE);
+    }
+
+    private Long resolveStaffScope(CustomerMatchingRequest request, DemandEntity dbDemand) {
+        if (request.getStaffId() != null) {
+            return request.getStaffId();
+        }
+        if (request.getCustomerId() == null) {
+            return null;
+        }
+
+        List<Long> staffIds;
+        if (dbDemand != null && dbDemand.getId() != null) {
+            staffIds = assignmentCustomerRepository.findStaffIdsByCustomerIdAndDemandId(
+                    request.getCustomerId(), dbDemand.getId());
+            if (staffIds.size() == 1) {
+                return staffIds.get(0);
+            }
+            if (staffIds.size() > 1) {
+                throw new IllegalArgumentException("staffId bat buoc khi customer duoc phan cong cho nhieu staff");
+            }
+        }
+
+        staffIds = assignmentCustomerRepository.findStaffIdsByCustomerId(request.getCustomerId());
+        if (staffIds.size() == 1) {
+            return staffIds.get(0);
+        }
+        if (staffIds.size() > 1) {
+            throw new IllegalArgumentException("staffId bat buoc khi customer duoc phan cong cho nhieu staff");
+        }
+
+        return null;
     }
 
     private BuildingMatchingResult calculateResult(

@@ -25,9 +25,11 @@ public class RoleRepositoryImpl implements RoleRepository {
 
 	@Override
 	public RoleEntity findOneByCode(String code) {
-		String sql = "select * FROM role as r where r.code = '" + code + "'";
+		String sql = "select * FROM role as r where r.code = :code order by r.id limit 1";
 		Query query = entityManager.createNativeQuery(sql, RoleEntity.class);
-		return (RoleEntity) query.getSingleResult();
+		query.setParameter("code", code);
+		List<RoleEntity> roles = query.getResultList();
+		return roles.isEmpty() ? null : roles.get(0);
 	}
 
 	@Override

@@ -61,12 +61,17 @@ public class CustomerStatusService {
         BuildingStatus newBuildingStatus = null;
 
         if (currentStatus == CustomerStatus.SIGNED && newStatus == CustomerStatus.PAID) {
+            validatePaidRequest(request);
+            validateStaffOwnsBuilding(request.getStaffId(), request.getBuildingId());
             commissionResult = handleCommission(request);
             newBuildingStatus = handleBuildingStatus(request);
         }
 
         // 4. Cập nhật trạng thái trên customer_request
         customerRequest.setStatus(newStatus);
+        if (customerRequest.getCustomer() != null) {
+            customerRequest.getCustomer().setStatus(newStatus);
+        }
         customerRequestRepository.save(customerRequest);
 
         // 5. Xây dựng response
@@ -108,11 +113,64 @@ public class CustomerStatusService {
         int currentDeals = staff.getTotalDeals() != null ? staff.getTotalDeals() : 0;
         staff.setTotalDeals(currentDeals + 1);
 
+        if (request.getTransactionType() == TransactionType.SALE) {
+            BigDecimal currentSaleRevenue = staff.getRevenueSale() != null ? staff.getRevenueSale() : BigDecimal.ZERO;
+            staff.setRevenueSale(currentSaleRevenue.add(result.getStaffCommission()));
+
+            int currentSaleDeals = staff.getTotalSaleDeals() != null ? staff.getTotalSaleDeals() : 0;
+            staff.setTotalSaleDeals(currentSaleDeals + 1);
+        } else {
+            BigDecimal currentRentRevenue = staff.getRevenueRent() != null ? staff.getRevenueRent() : BigDecimal.ZERO;
+            staff.setRevenueRent(currentRentRevenue.add(result.getStaffCommission()));
+
+            int currentRentDeals = staff.getTotalRentDeals() != null ? staff.getTotalRentDeals() : 0;
+            staff.setTotalRentDeals(currentRentDeals + 1);
+        }
+
         userRepository.save(staff);
         return result;
     }
 
     // ───────────────────── Xử lý trạng thái Building (giữ nguyên) ────────────
+    private void validatePaidRequest(CustomerStatusUpdateRequest request) {
+        if (request.getStaffId() == null) {
+            throw new IllegalArgumentException("staffId bat buoc khi chuyen SIGNED sang PAID");
+        }
+        if (request.getBuildingId() == null) {
+            throw new IllegalArgumentException("buildingId bat buoc khi chuyen SIGNED sang PAID");
+        }
+        if (request.getTransactionType() == null) {
+            throw new IllegalArgumentException("transactionType bat buoc khi chuyen SIGNED sang PAID");
+        }
+
+        if (request.getTransactionType() == TransactionType.SALE) {
+            if (request.getContractValue() == null || request.getContractValue().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("contractValue phai lon hon 0 cho giao dich SALE");
+            }
+            return;
+        }
+
+        if (request.getMonthlyRent() == null || request.getMonthlyRent().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("monthlyRent phai lon hon 0 cho giao dich RENT");
+        }
+        if (request.getContractMonths() == null || request.getContractMonths() <= 0) {
+            throw new IllegalArgumentException("contractMonths phai lon hon 0 cho giao dich RENT");
+        }
+    }
+
+    private void validateStaffOwnsBuilding(Long staffId, Long buildingId) {
+        BuildingEntity building = buildingRepository.findById(buildingId)
+                .orElseThrow(() -> new IllegalArgumentException("Khong tim thay building id: " + buildingId));
+
+        boolean assigned = building.getUsers() != null
+                && building.getUsers().stream().anyMatch(staff -> staffId.equals(staff.getId()));
+
+        if (!assigned) {
+            throw new IllegalStateException(
+                    "Staff id " + staffId + " khong quan ly building id " + buildingId);
+        }
+    }
+
     private BuildingStatus handleBuildingStatus(CustomerStatusUpdateRequest request) {
         if (request.getBuildingId() == null) return null;
 

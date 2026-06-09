@@ -6,6 +6,8 @@ public class StaffRegisterResponse {
     private String fullName;
     private String email;
     private String phone;
+    private String workingArea;
+    private String role;
     private String message;
     private boolean success;
 
@@ -13,11 +15,19 @@ public class StaffRegisterResponse {
 
     public StaffRegisterResponse(Long id, String userName, String fullName,
                                  String email, String phone, String message, boolean success) {
+        this(id, userName, fullName, email, phone, null, null, message, success);
+    }
+
+    public StaffRegisterResponse(Long id, String userName, String fullName,
+                                 String email, String phone, String workingArea,
+                                 String role, String message, boolean success) {
         this.id = id;
         this.userName = userName;
         this.fullName = fullName;
         this.email = email;
         this.phone = phone;
+        this.workingArea = workingArea;
+        this.role = role;
         this.message = message;
         this.success = success;
     }
@@ -33,6 +43,10 @@ public class StaffRegisterResponse {
     public void setEmail(String email) { this.email = email; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getWorkingArea() { return workingArea; }
+    public void setWorkingArea(String workingArea) { this.workingArea = workingArea; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
     public boolean isSuccess() { return success; }

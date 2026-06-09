@@ -1,5 +1,6 @@
 package com.javaweb.model.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.javaweb.enums.CustomerPriorityType;
 import com.javaweb.enums.PropertyType;
 
@@ -9,6 +10,8 @@ import com.javaweb.enums.PropertyType;
 public class CustomerMatchingRequest {
 
     private Long customerId;          // (tuỳ chọn) nếu muốn lấy demand từ DB
+    @JsonAlias({"senderId", "userId", "currentStaffId", "assignedStaffId"})
+    private Long staffId;             // Staff scope: chỉ match building staff đang quản lý
 
     // ── Thông tin nhu cầu (override hoặc dùng trực tiếp) ────────────────────
     private Double demandArea;        // Diện tích mong muốn (m²)
@@ -26,6 +29,9 @@ public class CustomerMatchingRequest {
 
     public Long getCustomerId() { return customerId; }
     public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getStaffId() { return staffId; }
+    public void setStaffId(Long staffId) { this.staffId = staffId; }
 
     public Double getDemandArea() { return demandArea; }
     public void setDemandArea(Double demandArea) { this.demandArea = demandArea; }

@@ -1,10 +1,13 @@
 package com.javaweb.service.impl;
 
+import com.javaweb.entity.CustomerEntity;
+import com.javaweb.entity.DemandEntity;
 import com.javaweb.entity.UserEntity;
 import com.javaweb.model.request.StaffMatchingRequest;
 import com.javaweb.model.response.StaffMatchingResponse;
 import com.javaweb.model.response.StaffMatchingResult;
 import com.javaweb.repository.AssignmentCustomerRepository;
+import com.javaweb.repository.CustomerRepository;
 import com.javaweb.repository.UserRepository;
 import com.javaweb.service.StaffMatchingService;
 import com.javaweb.service.WardLocationScorer;
@@ -28,14 +31,18 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
     private AssignmentCustomerRepository assignmentCustomerRepository;
 
     @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
     private WardLocationScorer wardLocationScorer;
 
     @Override
     public StaffMatchingResponse findMatchingStaff(StaffMatchingRequest request) {
+        String demandWardName = resolveDemandWardName(request);
         List<UserEntity> activeStaffs = userRepository.findByStatus(1);
 
         List<StaffMatchingResult> results = activeStaffs.stream()
-                .map(staff -> calculateResult(staff, request))
+                .map(staff -> calculateResult(staff, request, demandWardName))
                 .sorted(Comparator.comparingDouble(StaffMatchingResult::getTotalScoreCS).reversed())
                 .limit(request.getTopN())
                 .collect(Collectors.toList());
@@ -47,11 +54,11 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
         return response;
     }
 
-    private StaffMatchingResult calculateResult(UserEntity staff, StaffMatchingRequest request) {
+    private StaffMatchingResult calculateResult(UserEntity staff, StaffMatchingRequest request, String demandWardName) {
         int daysWorked = calcDaysWorked(staff);
         boolean isNewbie = daysWorked < request.getProbationDays();
 
-        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), request.getDemandWardName());
+        double sArea = scoreBestWorkingArea(staff.getWorkingArea(), demandWardName);
 
         double sPerformance = StaffMatchingScoreCalculator.scorePerformance(
                 staff.getRevenue(),
@@ -100,6 +107,23 @@ public class StaffMatchingServiceImpl implements StaffMatchingService {
             if (best == 1.0) break;
         }
         return best;
+    }
+
+    private String resolveDemandWardName(StaffMatchingRequest request) {
+        if (request.getDemandWardName() != null && !request.getDemandWardName().trim().isEmpty()) {
+            return request.getDemandWardName();
+        }
+        if (request.getCustomerId() == null) {
+            return null;
+        }
+
+        CustomerEntity customer = customerRepository
+                .findById(request.getCustomerId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Không tìm thấy khách hàng id: " + request.getCustomerId()));
+
+        DemandEntity demand = customer.getCurrentDemand();
+        return demand != null ? demand.getWard() : null;
     }
 
     private int calcDaysWorked(UserEntity staff) {

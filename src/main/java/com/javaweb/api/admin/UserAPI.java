@@ -11,6 +11,7 @@
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
 
+    import java.util.Collections;
     import java.util.List;
     import java.util.Map;
 
@@ -38,8 +39,21 @@
         }
 
         @PutMapping("/{id}")
-        public ResponseEntity<UserDTO> updateUsers(@PathVariable("id") long id, @RequestBody UserDTO userDTO) {
-            return ResponseEntity.ok(userService.update(id, userDTO));
+        public ResponseEntity<?> updateUsers(@PathVariable("id") long id, @RequestBody UserDTO userDTO) {
+            try {
+                return ResponseEntity.ok(userService.update(id, userDTO));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage()));
+            }
+        }
+
+        @PutMapping("/staffs/{id}")
+        public ResponseEntity<?> updateStaff(@PathVariable("id") long id, @RequestBody StaffDTO staffDTO) {
+            try {
+                return ResponseEntity.ok(userService.updateStaff(id, staffDTO));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("message", e.getMessage()));
+            }
         }
 
         @PutMapping("/change-password/{id}")

@@ -67,6 +67,8 @@ public class StaffAuthServiceImpl implements StaffAuthService {
                 saved.getFullName(),
                 saved.getEmail(),
                 saved.getPhone(),
+                saved.getWorkingArea(),
+                "STAFF",
                 "Đăng ký nhân viên thành công",
                 true
         );
@@ -119,6 +121,7 @@ public class StaffAuthServiceImpl implements StaffAuthService {
                 user.getEmail(),
                 user.getPhone(),
                 user.getWorkingArea(),
+                "STAFF",
                 token,
                 "Đăng nhập thành công",
                 true

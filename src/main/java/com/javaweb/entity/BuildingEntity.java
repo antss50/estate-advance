@@ -118,10 +118,10 @@ public class BuildingEntity extends BaseEntity {
     @Column(name = "map")
     private String map;
 
-    @Column(name = "avatar")
+    @Column(name = "avatar", columnDefinition = "TEXT")
     private String avatar;
 
-    @Column(name = "image")
+    @Column(name = "image", columnDefinition = "TEXT")
     private String image;
 
     // ============ CÁC FIELD MỚI ============

@@ -16,6 +16,15 @@ public interface AssignmentCustomerRepository extends JpaRepository<AssignmentCu
     // ── Query mới: theo demand cụ thể ────────────────────────────────────────
     List<AssignmentCustomerEntity> findByCustomer_IdAndDemand_Id(Long customerId, Long demandId);
 
+    @Query("SELECT DISTINCT a.staff.id FROM AssignmentCustomerEntity a " +
+            "WHERE a.customer.id = :customerId AND a.demand.id = :demandId")
+    List<Long> findStaffIdsByCustomerIdAndDemandId(
+            @Param("customerId") Long customerId,
+            @Param("demandId") Long demandId);
+
+    @Query("SELECT DISTINCT a.staff.id FROM AssignmentCustomerEntity a WHERE a.customer.id = :customerId")
+    List<Long> findStaffIdsByCustomerId(@Param("customerId") Long customerId);
+
     void deleteByCustomer_IdAndDemand_Id(Long customerId, Long demandId);
 
     long countByStaff_Id(Long staffId);
