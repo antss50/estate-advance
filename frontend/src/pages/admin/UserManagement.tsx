@@ -59,7 +59,7 @@ const UserManagement: React.FC = () => {
 
   const [form] = Form.useForm();
 
-  const fetchUsers = async (p: number, kw: string, role?: string) => {
+  const fetchUsers = async (p: number) => {
     setLoading(true);
     try {
       let finalRes: (UserDTO | Staff)[] = [];
@@ -94,22 +94,19 @@ const UserManagement: React.FC = () => {
   useEffect(() => {
     setPage(1);
     setData([]); // Clear data khi chuyển tab
-    const role = activeTab === "staff" ? "STAFF || MANAGER" : "CUSTOMER";
-    fetchUsers(1, keyword, role);
+    fetchUsers(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
-    const role = activeTab === "staff" ? "STAFF || MANAGER" : "CUSTOMER";
-    const t = setTimeout(() => fetchUsers(1, keyword, role), 300);
+    const t = setTimeout(() => fetchUsers(1), 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keyword]);
 
   const onPageChange = (page: number) => {
     setPage(page);
-    const role = activeTab === "staff" ? "STAFF || MANAGER" : "CUSTOMER";
-    fetchUsers(page, keyword, role);
+    fetchUsers(page);
   };
 
   const openCreate = () => {
@@ -122,7 +119,7 @@ const UserManagement: React.FC = () => {
     form.setFieldsValue({
       fullName: user.fullName,
       userName: user.userName || "",
-      role: user.role || "STAFF",
+      roleCode: user.role || "STAFF",
       status: user.status === "ACTIVE" ? 1 : 0,
       email: user.email || "",
       phone: user.phone || "",
@@ -149,13 +146,24 @@ const UserManagement: React.FC = () => {
     setSubmitting(true);
     try {
       if (editingUserId) {
-        // update payload: fullName, status, roleDTOs
-        const payload = {
-          fullName: (values.fullName || "").trim(),
-          status: Number(values.status ?? 1),
-          roleCode: values.roleCode,
-        };
-        await userApi.updateUser(editingUserId, payload);
+        if (activeTab === "staff") {
+          const payload = {
+            fullName: (values.fullName || "").trim(),
+            userName: (values.userName || "").trim(),
+            phone: (values.phone || "").trim(),
+            email: (values.email || "").trim(),
+            workingArea: (values.workingArea || "").trim(),
+            role: values.roleCode || "STAFF",
+          };
+          await staffApi.updateStaff(editingUserId, payload);
+        } else {
+          const payload = {
+            fullName: (values.fullName || "").trim(),
+            status: Number(values.status ?? 1),
+            roleCode: values.roleCode,
+          };
+          await userApi.updateUser(editingUserId, payload);
+        }
         message.success("Cập nhật nhân viên thành công");
       } else {
         const userName = (values.userName || "").trim();
@@ -186,7 +194,7 @@ const UserManagement: React.FC = () => {
         message.success("Tạo nhân viên thành công");
       }
       closeModal();
-      fetchUsers(1, keyword, activeTab === "staff" ? "STAFF" : "CUSTOMER");
+      fetchUsers(1);
     } catch (err) {
       console.error("Submit user error", err);
       const axiosErr = err as Error & {
@@ -214,7 +222,7 @@ const UserManagement: React.FC = () => {
         try {
           await userApi.deleteUser([targetId]);
           message.success("Xóa nhân viên thành công");
-          fetchUsers(1, keyword, activeTab === "staff" ? "STAFF" : "CUSTOMER");
+          fetchUsers(1);
         } catch (err) {
           console.error("Delete user error", err);
           message.error("Xóa thất bại");

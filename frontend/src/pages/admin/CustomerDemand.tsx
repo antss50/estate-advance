@@ -250,7 +250,7 @@ export const CustomerDemand: React.FC = () => {
       const currentDemand = customers.find(c => String(c.id) === String(customerRequest.id))?.demand ?? customerRequest.demand;
       const location = getDemandLocation(currentDemand);
       const response = await getMatchingStaffsForCustomerRequest({
-        customerId: customerRequest.id,
+        customerId: customerRequest.customerId,
         demandWard: location.ward,
       });
 

@@ -38,12 +38,10 @@ const StaffLayout: React.FC = () => {
     },
   ];
 
-  // Logic xác định selectedKey đồng bộ với AdminLayout
   const selectedKey =
     menuItems.find((m) => location.pathname.startsWith(m.key))?.key ||
     "/staff/dashboard";
 
-  // Trạng thái kiểm tra đăng nhập định danh của nhân viên (Giữ nguyên logic)
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [staffInfo, setStaffInfo] = useState<LoginResponse | null>(null);
 

@@ -103,19 +103,28 @@ const MONTH_OPTIONS = [
   { label: "December", value: 12 },
 ];
 
-const MOCK_REVENUE_CHART_DATA: RevenueChartPoint[] = [
-  { day: 1, revenue: 18_000_000 },
-  { day: 3, revenue: 24_000_000 },
-  { day: 6, revenue: 12_000_000 },
-  { day: 9, revenue: 32_000_000 },
-  { day: 12, revenue: 28_000_000 },
-  { day: 15, revenue: 36_000_000 },
-  { day: 18, revenue: 31_000_000 },
-  { day: 21, revenue: 44_000_000 },
-  { day: 24, revenue: 39_000_000 },
-  { day: 27, revenue: 52_000_000 },
-  { day: 30, revenue: 34_000_000 },
-];
+const buildRevenueChartData = (
+  stats?: StaffStatisticsResponse | null,
+): RevenueChartPoint[] => {
+  const sale = stats?.revenueSale || 0;
+  const rent = stats?.revenueRent || 0;
+  const total = stats?.totalRevenue || sale + rent;
+
+  return [
+    { day: 1, revenue: 0 },
+    { day: 15, revenue: sale },
+    { day: 22, revenue: sale + rent },
+    { day: 30, revenue: total },
+  ];
+};
+
+const buildAxisValues = (maxRevenue: number) => {
+  const rawValues = [0.8, 0.6, 0.4, 0.2].map((ratio) =>
+    Math.round((maxRevenue * ratio) / 1_000_000) * 1_000_000,
+  );
+
+  return Array.from(new Set(rawValues.filter((value) => value > 0)));
+};
 
 const getInitials = (name: string) =>
   name
@@ -153,10 +162,10 @@ const toRevenuePath = (
 const RevenueChart: React.FC<{ data: RevenueChartPoint[] }> = ({ data }) => {
   const width = 960;
   const height = 320;
-  const maxRevenue = 60_000_000;
+  const maxRevenue = Math.max(...data.map((point) => point.revenue), 1);
   const path = toRevenuePath(data, width, height, maxRevenue);
   const areaPath = `${path} L ${width} ${height} L 0 ${height} Z`;
-  const yAxisValues = [50_000_000, 40_000_000, 30_000_000, 20_000_000, 10_000_000];
+  const yAxisValues = buildAxisValues(maxRevenue);
   const xAxisValues = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];
 
   return (
@@ -302,7 +311,7 @@ const StaffChartSection: React.FC<{
           }
           type="button"
         >
-          Revenue
+          Doanh thu
         </button>
         <button
           onClick={() => onTabChange("deals")}
@@ -313,7 +322,7 @@ const StaffChartSection: React.FC<{
           }
           type="button"
         >
-          Deal Performance
+          Hi\u1ec7u su\u1ea5t giao d\u1ecbch
         </button>
       </Space>
 
@@ -341,7 +350,7 @@ const StaffDashboardIndex: React.FC = () => {
   const [activeChartTab, setActiveChartTab] = useState<ChartTab>("revenue");
   const [selectedChartMonth, setSelectedChartMonth] = useState(1);
   const [revenueChartData, setRevenueChartData] = useState<RevenueChartPoint[]>(
-    MOCK_REVENUE_CHART_DATA,
+    buildRevenueChartData(null),
   );
 
   useEffect(() => {
@@ -362,6 +371,7 @@ const StaffDashboardIndex: React.FC = () => {
           currentStaff.id,
         );
         setStats(response);
+        setRevenueChartData(buildRevenueChartData(response));
       } catch (error) {
         console.error("Error fetching staff statistics:", error);
         message.error("Kh\u00f4ng th\u1ec3 t\u1ea3i th\u1ed1ng k\u00ea nh\u00e2n vi\u00ean");
@@ -381,7 +391,7 @@ const StaffDashboardIndex: React.FC = () => {
 
   const handleChartMonthChange = (month: number) => {
     setSelectedChartMonth(month);
-    setRevenueChartData(MOCK_REVENUE_CHART_DATA);
+    setRevenueChartData(buildRevenueChartData(stats));
   };
 
   return (

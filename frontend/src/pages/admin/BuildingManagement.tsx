@@ -45,6 +45,19 @@ const { Title } = Typography;
 
 const PAGE_SIZE = 12;
 
+const dataUrlToFile = (dataUrl: string, fileName: string): File => {
+  const [header, data] = dataUrl.split(",");
+  const mime = header.match(/data:(.*?);base64/)?.[1] || "image/jpeg";
+  const binary = atob(data || "");
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new File([bytes], fileName, { type: mime });
+};
+
 const BuildingManagement: React.FC = () => {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
@@ -310,7 +323,8 @@ const BuildingManagement: React.FC = () => {
           // TRƯỜNG HỢP 2: Nếu là ảnh cũ đã có sẵn URL (không thay đổi)
           if (file.url) {
             if (file.url.startsWith("data:image")) {
-              return file.url;
+              const dataUrlFile = dataUrlToFile(file.url, file.name || "building-image.jpg");
+              return await uploadImageToCloudinary(dataUrlFile);
             }
             return file.url;
           }
@@ -480,8 +494,8 @@ const BuildingManagement: React.FC = () => {
     },
     {
       title: "Giá thuê",
-      dataIndex: "priceRent",
-      key: "priceRent",
+      dataIndex: "rentPrice",
+      key: "rentPrice",
       render: (v: number) => (v ? v.toLocaleString() + " VND" : "-"),
     },
     {
@@ -811,7 +825,7 @@ const BuildingManagement: React.FC = () => {
               )}
             </Col>
             <Col span={8}>
-              <Form.Item name="priceRent" label="Giá thuê (VND)">
+              <Form.Item name="rentPrice" label="Giá thuê (VND)">
                 <InputNumber style={{ width: "100%" }} />
               </Form.Item>
             </Col>

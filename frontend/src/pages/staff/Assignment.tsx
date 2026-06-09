@@ -227,6 +227,15 @@ const Assignment: React.FC = () => {
   }, [fetchCustomers]);
 
   const handleMatching = async (customer: UserDemandDTO) => {
+    const staffId = getCurrentStaffId();
+
+    if (!staffId) {
+      message.error(
+        "Không tìm thấy staffId. Vui lòng đăng nhập lại.",
+      );
+      return;
+    }
+
     setIsMatchingLoading(true);
     setMatchedCustomer(customer);
     setSelectedBuildingIds([]);
@@ -234,6 +243,7 @@ const Assignment: React.FC = () => {
     try {
       const payload: MatchingPayload = {
         customerId: Number(customer.customerId),
+        staffId,
         demandPrice: Number(customer.demand?.price || 0),
         demandArea: Number(customer.demand?.area || 0),
         demandWard: customer.demand?.ward,

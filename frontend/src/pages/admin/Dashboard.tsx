@@ -134,19 +134,28 @@ const MONTH_OPTIONS = [
   { label: "December", value: 12 },
 ];
 
-const MOCK_REVENUE_CHART_DATA: RevenueChartPoint[] = [
-  { day: 1, revenue: 126_000_000 },
-  { day: 3, revenue: 72_000_000 },
-  { day: 6, revenue: 51_000_000 },
-  { day: 9, revenue: 72_000_000 },
-  { day: 12, revenue: 91_000_000 },
-  { day: 15, revenue: 73_000_000 },
-  { day: 18, revenue: 98_000_000 },
-  { day: 21, revenue: 103_000_000 },
-  { day: 24, revenue: 67_000_000 },
-  { day: 27, revenue: 135_000_000 },
-  { day: 30, revenue: 50_000_000 },
-];
+const buildRevenueChartData = (
+  stats?: DashboardResponse | null,
+): RevenueChartPoint[] => {
+  const staffRevenue = stats?.totalStaffRevenue || 0;
+  const systemRevenue = stats?.totalSystemRevenue || 0;
+  const totalRevenue = stats?.totalRevenue || staffRevenue + systemRevenue;
+
+  return [
+    { day: 1, revenue: 0 },
+    { day: 12, revenue: staffRevenue },
+    { day: 22, revenue: staffRevenue + systemRevenue },
+    { day: 30, revenue: totalRevenue },
+  ];
+};
+
+const buildAxisValues = (maxRevenue: number) => {
+  const rawValues = [0.8, 0.6, 0.4, 0.2].map((ratio) =>
+    Math.round((maxRevenue * ratio) / 1_000_000) * 1_000_000,
+  );
+
+  return Array.from(new Set(rawValues.filter((value) => value > 0)));
+};
 
 const toRevenuePath = (
   data: RevenueChartPoint[],
@@ -165,10 +174,10 @@ const toRevenuePath = (
 const RevenueChart: React.FC<{ data: RevenueChartPoint[] }> = ({ data }) => {
   const width = 960;
   const height = 360;
-  const maxRevenue = 150_000_000;
+  const maxRevenue = Math.max(...data.map((point) => point.revenue), 1);
   const path = toRevenuePath(data, width, height, maxRevenue);
   const areaPath = `${path} L ${width} ${height} L 0 ${height} Z`;
-  const yAxisValues = [140_000_000, 120_000_000, 100_000_000, 80_000_000, 60_000_000, 40_000_000, 20_000_000];
+  const yAxisValues = buildAxisValues(maxRevenue);
   const xAxisValues = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];
 
   return (
@@ -404,7 +413,7 @@ const DashboardChartSection: React.FC<{
           }
           type="button"
         >
-          Revenue
+          Doanh thu
         </button>
         <button
           onClick={() => onTabChange("staffPerformance")}
@@ -415,7 +424,7 @@ const DashboardChartSection: React.FC<{
           }
           type="button"
         >
-          Staff Performance
+          Hi\u1ec7u su\u1ea5t nh\u00e2n vi\u00ean
         </button>
       </Space>
 
@@ -551,6 +560,43 @@ const TopStaffCard: React.FC<{ staff: TopStaff }> = ({ staff }) => {
           </Col>
         </Row>
 
+        <Row gutter={[10, 10]}>
+          <Col span={12}>
+            <div
+              style={{
+                background: "#ffffffb8",
+                borderRadius: 10,
+                padding: 10,
+              }}
+            >
+              <Text type="secondary" style={{ display: "block", fontSize: 12 }}>
+                {"Doanh thu b\u00e1n"}
+              </Text>
+              <Text strong>{formatCurrency(staff.revenueSale || 0)}</Text>
+              <Text type="secondary" style={{ display: "block", fontSize: 12 }}>
+                {`${staff.totalSaleDeals || 0} giao d\u1ecbch`}
+              </Text>
+            </div>
+          </Col>
+          <Col span={12}>
+            <div
+              style={{
+                background: "#ffffffb8",
+                borderRadius: 10,
+                padding: 10,
+              }}
+            >
+              <Text type="secondary" style={{ display: "block", fontSize: 12 }}>
+                {"Doanh thu thu\u00ea"}
+              </Text>
+              <Text strong>{formatCurrency(staff.revenueRent || 0)}</Text>
+              <Text type="secondary" style={{ display: "block", fontSize: 12 }}>
+                {`${staff.totalRentDeals || 0} giao d\u1ecbch`}
+              </Text>
+            </div>
+          </Col>
+        </Row>
+
         <div>
           <Row justify="space-between" align="middle" style={{ marginBottom: 6 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -587,7 +633,7 @@ const Dashboard: React.FC = () => {
   const [activeChartTab, setActiveChartTab] = useState<ChartTab>("revenue");
   const [selectedChartMonth, setSelectedChartMonth] = useState(1);
   const [revenueChartData, setRevenueChartData] = useState<RevenueChartPoint[]>(
-    MOCK_REVENUE_CHART_DATA,
+    buildRevenueChartData(null),
   );
   const [staffPerformanceChartData, setStaffPerformanceChartData] = useState<
     StaffPerformanceChartItem[]
@@ -599,6 +645,7 @@ const Dashboard: React.FC = () => {
       const res = await administrativeApi.getStatistics();
       const topStaffResponse = res.topStaffs ?? [];
       setStats(res);
+      setRevenueChartData(buildRevenueChartData(res));
       setStaffPerformanceChartData(
         topStaffResponse.slice(0, 5).map((staff) => ({
           staffId: staff.staffId,
@@ -622,7 +669,7 @@ const Dashboard: React.FC = () => {
 
   const handleChartMonthChange = (month: number) => {
     setSelectedChartMonth(month);
-    setRevenueChartData(MOCK_REVENUE_CHART_DATA);
+    setRevenueChartData(buildRevenueChartData(stats));
   };
 
   return (
@@ -661,7 +708,43 @@ const Dashboard: React.FC = () => {
             <Col xs={24} sm={12} md={6}>
               <Card style={STAT_STYLE}>
                 <Statistic
-                  title={"Kh\u00e1ch h\u00e0ng"}
+                  title={"Doanh Thu H\u1ec7 Th\u1ed1ng"}
+                  value={stats.totalSystemRevenue || 0}
+                  formatter={(value) => formatCurrency(Number(value))}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"T\u1ed5ng Giao D\u1ecbch"}
+                  value={stats.totalDeals || 0}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"Giao D\u1ecbch B\u00e1n"}
+                  value={stats.totalSaleDeals || 0}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"Giao D\u1ecbch Thu\u00ea"}
+                  value={stats.totalRentDeals || 0}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"Kh\u00e1ch H\u00e0ng"}
                   value={stats.totalCustomers || 0}
                 />
               </Card>
@@ -669,7 +752,26 @@ const Dashboard: React.FC = () => {
             <Col xs={24} sm={12} md={6}>
               <Card style={STAT_STYLE}>
                 <Statistic
-                  title={"Kh\u00e1ch h\u00e0ng m\u1edbi"}
+                  title={"Kh\u00e1ch \u0110\u00e3 Thanh To\u00e1n"}
+                  value={stats.totalPaidCustomers || 0}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"Kh\u00e1ch \u0110ang Ho\u1ea1t \u0110\u1ed9ng"}
+                  value={stats.totalActiveCustomers || 0}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card style={STAT_STYLE}>
+                <Statistic
+                  title={"Kh\u00e1ch H\u00e0ng M\u1edbi"}
                   value={stats.totalNewCustomers || 0}
                 />
               </Card>

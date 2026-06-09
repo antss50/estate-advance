@@ -1,5 +1,5 @@
 import client, { setAuthToken } from './axiosClient';
-import type { LoginResponse, MatchedStaffForBuildingRequestDTO, MatchedStaffForBuildingResponse, MatchedStaffForCustomerRequestDTO, MatchedStaffForCustomerRequestResponse, RegisterStaffPayload, RegisterUserResponse, UserDTO } from '../types/user.type';
+import type { LoginResponse, MatchedStaffForBuildingRequestDTO, MatchedStaffForBuildingResponse, MatchedStaffForCustomerRequestDTO, MatchedStaffForCustomerRequestResponse, RegisterStaffPayload, RegisterUserResponse, UpdateStaffPayload, UserDTO } from '../types/user.type';
 import type { Staff } from '../types';
 import type { BuildingSearchResponse } from '../types/building.type';
 
@@ -38,6 +38,11 @@ export async function getStaffById(staffId: number): Promise<UserDTO> {
   return res.data;
 }
 
+export async function updateStaff(staffId: number | string, payload: UpdateStaffPayload): Promise<Staff> {
+  const res = await client.put<Staff>(`${PATH}/${encodeURIComponent(String(staffId))}`, payload);
+  return res.data;
+}
+
 export async function getMatchingStaffsForBuilding(payload: MatchedStaffForBuildingRequestDTO): Promise<MatchedStaffForBuildingResponse[]> {
   const res = await client.post<MatchedStaffForBuildingResponse[]>(`/api/building-staff-matching/find-staff`, payload);
   return res.data;
@@ -63,4 +68,4 @@ export async function getBuildingByStaff(staffId: number): Promise<BuildingSearc
   return res.data;
 }
 
-export default { configureToken, getStaffs, getStaffById, registerStaff, loginStaff, getBuildingByStaff, getMatchingStaffsForBuilding, getMatchingStaffsForCustomerRequest };
+export default { configureToken, getStaffs, getStaffById, updateStaff, registerStaff, loginStaff, getBuildingByStaff, getMatchingStaffsForBuilding, getMatchingStaffsForCustomerRequest };

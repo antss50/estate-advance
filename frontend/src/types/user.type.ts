@@ -67,6 +67,15 @@ export interface RegisterStaffPayload {
   workingArea?: string;
 }
 
+export interface UpdateStaffPayload {
+  fullName: string;
+  userName: string;
+  phone: string;
+  email: string;
+  workingArea: string;
+  role: string;
+}
+
 export interface UpdateUserPayload {
   fullName?: string;
   status?: number;
@@ -168,6 +177,7 @@ export interface MatchedStaffForBuildingDTO {
 
 export interface MatchingPayload {
   customerId: number;
+  staffId?: number;
   // transactionType: string;
   demandPrice: number;
   demandArea: number;

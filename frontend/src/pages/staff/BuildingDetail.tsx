@@ -37,7 +37,6 @@ const SpecsCard: React.FC<{ building: BuildingDTO }> = ({ building }) => {
   const rows: Array<[string, React.ReactNode]> = [
     [
       "Mức giá",
-      building.rentPriceDescription ||
         (building.rentPrice ? `${formatCurrency(building.rentPrice)}` : "-"),
     ],
     ["Diện tích sàn", building.floorArea ? `${building.floorArea} m²` : "-"],
@@ -343,9 +342,9 @@ const BuildingDetail: React.FC = () => {
                   flexWrap: "wrap",
                 }}
               >
-                <Text style={{ color: TEXT_MUTED }}>
+                {/* <Text style={{ color: TEXT_MUTED }}>
                   Mã loại: {Array.isArray(building.typeCode) ? building.typeCode.join(", ") : building.typeCode}
-                </Text>
+                </Text> */}
                 {/* <Text style={{ color: TEXT_MUTED }}>
                   Diện cho thuê: {building.rentArea ?? "-"}
                 </Text> */}
@@ -362,8 +361,8 @@ const BuildingDetail: React.FC = () => {
                 >
                   <Text style={{ color: TEXT_MUTED }}>Giá thuê</Text>
                   <Text style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>
-                    {building.rentPriceDescription ||
-                      formatCurrency(building.rentPrice)}
+                    
+                      {formatCurrency(building.priceRent)}
                   </Text>
                 </div>
                 <Divider style={{ margin: "8px 0" }} />
@@ -477,27 +476,9 @@ const BuildingDetail: React.FC = () => {
             <Card style={{ marginTop: 16, borderRadius: 12 }}>
               <Title level={5}>Tài nguyên</Title>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {building.linkOfBuilding && (
-                  <a
-                    href={building.linkOfBuilding}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Xem chi tiết
-                  </a>
-                )}
-                {building.map && (
-                  <a href={building.map} target="_blank" rel="noreferrer">
-                    Xem bản đồ
-                  </a>
-                )}
+          
                 <Divider style={{ margin: "8px 0" }} />
-                <div style={{ fontSize: 12, color: TEXT_MUTED }}>
-                  <div>Ngày tạo: {building.createdDate ?? "-"}</div>
-                  <div>Người tạo: {building.createdBy ?? "-"}</div>
-                  <div>Ngày sửa: {building.modifiedDate ?? "-"}</div>
-                  <div>Người sửa: {building.modifiedBy ?? "-"}</div>
-                </div>
+                
               </div>
             </Card>
           </div>
