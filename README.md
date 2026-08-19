@@ -56,13 +56,9 @@ flowchart LR
     Scheduler[Tác vụ hết hạn thuê hằng ngày] --> Service
 ```
 
-### Mô hình dữ liệu / ERD
-
-![Uploading image.png…]()
-
+### Mô hình dữ liệu 
 
 Các thực thể chính: `User`, `Role`, `Building`, `RentArea`, `Customer`, `Demand`, `CustomerRequest`, `AssignmentBuilding`, `AssignmentCustomer`, `ChatRoom`, `ChatRoomMember`, `ChatMessage`, `Province` và `Ward`.
-
 
 ## Bắt Đầu
 
