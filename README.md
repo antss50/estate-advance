@@ -58,9 +58,8 @@ flowchart LR
 
 ### Mô hình dữ liệu / ERD
 
-```text
-docs/images/estate-advance-erd.png
-```
+![Uploading image.png…]()
+
 
 Các thực thể chính: `User`, `Role`, `Building`, `RentArea`, `Customer`, `Demand`, `CustomerRequest`, `AssignmentBuilding`, `AssignmentCustomer`, `ChatRoom`, `ChatRoomMember`, `ChatMessage`, `Province` và `Ward`.
 
